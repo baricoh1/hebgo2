@@ -33,7 +33,7 @@ function Register() {
         return;
       }
       
-      console.log('✅ User does not exist, creating...');
+      
       await setDoc(doc(db, 'users', userName), {
         password,
         gender,
