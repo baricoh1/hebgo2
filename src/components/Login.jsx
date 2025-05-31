@@ -13,7 +13,7 @@ function Login() {
   const handleLogin = async (e) => {
     e.preventDefault();
     if (!userName || !password) {
-      alert('אנא מלא שם משתמש וסיסמה.');
+      alert('אנא3 מלא שם משתמש וסיסמה.');
       return;
     }
 
