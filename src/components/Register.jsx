@@ -1,8 +1,9 @@
+// ✅ Register.jsx - using Firestore only, no email/password auth
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaUserAlt, FaLock, FaVenusMars, FaLanguage } from 'react-icons/fa';
-import { getDatabase, ref, set } from 'firebase/database';
-import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth';
+import { doc, setDoc } from 'firebase/firestore';
+import { db } from '../firebase';
 
 function Register() {
   const [userName, setUserName] = useState('');
@@ -24,13 +25,8 @@ function Register() {
     }
 
     try {
-      const auth = getAuth();
-      const email = `${userName}`;
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
-
-      const db = getDatabase();
-      await set(ref(db, 'users/' + userName), {
+      await setDoc(doc(db, 'users', userName), {
+        password,
         gender,
         progress: defaultProgress,
         difficulty: 'easy'
@@ -53,10 +49,9 @@ function Register() {
         <h1 className="text-4xl font-bold text-center text-blue-700">הרשמה</h1>
 
         <div className="space-y-5">
-
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">שם משתמש</label>
-            <div className="flex items-center bg-white border border-gray-300 rounded-xl px-4 py-3 shadow-sm focus-within:ring-2 focus-within:ring-blue-400 transition">
+            <div className="flex items-center bg-white border border-gray-300 rounded-xl px-4 py-3">
               <FaUserAlt className="text-gray-400 me-3" />
               <input
                 type="text"
@@ -64,14 +59,13 @@ function Register() {
                 onChange={(e) => setUserName(e.target.value)}
                 className="flex-1 bg-transparent focus:outline-none text-gray-800"
                 placeholder="הקלד שם משתמש"
-                required
               />
             </div>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">סיסמה</label>
-            <div className="flex items-center bg-white border border-gray-300 rounded-xl px-4 py-3 shadow-sm focus-within:ring-2 focus-within:ring-blue-400 transition">
+            <div className="flex items-center bg-white border border-gray-300 rounded-xl px-4 py-3">
               <FaLock className="text-gray-400 me-3" />
               <input
                 type="password"
@@ -79,7 +73,6 @@ function Register() {
                 onChange={(e) => setPassword(e.target.value)}
                 className="flex-1 bg-transparent focus:outline-none text-gray-800"
                 placeholder="••••••••"
-                required
               />
             </div>
           </div>
@@ -88,11 +81,7 @@ function Register() {
             <label className="block text-sm font-medium text-gray-700 mb-1">מין</label>
             <div className="flex items-center bg-white border border-gray-300 rounded-xl px-4 py-3">
               <FaVenusMars className="text-gray-400 me-3" />
-              <select
-                value={gender}
-                onChange={(e) => setGender(e.target.value)}
-                className="flex-1 bg-transparent focus:outline-none text-gray-800"
-              >
+              <select value={gender} onChange={(e) => setGender(e.target.value)} className="flex-1 bg-transparent focus:outline-none text-gray-800">
                 <option value="male">זכר</option>
                 <option value="female">נקבה</option>
                 <option value="other">אחר</option>
@@ -104,11 +93,7 @@ function Register() {
             <label className="block text-sm font-medium text-gray-700 mb-1">שפה מועדפת</label>
             <div className="flex items-center bg-white border border-gray-300 rounded-xl px-4 py-3">
               <FaLanguage className="text-gray-400 me-3" />
-              <select
-                value={lang}
-                onChange={(e) => setLang(e.target.value)}
-                className="flex-1 bg-transparent focus:outline-none text-gray-800"
-              >
+              <select value={lang} onChange={(e) => setLang(e.target.value)} className="flex-1 bg-transparent focus:outline-none text-gray-800">
                 <option value="us">English</option>
                 <option value="es">Español</option>
                 <option value="ru">Русский</option>
@@ -116,20 +101,12 @@ function Register() {
             </div>
           </div>
 
-          <button
-            onClick={handleRegister}
-            className="w-full py-3 bg-gradient-to-r from-green-500 to-teal-500 hover:from-green-600 hover:to-teal-600 text-white font-semibold rounded-xl shadow-md transition-all duration-300"
-          >
+          <button onClick={handleRegister} className="w-full py-3 bg-gradient-to-r from-green-500 to-teal-500 text-white font-semibold rounded-xl shadow-md">
             הירשם
           </button>
-
-          <button
-            onClick={() => navigate('/login')}
-            className="w-full py-2 text-sm text-blue-600 hover:underline text-center"
-          >
+          <button onClick={() => navigate('/login')} className="w-full py-2 text-sm text-blue-600 hover:underline text-center">
             כבר יש לי משתמש ← התחבר
           </button>
-
         </div>
       </div>
     </div>
