@@ -1,6 +1,7 @@
 // src/components/Questions.jsx
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import questionsData from './questions.json';
 

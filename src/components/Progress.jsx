@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 
 import lvl0 from '../images/lvl0.png';

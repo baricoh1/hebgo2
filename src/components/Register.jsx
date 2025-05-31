@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaUserAlt, FaLock, FaVenusMars, FaLanguage } from 'react-icons/fa';
+import { getDatabase, ref, set } from 'firebase/database';
 import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth';
 
 function Register() {

@@ -3,8 +3,10 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import logo from '../logo.png';
 
-import { db } from '../firebase'; // ✅ זה מספיק
+import { getFirestore, doc, getDoc } from 'firebase/firestore';
+import { app } from '../firebase'; // assuming firebase is initialized in firebase.js
 
+const db = getFirestore(app);
 
 function Home() {
   const navigate = useNavigate();
