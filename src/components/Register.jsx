@@ -32,7 +32,8 @@ function Register() {
         alert('שם המשתמש כבר קיים. אנא בחר שם אחר.');
         return;
       }
-
+      
+      console.log('✅ User does not exist, creating...');
       await setDoc(doc(db, 'users', userName), {
         password,
         gender,
