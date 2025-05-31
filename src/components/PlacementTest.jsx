@@ -2,7 +2,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import questionsData from './placementQuestions.json';
-import { doc, setDoc } from 'firebase/firestore';
 import { db } from '../firebase'; // Make sure this path is correct
 
 function PlacementTest() {
