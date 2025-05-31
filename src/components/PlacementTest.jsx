@@ -2,6 +2,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import questionsData from './placementQuestions.json';
+import { doc, setDoc } from 'firebase/firestore';
+import { db } from '../firebase'; // Make sure this path is correct
 
 function PlacementTest() {
   const [current, setCurrent] = useState(0);
@@ -17,7 +19,7 @@ function PlacementTest() {
   const handleAnswer = (index) => {
     setSelected(index);
     if (index === testQuestions[current].correct) {
-      setScore(prev => prev + 1);
+      setScore((prev) => prev + 1);
     }
 
     if (current + 1 === testQuestions.length) {
@@ -41,13 +43,13 @@ function PlacementTest() {
     localStorage.setItem('userDifficulty', difficulty);
 
     try {
-      await fetch(`http://localhost:5000/api/user/${userName}/difficulty`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ lang: userLang, difficulty })
-      });
+      await setDoc(doc(db, 'users', userName), {
+        difficulty,
+        lang: userLang,
+        updatedAt: new Date(),
+      }, { merge: true });
     } catch (err) {
-      console.error('Error saving difficulty:', err);
+      console.error('Error saving difficulty to Firebase:', err);
     }
 
     setTimeout(() => navigate('/'), 2000);
@@ -70,7 +72,6 @@ function PlacementTest() {
           מבחן רמת התחלה - {userLang.toUpperCase()}
         </h1>
 
-        {/* Progress Bar */}
         {!completed && (
           <div className="w-full bg-gray-300 dark:bg-gray-700 rounded-full h-4 mt-4 overflow-hidden">
             <div

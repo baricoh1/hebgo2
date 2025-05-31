@@ -3,40 +3,50 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import logo from '../logo.png';
 
+import { getFirestore, doc, getDoc } from 'firebase/firestore';
+import { app } from '../firebase'; // assuming firebase is initialized in firebase.js
+
+const db = getFirestore(app);
+
 function Home() {
   const navigate = useNavigate();
   const [showToast, setShowToast] = useState(false);
   const timeoutRef = useRef(null);
 
-  // Load username and gender from localStorage immediately
   const [userName, setUserName] = useState(() => localStorage.getItem('userName'));
   const [gender, setGender] = useState(() => localStorage.getItem('userGender') || null);
 
-  // If we have a user but no gender yet, fetch from the server
   useEffect(() => {
     if (userName && !gender) {
-      fetch(`http://localhost:5000/api/user/${userName}`)
-        .then((res) => res.json())
-        .then((data) => {
-          const g = data.gender || 'other';
-          setGender(g);
-          localStorage.setItem('userGender', g);
-        })
-        .catch(() => {
+      const fetchUser = async () => {
+        try {
+          const docRef = doc(db, 'users', userName);
+          const userSnap = await getDoc(docRef);
+          if (userSnap.exists()) {
+            const g = userSnap.data().gender || 'other';
+            setGender(g);
+            localStorage.setItem('userGender', g);
+          } else {
+            setGender('other');
+            localStorage.setItem('userGender', 'other');
+          }
+        } catch (error) {
+          console.error('Error fetching user:', error);
           setGender('other');
           localStorage.setItem('userGender', 'other');
-        });
+        }
+      };
+
+      fetchUser();
     }
   }, [userName, gender]);
 
-  // Blur any focused element on mount to avoid mobile keyboard
   useEffect(() => {
     if (document.activeElement) {
       document.activeElement.blur();
     }
   }, []);
 
-  // Clear all user-related localStorage and reset state, then show a "logout" toast
   const handleLogout = () => {
     localStorage.removeItem('userName');
     localStorage.removeItem('userLang');
@@ -55,7 +65,6 @@ function Home() {
     }, 2500);
   };
 
-  // Cancel any pending toast timeout and navigate to login
   const goToLogin = () => {
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
@@ -64,10 +73,8 @@ function Home() {
     navigate('/login');
   };
 
-  // Determine welcome message
   const renderWelcome = () => {
     if (!userName) {
-      // Not logged in yet
       return (
         <>
           {gender === 'female' ? 'ברוכה הבאה' : 'ברוך הבא'} ל־
@@ -75,7 +82,6 @@ function Home() {
         </>
       );
     }
-    // Logged in user
     return (
       <>
         {gender === 'female' ? 'ברוכה הבאה' : 'ברוך הבא'}{' '}
@@ -86,23 +92,17 @@ function Home() {
 
   return (
     <div className="min-h-screen w-full bg-blue-100 flex items-center justify-center p-6">
-      <div
-        dir="rtl"
-        className="w-full max-w-4xl px-6 py-6 flex flex-col items-center text-center space-y-6"
-      >
-        {/* Logo */}
+      <div dir="rtl" className="w-full max-w-4xl px-6 py-6 flex flex-col items-center text-center space-y-6">
         <img
           src={logo}
           alt="Hebrew Go Logo"
           className="h-60 sm:h-64 md:h-72 bg-white p-4 rounded-xl shadow-lg transition-transform duration-500 hover:scale-105"
         />
 
-        {/* Welcome message */}
         <p className="text-3xl sm:text-4xl md:text-5xl font-bold text-center">
           {renderWelcome()}
         </p>
 
-        {/* Buttons */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
           {userName ? (
             <>
@@ -142,7 +142,6 @@ function Home() {
         </div>
       </div>
 
-      {/* Logout toast */}
       {showToast && (
         <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-green-600 text-white px-6 py-3 rounded-full shadow-lg text-lg z-50">
           ✅ התנתקת בהצלחה!

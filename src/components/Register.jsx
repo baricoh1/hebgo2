@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaUserAlt, FaLock, FaVenusMars, FaLanguage } from 'react-icons/fa';
+import { getDatabase, ref, set } from 'firebase/database';
+import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth';
 
 function Register() {
   const [userName, setUserName] = useState('');
@@ -22,31 +24,26 @@ function Register() {
     }
 
     try {
-      const res = await fetch('http://localhost:5000/api/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          username: userName,
-          password,
-          gender,
-          progress: defaultProgress
-        })
+      const auth = getAuth();
+      const email = `${userName}@fake.com`;
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+
+      const db = getDatabase();
+      await set(ref(db, 'users/' + userName), {
+        gender,
+        progress: defaultProgress,
+        difficulty: 'easy'
       });
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        alert(`שגיאה בהרשמה: ${data.error || res.statusText}`);
-      } else {
-        alert('✅ נרשמת בהצלחה!');
-        localStorage.setItem('userName', userName);
-        localStorage.setItem('userLang', lang);
-        localStorage.setItem('userDifficulty', 'easy');
-        navigate('/placement');
-      }
+      alert('✅ נרשמת בהצלחה!');
+      localStorage.setItem('userName', userName);
+      localStorage.setItem('userLang', lang);
+      localStorage.setItem('userDifficulty', 'easy');
+      navigate('/placement');
     } catch (err) {
       console.error('Registration error:', err);
-      alert('שגיאה בשרת.');
+      alert('שגיאה בהרשמה: ' + err.message);
     }
   };
 
