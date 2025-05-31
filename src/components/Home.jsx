@@ -3,7 +3,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import logo from '../logo.png';
 
-import { doc, getDoc } from 'firebase/firestore';
+import { db } from '../firebase'; // ✅ זה מספיק
 
 
 function Home() {
