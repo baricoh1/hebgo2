@@ -110,7 +110,6 @@ function Questions() {
       if (serverProg.length >= MAX_QUESTIONS_PER_CATEGORY) setShowRestartModal(true);
 
       if (data.gender)      localStorage.setItem('userGender', data.gender);
-      if (data.difficulty)  localStorage.setItem('userDifficulty', data.difficulty);
     } catch (err) {
       console.error('Error fetching user progress:', err);
     }
