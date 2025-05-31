@@ -25,6 +25,14 @@ function Register() {
     }
 
     try {
+      const userRef = doc(db, 'users', userName);
+      const userSnap = await getDoc(userRef);
+
+      if (userSnap.exists()) {
+        alert('שם המשתמש כבר קיים. אנא בחר שם אחר.');
+        return;
+      }
+
       await setDoc(doc(db, 'users', userName), {
         password,
         gender,
