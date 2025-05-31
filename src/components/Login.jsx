@@ -2,7 +2,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaUserAlt, FaLock } from 'react-icons/fa';
-import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';
 import { app } from '../firebase'; // make sure this path is correct
 
 function Login() {
