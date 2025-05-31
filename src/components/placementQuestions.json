@@ -1,0 +1,104 @@
+{
+  "us": {
+    "easy": [
+      {
+        "question": "'מים' What is the correct translation?",
+        "answers": ["Fire", "Water", "Air", "Earth"],
+        "correct": 1,
+        "hint": "You drink it when you're thirsty"
+      },
+      {
+        "question": "'חתול' What is the correct translation?",
+        "answers": ["Dog", "Chair", "Cat", "Book"],
+        "correct": 2,
+        "hint": "A common household pet that purrs"
+      },
+      {
+        "question": "'ילד' What is the correct translation?",
+        "answers": ["Boy", "Girl", "Teacher", "Man"],
+        "correct": 0,
+        "hint": "A young male child"
+      },
+      {
+        "question": "'ספר' What is the correct translation?",
+        "answers": ["Book", "Pen", "Table", "Window"],
+        "correct": 0,
+        "hint": "You read it"
+      },
+      {
+        "question": "'שולחן' What is the correct translation?",
+        "answers": ["Chair", "Table", "Door", "Wall"],
+        "correct": 1,
+        "hint": "A piece of furniture you put things on"
+      }
+    ]
+  },
+  "es": {
+    "easy": [
+      {
+        "question": "'מים' ¿Cuál es la traducción correcta?",
+        "answers": ["Fuego", "Agua", "Aire", "Tierra"],
+        "correct": 1,
+        "hint": "Lo bebes cuando tienes sed"
+      },
+      {
+        "question": "'חתול' ¿Cuál es la traducción correcta?",
+        "answers": ["Perro", "Silla", "Gato", "Libro"],
+        "correct": 2,
+        "hint": "Una mascota común que ronronea"
+      },
+      {
+        "question": "'ילד' ¿Cuál es la traducción correcta?",
+        "answers": ["Niño", "Niña", "Profesor", "Hombre"],
+        "correct": 0,
+        "hint": "Un niño varón joven"
+      },
+      {
+        "question": "'ספר' ¿Cuál es la traducción correcta?",
+        "answers": ["Libro", "Bolígrafo", "Mesa", "Ventana"],
+        "correct": 0,
+        "hint": "Lo lees"
+      },
+      {
+        "question": "'שולחן' ¿Cuál es la traducción correcta?",
+        "answers": ["Silla", "Mesa", "Puerta", "Pared"],
+        "correct": 1,
+        "hint": "Un mueble donde pones cosas"
+      }
+    ]
+  },
+  "ru": {
+    "easy": [
+      {
+        "question": "'מים' Какой правильный перевод?",
+        "answers": ["Огонь", "Вода", "Воздух", "Земля"],
+        "correct": 1,
+        "hint": "Вы пьёте это, когда хотите пить"
+      },
+      {
+        "question": "'חתול' Какой правильный перевод?",
+        "answers": ["Собака", "Стул", "Кошка", "Книга"],
+        "correct": 2,
+        "hint": "Домашнее животное, мурлычет"
+      },
+      {
+        "question": "'ילד' Какой правильный перевод?",
+        "answers": ["Мальчик", "Девочка", "Учитель", "Мужчина"],
+        "correct": 0,
+        "hint": "Молодой мальчик"
+      },
+      {
+        "question": "'ספר' Какой правильный перевод?",
+        "answers": ["Книга", "Ручка", "Стол", "Окно"],
+        "correct": 0,
+        "hint": "Вы читаете это"
+      },
+      {
+        "question": "'שולחן' Какой правильный перевод?",
+        "answers": ["Стул", "Стол", "Дверь", "Стена"],
+        "correct": 1,
+        "hint": "Мебель, на которую вы кладёте вещи"
+      }
+    ]
+  }
+}
