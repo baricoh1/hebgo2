@@ -25,7 +25,7 @@ function Register() {
 
     try {
       const auth = getAuth();
-      const email = `${userName}@fake.com`;
+      const email = `${userName}`;
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
