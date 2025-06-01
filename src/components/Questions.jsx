@@ -258,19 +258,20 @@ function Questions() {
     }, 1500);
   };
 
-    function splitQuestionText(text) {
-      const hebrewMatch = text.match(/['"״]?[א-ת\s,:()"'״]+['"״]?[.!?]*/g);
-      if (!hebrewMatch) return { enPart: text, hePart: '', punctuation: '' };
+  function splitQuestionText(text) {
+    const endsWithPunctuation = /[?!]$/;
+    const punctuation = text.match(endsWithPunctuation) ? text.slice(-1) : '';
+    const cleanText = punctuation ? text.slice(0, -1).trim() : text;
 
-      const hePart = hebrewMatch.join(' ').trim();
-      const enPart = text.replace(hePart, '').trim();
+    const hebrewMatch = cleanText.match(/['"״]?[א-ת\s,:()"'״]+['"״]?/g);
+    if (!hebrewMatch) return { enPart: cleanText, hePart: '', punctuation };
 
-      // נבדוק אם יש סימן שאלה או נקודה בסוף
-      const punctuationMatch = text.match(/[?!]$/);
-      const punctuation = punctuationMatch ? punctuationMatch[0] : '';
+    const hePart = hebrewMatch.join(' ').trim();
+    const enPart = cleanText.replace(hePart, '').trim();
 
-      return { enPart, hePart, punctuation };
+    return { enPart, hePart, punctuation };
   }
+
 
 
 
@@ -283,6 +284,7 @@ function Questions() {
   const question = questionIndex !== null ? questionsList[questionIndex] : { question: '', answers: [], hint: '', authohint: '' };
   const progressPercent = ((currentQuestionNumber - 1) / MAX_QUESTIONS) * 100;
   const { enPart, hePart, punctuation } = splitQuestionText(question.question);
+
 
   /* ------------------------------------------------------------------
      JSX RETURN
