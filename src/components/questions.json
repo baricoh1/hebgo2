@@ -486,6 +486,126 @@
     ],
     "hard": [
       {
+        "question": "?'הרים גבה'  Choose the correct meaning of the sentence:",
+        "answers": [
+          "Was surprised",
+          "Got angry",
+          "Was happy",
+          "Got scared"
+        ],
+        "correct": 0,
+        "hint": "He was surprised or skeptical",
+        "authohint": "Used when someone reacts with surprise or disbelief"
+      },
+      {
+        "question": "?'הורידה את הראש'  Choose the correct meaning of the sentence:",
+        "answers": [
+          "Was offended",
+          "Was disappointed",
+          "Was happy",
+          "Was excited"
+        ],
+        "correct": 1,
+        "hint": "She accepted disappointment or gave up",
+        "authohint": "Describes someone humbling themselves or surrendering"
+      },
+      {
+        "question": "?שבר את הקרח'  Choose the correct meaning of the sentence:",
+        "answers": [
+          "Made the atmosphere easier",
+          "Hurt others",
+          "Surprised everyone",
+          "Disappeared immediately"
+        ],
+        "correct": 0,
+        "hint": "He made the situation more relaxed",
+        "authohint": "Used when someone helps others feel more comfortable"
+      },
+      {
+        "question": "?יצא לו שם של קמצן'  Choose the correct meaning of the sentence:",
+        "answers": [
+          "He is considered stingy",
+          "He became famous",
+          "He disappeared",
+          "He was fired"
+        ],
+        "correct": 0,
+        "hint": "People think he is stingy",
+        "authohint": "Said when someone is known for being cheap"
+      },
+      {
+        "question": "?שבר את הכלים ולא משחק'  Choose the correct meaning of the sentence:",
+        "answers": [
+          "He quit in anger",
+          "He behaved nicely",
+          "He lost",
+          "He played again"
+        ],
+        "correct": 0,
+        "hint": "He quit angrily",
+        "authohint": "Refers to someone who gave up in protest or frustration"
+      },
+      {
+        "question": "?העניינים יצאו משליטה'  Choose the correct meaning of the sentence:",
+        "answers": [
+          "No control over the situation",
+          "Everything is calm",
+          "He fell asleep",
+          "He is in control"
+        ],
+        "correct": 0,
+        "hint": "Things are out of control",
+        "authohint": "Describes a situation that's gotten chaotic"
+      },
+      {
+        "question": "?הלך בין הטיפות'  Choose the correct meaning of the sentence:",
+        "answers": [
+          "Acted very carefully",
+          "Got very wet",
+          "Was fast",
+          "Avoided work"
+        ],
+        "correct": 0,
+        "hint": "He acted very cautiously",
+        "authohint": "Means he navigated a tricky situation carefully"
+      },
+      {
+        "question": "?ישב על הגדר'  Choose the correct meaning of the sentence:",
+        "answers": [
+          "Hesitated to decide",
+          "Fell",
+          "Ignored everything",
+          "Reacted quickly"
+        ],
+        "correct": 0,
+        "hint": "He didn’t take a side",
+        "authohint": "Means he stayed neutral or undecided"
+      },
+      {
+        "question": "?עלה לו לראש'  Choose the correct meaning of the sentence:",
+        "answers": [
+          "Became arrogant",
+          "Got sick",
+          "Became tired",
+          "Was very excited"
+        ],
+        "correct": 0,
+        "hint": "He became arrogant",
+        "authohint": "Used when someone lets success inflate their ego"
+      },
+      {
+        "question": "?אכל את הלב'  Choose the correct meaning of the sentence:",
+        "answers": [
+          "Deeply regretted",
+          "Ate a lot",
+          "Was very happy",
+          "Didn't understand"
+        ],
+        "correct": 0,
+        "hint": "He deeply regretted something",
+        "authohint": "Describes someone who's very upset or envious"
+      },
+      {
         "question": "?'הִתְפַּקּוּת'  Translate this Hebrew word to English:",
         "answers": [
           "Retention",
