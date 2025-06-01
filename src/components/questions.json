@@ -460,7 +460,7 @@
         "authohint": "A yellow bus often drops students off at this place"
       },
       {
-        "question": "?'אני לובש _____' Complete the sentence:",
+        "question": "'אני לובש _____' Complete the sentence:",
         "answers": [
           "נעליים",
           "חלון",
@@ -472,7 +472,7 @@
         "authohint": "You tie their laces and walk outside with them on"
       },
       {
-        "question": "?'אני מחפש את ה_____' Complete the sentence:",
+        "question": "'אני מחפש את ה_____' Complete the sentence:",
         "answers": [
           "מפתח",
           "אור",
@@ -486,7 +486,7 @@
     ],
     "hard": [
       {
-        "question": "?'הרים גבה'  Choose the correct meaning of the sentence:",
+        "question": "'הרים גבה'  Choose the correct meaning of the sentence:",
         "answers": [
           "Was surprised",
           "Got angry",
@@ -498,7 +498,7 @@
         "authohint": "Used when someone reacts with surprise or disbelief"
       },
       {
-        "question": "?'הורידה את הראש'  Choose the correct meaning of the sentence:",
+        "question": "'הורידה את הראש'  Choose the correct meaning of the sentence:",
         "answers": [
           "Was offended",
           "Was disappointed",
@@ -510,7 +510,7 @@
         "authohint": "Describes someone humbling themselves or surrendering"
       },
       {
-        "question": "?שבר את הקרח'  Choose the correct meaning of the sentence:",
+        "question": "שבר את הקרח'  Choose the correct meaning of the sentence:",
         "answers": [
           "Made the atmosphere easier",
           "Hurt others",
@@ -522,7 +522,7 @@
         "authohint": "Used when someone helps others feel more comfortable"
       },
       {
-        "question": "?יצא לו שם של קמצן'  Choose the correct meaning of the sentence:",
+        "question": "יצא לו שם של קמצן'  Choose the correct meaning of the sentence:",
         "answers": [
           "He is considered stingy",
           "He became famous",
@@ -534,7 +534,7 @@
         "authohint": "Said when someone is known for being cheap"
       },
       {
-        "question": "?שבר את הכלים ולא משחק'  Choose the correct meaning of the sentence:",
+        "question": "שבר את הכלים ולא משחק'  Choose the correct meaning of the sentence:",
         "answers": [
           "He quit in anger",
           "He behaved nicely",
@@ -546,7 +546,7 @@
         "authohint": "Refers to someone who gave up in protest or frustration"
       },
       {
-        "question": "?העניינים יצאו משליטה'  Choose the correct meaning of the sentence:",
+        "question": "העניינים יצאו משליטה'  Choose the correct meaning of the sentence:",
         "answers": [
           "No control over the situation",
           "Everything is calm",
@@ -558,7 +558,7 @@
         "authohint": "Describes a situation that's gotten chaotic"
       },
       {
-        "question": "?הלך בין הטיפות'  Choose the correct meaning of the sentence:",
+        "question": "הלך בין הטיפות'  Choose the correct meaning of the sentence:",
         "answers": [
           "Acted very carefully",
           "Got very wet",
@@ -570,7 +570,7 @@
         "authohint": "Means he navigated a tricky situation carefully"
       },
       {
-        "question": "?ישב על הגדר'  Choose the correct meaning of the sentence:",
+        "question": "ישב על הגדר'  Choose the correct meaning of the sentence:",
         "answers": [
           "Hesitated to decide",
           "Fell",
@@ -582,7 +582,7 @@
         "authohint": "Means he stayed neutral or undecided"
       },
       {
-        "question": "?עלה לו לראש'  Choose the correct meaning of the sentence:",
+        "question": "עלה לו לראש'  Choose the correct meaning of the sentence:",
         "answers": [
           "Became arrogant",
           "Got sick",
