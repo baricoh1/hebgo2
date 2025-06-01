@@ -259,18 +259,17 @@ function Questions() {
   };
 
   function splitQuestionText(text) {
-    const hebrewMatch = text.match(/['"״]?[א-ת\s,:()"'״]+['"״]?/g);
-    if (!hebrewMatch) return { enPart: text, hePart: '', punctuation: '' };
+    const heMatch = text.match(/['״][א-ת\s_\-.,:()]+['״]/);
+    const hePart = heMatch ? heMatch[0] : '';
 
-    const hePart = hebrewMatch.join(' ').trim();
-    const enPart = text.replace(hePart, '').replace(/[?؟!]/g, '').trim();
+    const enPart = hePart ? text.replace(hePart, '').replace(/[?؟!]/g, '').trim() : text;
 
-    // ניקוי סימן פיסוק מהסוף
-    const punctuationMatch = text.match(/[?؟!]/);
+    const punctuationMatch = text.trim().match(/[?؟!]+$/);
     const punctuation = punctuationMatch ? punctuationMatch[0] : '';
 
     return { enPart, hePart, punctuation };
-}
+ }
+
 
 
 
@@ -322,6 +321,7 @@ function Questions() {
                   <span className="text-purple-700 dark:text-purple-400 font-bold" dir="rtl">{hePart}{punctuation}</span>
                   <span className="text-blue-900 dark:text-blue-200" dir="ltr">{enPart}</span>
                 </div>
+
 
                 <ul className="space-y-2 text-right list-none p-0 m-0">
                   {question.answers.map((ans, idx) => {
