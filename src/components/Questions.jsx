@@ -280,20 +280,16 @@ function Questions() {
           ) : (
             <>
               {/* Header */}
-              <header className="flex flex-col gap-2 bg-blue-200 dark:bg-blue-950 p-4 rounded-lg shadow">
-                <div className="flex flex-row-reverse justify-between items-center">
-                  <button onClick={() => navigate('/')} className="text-xl font-semibold hover:underline">← חזרה לעמוד ראשי</button>
-                  <div className="flex items-center mx-3 gap-2">
-                    <span className="text-base font-semibold text-gray-700 dark:text-gray-300">שאלה</span>
-                    <span className="bg-blue-500 text-white rounded-full px-3 py-1 shadow-md">{currentQuestionNumber}</span>
-                  </div>
-                  <div className="bg-white py-1 px-3 rounded shadow dark:bg-gray-100">
-                    <span className={time <= 5 ? 'text-red-600 font-bold' : 'text-blue-600'}>{formatTime(time)}</span>
-                  </div>
+              <header className="flex flex-row-reverse justify-between items-center bg-blue-200 dark:bg-blue-950 p-4 rounded-lg shadow">
+                <button onClick={() => navigate('/')} className="text-xl font-semibold hover:underline">← חזרה לעמוד ראשי</button>
+                <div className="flex items-center mx-3 gap-2">
+                  <span className="text-base font-semibold text-gray-700 dark:text-gray-300">שאלה</span>
+                  <span className="bg-blue-500 text-white rounded-full px-3 py-1 shadow-md">{currentQuestionNumber}</span>
                 </div>
-                <div className="text-xl text-center font-bold text-blue-900 dark:text-blue-200">{question.question}</div>
+                <div className="bg-white py-1 px-3 rounded shadow dark:bg-gray-100">
+                  <span className={time <= 5 ? 'text-red-600 font-bold' : 'text-blue-600'}>{formatTime(time)}</span>
+                </div>
               </header>
-
 
               {/* Progress Bar */}
               <div className="w-full bg-gray-300 dark:bg-gray-700 h-2 rounded-full overflow-hidden mt-2">
