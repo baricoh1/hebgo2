@@ -258,16 +258,20 @@ function Questions() {
     }, 1500);
   };
 
-  function splitQuestionText(text) {
-  // Hebrew split
-  const hebrewMatch = text.match(/['"״]?[א-ת\s,:()"'״]+['"״]?[.!?]*/g);
-  if (!hebrewMatch) return { enPart: text, hePart: '' };
+    function splitQuestionText(text) {
+      const hebrewMatch = text.match(/['"״]?[א-ת\s,:()"'״]+['"״]?[.!?]*/g);
+      if (!hebrewMatch) return { enPart: text, hePart: '', punctuation: '' };
 
-  const hePart = hebrewMatch.join(' ').trim();
-  const enPart = text.replace(hePart, '').trim();
+      const hePart = hebrewMatch.join(' ').trim();
+      const enPart = text.replace(hePart, '').trim();
 
-  return { enPart, hePart };
+      // נבדוק אם יש סימן שאלה או נקודה בסוף
+      const punctuationMatch = text.match(/[?!]$/);
+      const punctuation = punctuationMatch ? punctuationMatch[0] : '';
+
+      return { enPart, hePart, punctuation };
   }
+
 
 
   /* ------------------------------------------------------------------
@@ -278,8 +282,7 @@ function Questions() {
 
   const question = questionIndex !== null ? questionsList[questionIndex] : { question: '', answers: [], hint: '', authohint: '' };
   const progressPercent = ((currentQuestionNumber - 1) / MAX_QUESTIONS) * 100;
-  const { enPart, hePart } = splitQuestionText(question.question);
-
+  const { enPart, hePart, punctuation } = splitQuestionText(question.question);
 
   /* ------------------------------------------------------------------
      JSX RETURN
@@ -314,9 +317,8 @@ function Questions() {
               {/* Question Card */}
               <main className="bg-white/90 dark:bg-gray-800 p-6 rounded-xl shadow-lg text-lg flex-grow transition-all duration-300">
                 <div className="flex flex-row justify-center items-center flex-wrap gap-2 text-xl font-bold text-blue-900 dark:text-blue-200">
-                  <span className="text-purple-700 dark:text-purple-400 font-bold" dir="rtl">{hePart}</span>
+                  <span className="text-purple-700 dark:text-purple-400 font-bold" dir="rtl">{hePart}{punctuation}</span>
                   <span className="text-blue-900 dark:text-blue-200" dir="ltr">{enPart}</span>
-                  <span className="text-blue-900 dark:text-blue-200">?</span>
                 </div>
                 <ul className="space-y-2 text-right list-none p-0 m-0">
                   {question.answers.map((ans, idx) => {
