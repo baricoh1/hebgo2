@@ -313,10 +313,11 @@ function Questions() {
 
               {/* Question Card */}
               <main className="bg-white/90 dark:bg-gray-800 p-6 rounded-xl shadow-lg text-lg flex-grow transition-all duration-300">
-                <div className="text-xl text-center font-bold text-blue-900 dark:text-blue-200">
-                  <span>{enPart} </span>
-                  <span className="text-purple-700 dark:text-purple-400 font-bold">{hePart}</span>
+                <div className="text-xl text-center font-bold text-blue-900 dark:text-blue-200 flex flex-wrap justify-center gap-2">
+                  <span dir="ltr">{enPart}</span>
+                  <span dir="rtl" className="text-purple-700 dark:text-purple-400 font-bold">{hePart}</span>
                 </div>
+
                 <ul className="space-y-2 text-right list-none p-0 m-0">
                   {question.answers.map((ans, idx) => {
                     const isCorrect   = idx === question.correct;
