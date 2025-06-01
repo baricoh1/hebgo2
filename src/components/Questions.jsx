@@ -259,20 +259,15 @@ function Questions() {
   };
 
   function splitQuestionText(text) {
-    const endsWithPunctuation = /[?!]$/;
-    const punctuation = text.match(endsWithPunctuation) ? text.slice(-1) : '';
-    const cleanText = punctuation ? text.slice(0, -1).trim() : text;
-
-    const hebrewMatch = cleanText.match(/['"״]?[א-ת\s,:()"'״]+['"״]?/g);
-    if (!hebrewMatch) return { enPart: cleanText, hePart: '', punctuation };
+    // Hebrew split
+    const hebrewMatch = text.match(/['"״]?[א-ת\s,:()"'״]+['"״]?[.!?]*/g);
+    if (!hebrewMatch) return { enPart: text, hePart: '' };
 
     const hePart = hebrewMatch.join(' ').trim();
-    const enPart = cleanText.replace(hePart, '').trim();
+    const enPart = text.replace(hePart, '').trim();
 
-    return { enPart, hePart, punctuation };
+    return { enPart, hePart };
   }
-
-
 
 
   /* ------------------------------------------------------------------
@@ -283,7 +278,7 @@ function Questions() {
 
   const question = questionIndex !== null ? questionsList[questionIndex] : { question: '', answers: [], hint: '', authohint: '' };
   const progressPercent = ((currentQuestionNumber - 1) / MAX_QUESTIONS) * 100;
-  const { enPart, hePart, punctuation } = splitQuestionText(question.question);
+  const { enPart, hePart } = splitQuestionText(question.question);
 
 
   /* ------------------------------------------------------------------
@@ -319,9 +314,10 @@ function Questions() {
               {/* Question Card */}
               <main className="bg-white/90 dark:bg-gray-800 p-6 rounded-xl shadow-lg text-lg flex-grow transition-all duration-300">
                 <div className="flex flex-row justify-center items-center flex-wrap gap-2 text-xl font-bold text-blue-900 dark:text-blue-200">
-                  <span className="text-purple-700 dark:text-purple-400 font-bold" dir="rtl">{hePart}{punctuation}</span>
+                  <span className="text-purple-700 dark:text-purple-400 font-bold" dir="rtl">{hePart}</span>
                   <span className="text-blue-900 dark:text-blue-200" dir="ltr">{enPart}</span>
                 </div>
+
                 <ul className="space-y-2 text-right list-none p-0 m-0">
                   {question.answers.map((ans, idx) => {
                     const isCorrect   = idx === question.correct;
