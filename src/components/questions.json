@@ -47,7 +47,7 @@
         ],
         "correct": 2,
         "hint": "It's where most people live",
-        "authohint": "You sleep and eat here—it's your home"
+        "authohint": "You sleep and eat there"
       },
       {
         "question": "?'מים' What is the correct translation of the Hebrew word",
@@ -179,7 +179,7 @@
         ],
         "correct": 2,
         "hint": "A young female child",
-        "authohint": "A young girl, not yet a woman"
+        "authohint": "Not yet a woman"
       },
       {
         "question": "?'חלב' What is the correct translation of the Hebrew word",
@@ -230,7 +230,7 @@
         "authohint": "You close your eyes and rest this way, usually in bed"
       },
       {
-        "question": "?'מִישְׁמַשׁ' What is the best translation of the Hebrew word",
+        "question": "?'מִישְׁמַשׁ' What is the best translation of the Hebrew slang",
         "answers": [
           "Blender",
           "Tidy room",
