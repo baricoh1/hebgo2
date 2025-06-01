@@ -316,9 +316,8 @@ function Questions() {
                 <div className="flex flex-row justify-center items-center flex-wrap gap-2 text-xl font-bold text-blue-900 dark:text-blue-200">
                   <span className="text-purple-700 dark:text-purple-400 font-bold" dir="rtl">{hePart}</span>
                   <span className="text-blue-900 dark:text-blue-200" dir="ltr">{enPart}</span>
+                  <span className="text-blue-900 dark:text-blue-200">?</span>
                 </div>
-
-
                 <ul className="space-y-2 text-right list-none p-0 m-0">
                   {question.answers.map((ans, idx) => {
                     const isCorrect   = idx === question.correct;
