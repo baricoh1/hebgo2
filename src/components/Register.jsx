@@ -114,7 +114,7 @@ function Register() {
             הירשם
           </button>
           <button onClick={() => navigate('/login')} className="w-full py-2 text-sm text-blue-600 hover:underline text-center">
-            כבר יש לי משתמש ← התחברtov
+            כבר יש לי משתמש ← התחבר
           </button>
         </div>
       </div>
