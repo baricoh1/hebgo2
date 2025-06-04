@@ -77,7 +77,7 @@ function Home() {
     if (!userName) {
       return (
         <>
-          {gender === 'female' ? 'ברוכה הבאה' : '!ברוך הבא'} ל־
+          {gender === 'female' ? 'ברוכה הבאה' : '!!ברוך הבא'} ל־
           <span className="text-blue-700">Hebrew Go 🎓</span>
         </>
       );
