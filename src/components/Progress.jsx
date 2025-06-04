@@ -17,21 +17,21 @@ function Progress() {
   const MAX_QUESTIONS = 20;
   const navigate = useNavigate();
 
-  // לוקח שם משתמש ו־gender מה־localStorage
-  const [userName, setUserName] = useState(() => localStorage.getItem('userName') || null);
+  // שם משתמש וג׳נדר מתוך localStorage
+  const [userName] = useState(() => localStorage.getItem('userName') || null);
   const [gender, setGender] = useState(() => localStorage.getItem('userGender') || 'other');
 
-  // שפת הממשק הנבחרת (us/es/ru)
-  const [selectedLang, setSelectedLang] = useState('us');
+  // לשם הפשטות, בגרסה הזאת נניח שהשפה היא תמיד 'us'
+  const [selectedLang] = useState('us');
 
-  // ברירת המחדל לפרוגרס
+  // ברירת מחדל ל-progress
   const defaultProgress = {
     us: { easy: [], medium: [], hard: [] },
     es: { easy: [], medium: [], hard: [] },
     ru: { easy: [], medium: [], hard: [] },
   };
 
-  // ה־state שבו נשמרת כל תיבת ה־progress
+  // הנה ה-state שמשמור את המידע שהבאנו מה־localStorage או מה־Firestore
   const [progress, setProgress] = useState(() => {
     try {
       const stored = localStorage.getItem('userProgress');
@@ -41,36 +41,37 @@ function Progress() {
     }
   });
 
-  // בפעם הראשונה ובכל פעם ששם המשתמש משתנה, נטען מה־Firestore
+  // בפעם הראשונה וגם בכל שינוי של userName, נבקש את הנתונים מ־Firestore
   useEffect(() => {
-    const fetchUserData = async () => {
+    async function fetchUserData() {
       if (!userName) return;
       try {
         const userDoc = await getDoc(doc(db, 'users', userName));
         if (userDoc.exists()) {
           const data = userDoc.data();
-          // אם יש פרוגרס ב־DB, מעדכנים גם ב־state וגם ב־localStorage
+
+          // אם יש פרוגרס ב־DB, נעדכן גם ב־state וגם בלוקאל
           if (data.progress) {
             setProgress(data.progress);
             localStorage.setItem('userProgress', JSON.stringify(data.progress));
           }
-          // אם יש gender בשכבת ה־DB, נשמור גם בלוקאל
+
+          // אם יש מין (gender) ב־DB, נעדכן גם בלוקאל
           if (data.gender) {
             setGender(data.gender);
             localStorage.setItem('userGender', data.gender);
           }
-          // כאן לא קוראים ל־data.difficulty, כי נחשב את הרמה דינמית מתוך פרוגרס
         }
       } catch (err) {
         console.error('Error fetching user document:', err);
       }
-    };
+    }
     fetchUserData();
   }, [userName]);
 
-  // פונקציה שמחזירה "easy"/"medium"/"hard" בהתאם למספר התשובות הנכונות
+  // פונקציה שחוזרת "easy"/"medium"/"hard" בהתאם לכמות הנכונות
   const getComputedLevel = () => {
-    // לוודא ש־progress נמצא בסקופ של הקומפוננטה
+    // לכל שפה יש אובייקט עם שלושה מערכים: easy, medium, hard
     const easyCount = progress[selectedLang]?.easy?.length || 0;
     const mediumCount = progress[selectedLang]?.medium?.length || 0;
     const hardCount = progress[selectedLang]?.hard?.length || 0;
@@ -81,21 +82,20 @@ function Progress() {
     return 'easy';
   };
 
-  // בונים state שנקרא trueLevel, ומעדכנים אותו בכל פעם שה־progress או השפה ישתנו
+  // State של הרמה המוצגת, שתתעדכן בכל פעם שה־progress ישתנה
   const [trueLevel, setTrueLevel] = useState(getComputedLevel());
   useEffect(() => {
     setTrueLevel(getComputedLevel());
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [progress, selectedLang]);
 
-  // תוויות בעברית לכל רמה
+  // הגדרת התוויות בעברית
   const levelLabels = {
     easy: 'קל',
     medium: 'בינוני',
     hard: 'קשה',
   };
 
-  // מחושבים מספר הפרוגרס בפועל
+  // כמות הנכונות הנוכחית בשפה הנבחרת
   const easy = progress[selectedLang]?.easy?.length || 0;
   const medium = progress[selectedLang]?.medium?.length || 0;
   const hard = progress[selectedLang]?.hard?.length || 0;
@@ -105,7 +105,7 @@ function Progress() {
   const mediumDone = medium >= MAX_QUESTIONS;
   const hardDone = hard >= MAX_QUESTIONS;
 
-  // בוחרים תמונה בהתאם לאם המשתמש אישה או לא, וגם לפי ה־Done של כל רמה
+  // בוחרים איזו תמונה להראות לפי מצב ה-"Done"
   let levelImage;
   if (gender === 'female') {
     if (hardDone) levelImage = lvl3girl;
@@ -119,7 +119,7 @@ function Progress() {
     else levelImage = lvl0;
   }
 
-  // פונקציה לעיגול באחוזים עבור פס התקדמות
+  // פונקציה לחישוב אורך פס ההתקדמות באחוזים
   const getPercent = (val) => `${(val / MAX_QUESTIONS) * 100}%`;
 
   return (
@@ -127,7 +127,7 @@ function Progress() {
       className="min-h-screen bg-blue-100 text-black dark:bg-gray-900 dark:text-white transition-colors duration-300 p-6"
       dir="rtl"
     >
-      {/* חלק עליון: תמונת רמה וטקסט */}
+      {/* ---------- חלק עליון: תמונה וטקסט ---------- */}
       <div className="flex flex-col items-center mb-6">
         <img
           src={levelImage}
@@ -139,12 +139,12 @@ function Progress() {
         </p>
       </div>
 
-      {/* ברכה אישית */}
+      {/* ---------- ברכה אישית ---------- */}
       <p className="text-center text-lg text-gray-600 dark:text-gray-300 mb-6">
         {gender === 'female' ? 'ברוכה הבאה' : 'ברוך הבא'}, {userName} 👋
       </p>
 
-      {/* פסים גרפיים לתצוגת התקדמות לכל רמה */}
+      {/* ---------- פסים גרפיים לתצוגת התקדמות ---------- */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-4xl mx-auto">
         {/* קל */}
         <div className="p-4 bg-green-100 dark:bg-green-800 rounded shadow text-center">
@@ -180,19 +180,19 @@ function Progress() {
         </div>
       </div>
 
-      {/* סה"כ פלאפלים (סך כל התשובות הנכונות) */}
+      {/* ---------- סה"כ פלאפלים (סך כל התשובות הנכונות) ---------- */}
       <div className="text-center mt-6 text-lg text-gray-700 dark:text-gray-300">
         🥙 סה״כ פלאפלים שנאספו: <span className="font-bold">{falafels}</span>
       </div>
 
-      {/* הודעת סיום כאשר השלימו את כל הרמות */}
+      {/* ---------- הודעת סיום כשסיימת את כל הרמות ---------- */}
       {easyDone && mediumDone && hardDone && (
         <div className="mt-6 max-w-md mx-auto p-4 bg-green-200 dark:bg-green-700 rounded text-center shadow text-xl font-semibold text-green-900 dark:text-green-100">
           🏆 כל הכבוד! השלמת את כל השלבים!
         </div>
       )}
 
-      {/* כפתור לחזרה לדף הבית */}
+      {/* ---------- כפתור חזרה לדף הבית ---------- */}
       <div className="flex justify-center mt-10">
         <button
           onClick={() => navigate('/')}
