@@ -1,6 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-// … יתר הייבואים
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '../firebase';
+
+import lvl0 from '../images/lvl0.png';
+import lvl1 from '../images/lvl1.png';
+import lvl2 from '../images/lvl2.png';
+import lvl3 from '../images/lvl3.png';
+import lvl0girl from '../images/lvl0girl.png';
+import lvl1girl from '../images/lvl1girl.png';
+import lvl2girl from '../images/lvl2girl.png';
+import lvl3girl from '../images/lvl3girl.png';
 
 function Progress() {
   const MAX_QUESTIONS = 20;
@@ -8,12 +18,25 @@ function Progress() {
 
   const [userName, setUserName] = useState(() => localStorage.getItem('userName') || null);
   const [gender, setGender] = useState(() => localStorage.getItem('userGender') || 'other');
-  // trueLevel יאתחל מה־localStorage, אך גם יעדכן כש־localStorage משתנה
-  const [trueLevel, setTrueLevel] = useState(() => localStorage.getItem('userDifficulty') || 'easy');
+  // במקום לקרוא ל-localStorage.userDifficulty, אנחנו נבנה את trueLevel מתוך ה-progress
   const [selectedLang, setSelectedLang] = useState('us');
 
-  // … defaultProgress + progress state + fetchUserData כמו קודם
+  const defaultProgress = {
+    us: { easy: [], medium: [], hard: [] },
+    es: { easy: [], medium: [], hard: [] },
+    ru: { easy: [], medium: [], hard: [] },
+  };
 
+  const [progress, setProgress] = useState(() => {
+    try {
+      const stored = localStorage.getItem('userProgress');
+      return stored ? JSON.parse(stored) : defaultProgress;
+    } catch {
+      return defaultProgress;
+    }
+  });
+
+  // לאחר שקיבלנו מה-DB נתוני progress עדכניים, נעדכן גם את ה-localStorage:
   useEffect(() => {
     const fetchUserData = async () => {
       if (!userName) return;
@@ -29,49 +52,62 @@ function Progress() {
             setGender(data.gender);
             localStorage.setItem('userGender', data.gender);
           }
-          if (data.difficulty) {
-            setTrueLevel(data.difficulty);
-            localStorage.setItem('userDifficulty', data.difficulty);
-          }
+          // לא צריך לקרוא / לטפל ב-data.difficulty, כי נריץ חישוב דינמי
         }
       } catch (err) {
         console.error('Error fetching user document:', err);
       }
     };
     fetchUserData();
-
-    // **אזנה לאירוע storage** בדפדפן, כדי שכשמשתנה localStorage על־ידי Tab/Component אחר (Questions.jsx), נעדכן:
-    const onStorageChange = (event) => {
-      if (event.key === 'userDifficulty') {
-        setTrueLevel(event.newValue || 'easy');
-      }
-    };
-    window.addEventListener('storage', onStorageChange);
-
-    return () => {
-      window.removeEventListener('storage', onStorageChange);
-    };
   }, [userName]);
 
-  // כל מה שמופיע לאחר מכן נשאר אותו דבר
-  const levelLabels = { easy: 'קל', medium: 'בינוני', hard: 'קשה' };
+  // עבור הצגת הטקסט של הרמה, נריץ פונקציה קטנה שמחזירה "easy"/"medium"/"hard" לפי מספר הפרוגרס
+  const getComputedLevel = () => {
+    const easyCount = progress[selectedLang]?.easy?.length || 0;
+    const mediumCount = progress[selectedLang]?.medium?.length || 0;
+    const hardCount = progress[selectedLang]?.hard?.length || 0;
+
+    if (hardCount >= MAX_QUESTIONS) return 'hard';
+    if (mediumCount >= MAX_QUESTIONS) return 'medium';
+    // אם אפילו easyCount >= MAX_QUESTIONS, נחזיר 'easy'
+    if (easyCount >= MAX_QUESTIONS) return 'easy';
+    // אם אף רמה לא הושלמה במלואה, נחזיר 'easy' כברירת מחדל
+    return 'easy';
+  };
+
+  // כל פעם שה-progress משתנה, נעדכן את trueLevel
+  const [trueLevel, setTrueLevel] = useState(getComputedLevel());
+  useEffect(() => {
+    setTrueLevel(getComputedLevel());
+  }, [progress, selectedLang]);
+
+  // תוויות בעברית לכל רמה
+  const levelLabels = {
+    easy: 'קל',
+    medium: 'בינוני',
+    hard: 'קשה',
+  };
+
+  // עכשיו מחשבים את משכי הפרוגרס מסביב
   const easy = progress[selectedLang]?.easy?.length || 0;
   const medium = progress[selectedLang]?.medium?.length || 0;
   const hard = progress[selectedLang]?.hard?.length || 0;
   const falafels = easy + medium + hard;
+
   const easyDone = easy >= MAX_QUESTIONS;
   const mediumDone = medium >= MAX_QUESTIONS;
   const hardDone = hard >= MAX_QUESTIONS;
 
+  // תמונה בהתאם למה ש־trueLevel מכיל (ולא לפי localStorage)
   let levelImage;
   if (gender === 'female') {
-    if (easyDone && mediumDone && hardDone) levelImage = lvl3girl;
-    else if (easyDone && mediumDone) levelImage = lvl2girl;
+    if (hardDone) levelImage = lvl3girl;
+    else if (mediumDone) levelImage = lvl2girl;
     else if (easyDone) levelImage = lvl1girl;
     else levelImage = lvl0girl;
   } else {
-    if (easyDone && mediumDone && hardDone) levelImage = lvl3;
-    else if (easyDone && mediumDone) levelImage = lvl2;
+    if (hardDone) levelImage = lvl3;
+    else if (mediumDone) levelImage = lvl2;
     else if (easyDone) levelImage = lvl1;
     else levelImage = lvl0;
   }
@@ -79,9 +115,16 @@ function Progress() {
   const getPercent = (val) => `${(val / MAX_QUESTIONS) * 100}%`;
 
   return (
-    <div className="min-h-screen bg-blue-100 text-black dark:bg-gray-900 dark:text-white transition-colors duration-300 p-6" dir="rtl">
+    <div
+      className="min-h-screen bg-blue-100 text-black dark:bg-gray-900 dark:text-white transition-colors duration-300 p-6"
+      dir="rtl"
+    >
       <div className="flex flex-col items-center mb-6">
-        <img src={levelImage} alt="רמת שחקן" className="w-48 h-auto rounded-full border-4 border-blue-300 shadow-xl" />
+        <img
+          src={levelImage}
+          alt="רמת שחקן"
+          className="w-48 h-auto rounded-full border-4 border-blue-300 shadow-xl"
+        />
         <p className="text-xl mt-1 font-bold text-indigo-700 dark:text-indigo-300">
           הרמה הנבחרת היא: {levelLabels[trueLevel]}
         </p>
