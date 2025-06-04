@@ -30,15 +30,28 @@ function Questions() {
   const MAX_QUESTIONS_PER_CATEGORY = 20;  // total questions available in a category
   const navigate = useNavigate();
 
-  // User preferences saved locally
+  // User preferences saved locally (difficulty now lifted into state)
   const userName   = localStorage.getItem('userName');
   const lang       = localStorage.getItem('userLang');
-  const difficulty = localStorage.getItem('userDifficulty');
+  const [difficultyState, setDifficultyState] = useState(localStorage.getItem('userDifficulty'));
+  const difficulty = difficultyState;
+
+  // For automatic progression: define the order of difficulties
+  const difficultiesOrder = ['easy', 'medium', 'hard'];
+
+  // Helper to get the next difficulty (or null if already at last)
+  function getNextDifficulty() {
+    const currentIdx = difficultiesOrder.indexOf(difficulty);
+    if (currentIdx === -1 || currentIdx === difficultiesOrder.length - 1) {
+      return null;
+    }
+    return difficultiesOrder[currentIdx + 1];
+  }
 
   const hintTextMap = { en: 'Show Hint', es: 'Mostrar pista', ru: 'Показать подсказку' };
   const currentHintText = hintTextMap[lang] || 'Show Hint';
 
-  // Load questions from JSON bundle
+  // Load questions from JSON bundle based on current language & difficulty
   const questionsList = questionsData?.[lang]?.[difficulty] || [];
   if (!lang || !difficulty || questionsList.length === 0) {
     return <div className="p-4 text-red-600">לא ניתן לטעון את השאלות. ודא שהשפה והרמה נבחרו כראוי.</div>;
@@ -89,6 +102,7 @@ function Questions() {
   const [toast, setToast]                       = useState(null);
   const [showEndModal, setShowEndModal]         = useState(false);
   const [showRestartModal, setShowRestartModal] = useState(false);
+  const [showFinalModal, setShowFinalModal]     = useState(false);
   const [currentQuestionNumber, setCurrentQuestionNumber] = useState(1);
 
   const initialLoad = useRef(false);
@@ -156,15 +170,24 @@ function Questions() {
   };
 
   /* ------------------------------------------------------------------
-     INITIAL LOAD
+     INITIAL LOAD & RELOAD ON DIFFICULTY CHANGE
   ------------------------------------------------------------------ */
   useEffect(() => {
-    if (questionIndex === null && !showRestartModal) loadNextQuestion();
     if (!initialLoad.current) {
       fetchProgressFromDB();
       initialLoad.current = true;
     }
-  }, [questionIndex, showRestartModal]);
+    // Whenever difficulty changes, reset for the new level
+    setQuestionIndex(null);
+    setSeenQuestions([]);
+    setCorrectIndexes(loadStoredProgress());
+    setCorrectCount(0);
+    setCurrentQuestionNumber(1);
+    setShowEndModal(false);
+    setShowRestartModal(false);
+    setShowFinalModal(false);
+    loadNextQuestion();
+  }, [difficulty]);
 
   /* ------------------------------------------------------------------
      TIMER HOOK
@@ -203,12 +226,37 @@ function Questions() {
   };
 
   const loadNextQuestion = () => {
-    if (currentQuestionNumber > MAX_QUESTIONS) return setShowEndModal(true);
-    if (correctIndexes.length >= MAX_QUESTIONS_PER_CATEGORY) return setShowRestartModal(true);
+    // אם סיימנו את כל ה־MAX_QUESTIONS של הרמה הנוכחית
+    if (currentQuestionNumber > MAX_QUESTIONS) {
+      const nextDiff = getNextDifficulty();
+      if (nextDiff) {
+        // יש רמה הבאה – נעבור אליה אוטומטית
+        localStorage.setItem('userDifficulty', nextDiff);
+        setDifficultyState(nextDiff);
+        // איפוס סטייטים לקראת הרמה החדשה
+        setCorrectIndexes([]);
+        storeProgressLocally([]);
+        setSeenQuestions([]);
+        setQuestionIndex(null);
+        setCorrectCount(0);
+        setCurrentQuestionNumber(1);
+        return;
+      } else {
+        // זו כבר הרמה האחרונה – מציגים את המודל של "סיימת את כל הרמות"
+        setShowFinalModal(true);
+        return;
+      }
+    }
+
+    // אם השגנו את כל ה־MAX_QUESTIONS_PER_CATEGORY
+    if (correctIndexes.length >= MAX_QUESTIONS_PER_CATEGORY) {
+      setShowRestartModal(true);
+      return;
+    }
 
     const nxt = getNextQuestionIndex();
     if (nxt === null) {
-      setSeenQuestions([]);
+      // לא נותרו שאלות שלא נצפו או כבר נכונות – נציג את המודל של "סיימת את הרמה"
       setShowEndModal(true);
     } else {
       setSeenQuestions(prev => [...prev, nxt]);
@@ -223,7 +271,12 @@ function Questions() {
   const nextQuestionAfterTimeout = () => {
     const last = currentQuestionNumber >= MAX_QUESTIONS;
     setCurrentQuestionNumber(n => n + 1);
-    if (last) setShowEndModal(true); else loadNextQuestion();
+    if (last) {
+      // נדחוף קריאה ל־loadNextQuestion (שיאבחן מעבר לרמה או מודל סופי)
+      loadNextQuestion();
+    } else {
+      loadNextQuestion();
+    }
   };
 
   const handleAnswerClick = (idx) => {
@@ -253,8 +306,13 @@ function Questions() {
       setToast(null);
       const isLast = currentQuestionNumber >= MAX_QUESTIONS;
       setCurrentQuestionNumber(n => n + 1);
-      if (isLast) setShowEndModal(true); else loadNextQuestion();
-      setLocked(false);
+      if (isLast) {
+        // נוציא לפונקציה שתבדוק מעבר לרמה הבאה או למודל סופי
+        loadNextQuestion();
+      } else {
+        loadNextQuestion();
+        setLocked(false);
+      }
     }, 1500);
   };
 
@@ -270,9 +328,7 @@ function Questions() {
     const punctuation = punctuationMatch ? punctuationMatch[0] : '';
 
     return { enPart, hePart, punctuation };
-}
-
-
+  }
 
   /* ------------------------------------------------------------------
      RENDER HELPERS
@@ -284,16 +340,15 @@ function Questions() {
   const progressPercent = ((currentQuestionNumber - 1) / MAX_QUESTIONS) * 100;
   const { enPart, hePart } = splitQuestionText(question.question);
 
-
   /* ------------------------------------------------------------------
      JSX RETURN
   ------------------------------------------------------------------ */
   return (
     <div dir="rtl" className="bg-blue-100 text-black dark:bg-gray-900 dark:text-white min-h-screen transition-colors duration-300">
       {/* --------------------------- QUIZ AREA --------------------------- */}
-      <div className={`relative z-10 ${showEndModal || showRestartModal ? 'pointer-events-none blur-sm' : ''}`}>
+      <div className={`relative z-10 ${showEndModal || showRestartModal || showFinalModal ? 'pointer-events-none blur-sm' : ''}`}>
         <div className="max-w-4xl mx-auto flex flex-col p-4 space-y-4">
-          {questionIndex === null && !showRestartModal ? (
+          {questionIndex === null && !showRestartModal && !showFinalModal ? (
             <div className="p-4 text-center text-lg">טוען שאלה...</div>
           ) : (
             <>
@@ -332,17 +387,34 @@ function Questions() {
                       else if (isCorrect)                bg = 'bg-green-400';
                     }
                     return (
-                      <button key={idx} onClick={() => handleAnswerClick(idx)} disabled={selected !== null || locked} className={`w-full text-right p-3 rounded-lg border shadow hover:bg-blue-100 ${bg} ${(selected !== null || locked) ? 'cursor-not-allowed' : ''}`}>{ans}</button>
+                      <button
+                        key={idx}
+                        onClick={() => handleAnswerClick(idx)}
+                        disabled={selected !== null || locked}
+                        className={`w-full text-right p-3 rounded-lg border shadow hover:bg-blue-100 ${bg} ${(selected !== null || locked) ? 'cursor-not-allowed' : ''}`}
+                      >
+                        {ans}
+                      </button>
                     );
                   })}
                 </ul>
 
                 <div className="mt-6 flex items-center justify-between">
-                  <button className="px-4 py-2 bg-yellow-400 text-black rounded hover:bg-yellow-500" onClick={() => setShowHint(true)} disabled={locked}>{currentHintText}</button>
+                  <button
+                    className="px-4 py-2 bg-yellow-400 text-black rounded hover:bg-yellow-500"
+                    onClick={() => setShowHint(true)}
+                    disabled={locked}
+                  >
+                    {currentHintText}
+                  </button>
                 </div>
 
-                {showHint && <div className="mt-2 p-3 bg-yellow-100 dark:bg-yellow-900 rounded text-right">💡 {question.hint}</div>}
-                {showAutoHint && question.authohint && <div className="mt-2 p-3 bg-blue-100 dark:bg-blue-900 rounded text-right animate-pulse">🤖 {question.authohint}</div>}
+                {showHint && (
+                  <div className="mt-2 p-3 bg-yellow-100 dark:bg-yellow-900 rounded text-right">💡 {question.hint}</div>
+                )}
+                {showAutoHint && question.authohint && (
+                  <div className="mt-2 p-3 bg-blue-100 dark:bg-blue-900 rounded text-right animate-pulse">🤖 {question.authohint}</div>
+                )}
               </main>
 
               {/* Footer */}
@@ -354,7 +426,13 @@ function Questions() {
 
       {/* --------------------------- TOAST --------------------------- */}
       {toast && (
-        <div className={`fixed bottom-6 left-1/2 transform -translate-x-1/2 px-6 py-3 rounded-full text-lg shadow-lg ${toast.type === 'success' ? 'bg-green-600' : 'bg-red-600'} text-white`}>{toast.message}</div>
+        <div
+          className={`fixed bottom-6 left-1/2 transform -translate-x-1/2 px-6 py-3 rounded-full text-lg shadow-lg ${
+            toast.type === 'success' ? 'bg-green-600' : 'bg-red-600'
+          } text-white`}
+        >
+          {toast.message}
+        </div>
       )}
 
       {/* --------------------------- END MODAL --------------------------- */}
@@ -362,9 +440,19 @@ function Questions() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-20">
           <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg space-y-4 max-w-sm">
             <h2 className="text-2xl font-bold text-center">סיימת את כל {MAX_QUESTIONS} השאלות!</h2>
-            <div className="flex justify-center"><img src={getResultImage()} alt="Result" className="w-32 h-32" /></div>
+            <div className="flex justify-center">
+              <img src={getResultImage()} alt="Result" className="w-32 h-32" />
+            </div>
             <p className="text-center">תשובות נכונות: {correctCount} מתוך {MAX_QUESTIONS}</p>
-            <button onClick={() => { setShowEndModal(false); navigate('/progress'); }} className="w-full py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition">חזרה להתקדמות</button>
+            <button
+              onClick={() => {
+                setShowEndModal(false);
+                navigate('/progress');
+              }}
+              className="w-full py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+            >
+              חזרה להתקדמות
+            </button>
           </div>
         </div>
       )}
@@ -376,9 +464,43 @@ function Questions() {
             <h2 className="text-2xl font-bold text-center">האם ברצונך להתחיל מחדש?</h2>
             <p className="text-center">כבר השלמת את כל השאלות בקטגוריה זו.</p>
             <div className="flex justify-between space-x-4 rtl:space-x-reverse">
-              <button onClick={() => setShowRestartModal(false)} className="flex-1 py-2 bg-gray-300 text-black rounded hover:bg-gray-400 transition">לא, תודה</button>
-              <button onClick={async () => { await resetCategoryInDB(); setCorrectIndexes([]); setSeenQuestions([]); setCurrentQuestionNumber(1); storeProgressLocally([]); setShowRestartModal(false); loadNextQuestion(); }} className="flex-1 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition">כן, התחל מחדש</button>
+              <button
+                onClick={() => setShowRestartModal(false)}
+                className="flex-1 py-2 bg-gray-300 text-black rounded hover:bg-gray-400 transition"
+              >
+                לא, תודה
+              </button>
+              <button
+                onClick={async () => {
+                  await resetCategoryInDB();
+                  setCorrectIndexes([]);
+                  setSeenQuestions([]);
+                  setCurrentQuestionNumber(1);
+                  storeProgressLocally([]);
+                  setShowRestartModal(false);
+                  loadNextQuestion();
+                }}
+                className="flex-1 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition"
+              >
+                כן, התחל מחדש
+              </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ------------------ FINAL (All Levels) MODAL ------------------ */}
+      {showFinalModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-20">
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg space-y-4 max-w-sm">
+            <h2 className="text-2xl font-bold text-center">הושלמו כל הרמות!</h2>
+            <p className="text-center">כל הכבוד – סיימת את כל הרמות.</p>
+            <button
+              onClick={() => navigate('/progress')}
+              className="w-full py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+            >
+              חזרה להתקדמות
+            </button>
           </div>
         </div>
       )}
