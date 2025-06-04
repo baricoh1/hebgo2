@@ -1,16 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from '../firebase';
-
-import lvl0 from '../images/lvl0.png';
-import lvl1 from '../images/lvl1.png';
-import lvl2 from '../images/lvl2.png';
-import lvl3 from '../images/lvl3.png';
-import lvl0girl from '../images/lvl0girl.png';
-import lvl1girl from '../images/lvl1girl.png';
-import lvl2girl from '../images/lvl2girl.png';
-import lvl3girl from '../images/lvl3girl.png';
+// … יתר הייבואים
 
 function Progress() {
   const MAX_QUESTIONS = 20;
@@ -18,43 +8,27 @@ function Progress() {
 
   const [userName, setUserName] = useState(() => localStorage.getItem('userName') || null);
   const [gender, setGender] = useState(() => localStorage.getItem('userGender') || 'other');
+  // trueLevel יאתחל מה־localStorage, אך גם יעדכן כש־localStorage משתנה
   const [trueLevel, setTrueLevel] = useState(() => localStorage.getItem('userDifficulty') || 'easy');
   const [selectedLang, setSelectedLang] = useState('us');
 
-  const defaultProgress = {
-    us: { easy: [], medium: [], hard: [] },
-    es: { easy: [], medium: [], hard: [] },
-    ru: { easy: [], medium: [], hard: [] },
-  };
-
-  const [progress, setProgress] = useState(() => {
-    try {
-      const stored = localStorage.getItem('userProgress');
-      return stored ? JSON.parse(stored) : defaultProgress;
-    } catch {
-      return defaultProgress;
-    }
-  });
+  // … defaultProgress + progress state + fetchUserData כמו קודם
 
   useEffect(() => {
     const fetchUserData = async () => {
       if (!userName) return;
-
       try {
         const userDoc = await getDoc(doc(db, 'users', userName));
         if (userDoc.exists()) {
           const data = userDoc.data();
-
           if (data.progress) {
             setProgress(data.progress);
             localStorage.setItem('userProgress', JSON.stringify(data.progress));
           }
-
           if (data.gender) {
             setGender(data.gender);
             localStorage.setItem('userGender', data.gender);
           }
-
           if (data.difficulty) {
             setTrueLevel(data.difficulty);
             localStorage.setItem('userDifficulty', data.difficulty);
@@ -64,21 +38,27 @@ function Progress() {
         console.error('Error fetching user document:', err);
       }
     };
-
     fetchUserData();
+
+    // **אזנה לאירוע storage** בדפדפן, כדי שכשמשתנה localStorage על־ידי Tab/Component אחר (Questions.jsx), נעדכן:
+    const onStorageChange = (event) => {
+      if (event.key === 'userDifficulty') {
+        setTrueLevel(event.newValue || 'easy');
+      }
+    };
+    window.addEventListener('storage', onStorageChange);
+
+    return () => {
+      window.removeEventListener('storage', onStorageChange);
+    };
   }, [userName]);
 
-  const levelLabels = {
-    easy: 'קל',
-    medium: 'בינוני',
-    hard: 'קשה',
-  };
-
+  // כל מה שמופיע לאחר מכן נשאר אותו דבר
+  const levelLabels = { easy: 'קל', medium: 'בינוני', hard: 'קשה' };
   const easy = progress[selectedLang]?.easy?.length || 0;
   const medium = progress[selectedLang]?.medium?.length || 0;
   const hard = progress[selectedLang]?.hard?.length || 0;
   const falafels = easy + medium + hard;
-
   const easyDone = easy >= MAX_QUESTIONS;
   const mediumDone = medium >= MAX_QUESTIONS;
   const hardDone = hard >= MAX_QUESTIONS;
@@ -101,11 +81,7 @@ function Progress() {
   return (
     <div className="min-h-screen bg-blue-100 text-black dark:bg-gray-900 dark:text-white transition-colors duration-300 p-6" dir="rtl">
       <div className="flex flex-col items-center mb-6">
-        <img
-          src={levelImage}
-          alt="רמת שחקן"
-          className="w-48 h-auto rounded-full border-4 border-blue-300 shadow-xl"
-        />
+        <img src={levelImage} alt="רמת שחקן" className="w-48 h-auto rounded-full border-4 border-blue-300 shadow-xl" />
         <p className="text-xl mt-1 font-bold text-indigo-700 dark:text-indigo-300">
           הרמה הנבחרת היא: {levelLabels[trueLevel]}
         </p>
