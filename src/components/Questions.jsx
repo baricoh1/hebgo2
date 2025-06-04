@@ -539,7 +539,7 @@ function Questions() {
       {showRestartModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-20">
           <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg space-y-4 max-w-sm">
-            <h2 className="text-2xl font-bold text-center">האם ברצונך להתחיל מחדש?</h2>
+            <h2 className="text-2xl font-bold text-center">האם ברצונך להתחיל מחדש או לעבור לשלב הבא?</h2>
             <p className="text-center">כבר השגת 20 תשובות נכונות בקטגוריה זו.</p>
             <div className="flex justify-between space-x-4 rtl:space-x-reverse">
               <button
