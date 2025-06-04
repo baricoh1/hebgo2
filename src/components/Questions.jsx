@@ -23,83 +23,119 @@ import ball10 from '../images/ball10.png';
 import correctSound from '../sounds/right_answer.mp3';
 import wrongSound from '../sounds/wrong_answer.mp3';
 
+function getNextDifficulty(current) {
+  if (current === 'easy') return 'medium';
+  if (current === 'medium') return 'hard';
+  return null;
+}
+
 function Questions() {
   const MAX_QUESTIONS = 10;
-  const MAX_QUESTIONS_PER_CATEGORY = 20;
-  const difficultyOrder = ['easy', 'medium', 'hard'];
-  const getNextDifficulty = (current) => {
-    const index = difficultyOrder.indexOf(current);
-    return index >= 0 && index < difficultyOrder.length - 1 ? difficultyOrder[index + 1] : null;
-  };
-
-  const navigate = useNavigate();
-  const userName = localStorage.getItem('userName');
-  const lang = localStorage.getItem('userLang');
-  const difficulty = localStorage.getItem('userDifficulty');
-
-  const hintTextMap = { en: 'Show Hint', es: 'Mostrar pista', ru: 'Показать подсказку' };
-  const currentHintText = hintTextMap[lang] || 'Show Hint';
-  const questionsList = questionsData?.[lang]?.[difficulty] || [];
-  if (!lang || !difficulty || questionsList.length === 0) {
-    return <div className="p-4 text-red-600">לא ניתן לטעון את השאלות. ודא שהשפה והרמה נבחרו כראוי.</div>;
-  }
-
-  const loadStoredProgress = () => {
-    try {
-      const raw = localStorage.getItem('userProgress');
-      if (!raw) return [];
-      const parsed = JSON.parse(raw);
-      return parsed?.[lang]?.[difficulty] || [];
-    } catch {
-      return [];
-    }
-  };
-
-  const storeProgressLocally = (array) => {
-    try {
-      const prev = JSON.parse(localStorage.getItem('userProgress') || '{}');
-      const upd = {
-        ...prev,
-        [lang]: {
-          ...(prev[lang] || {}),
-          [difficulty]: array,
-        },
-      };
-      localStorage.setItem('userProgress', JSON.stringify(upd));
-    } catch (e) {
-      console.error('localStorage error:', e);
-    }
-  };
-
   const [questionIndex, setQuestionIndex] = useState(null);
-  const [seenQuestions, setSeenQuestions] = useState([]);
+  const [correctIndexes, setCorrectIndexes] = useState([]);
+  const [showEndModal, setShowEndModal] = useState(false);
   const [selected, setSelected] = useState(null);
-  const [correctIndexes, setCorrectIndexes] = useState(loadStoredProgress);
   const [correctCount, setCorrectCount] = useState(0);
   const [locked, setLocked] = useState(false);
+  const [toast, setToast] = useState(null);
+  const [time, setTime] = useState(30);
   const [showHint, setShowHint] = useState(false);
   const [showAutoHint, setShowAutoHint] = useState(false);
-  const [time, setTime] = useState(30);
-  const [toast, setToast] = useState(null);
-  const [showEndModal, setShowEndModal] = useState(false);
-  const [showRestartModal, setShowRestartModal] = useState(false);
-  const [currentQuestionNumber, setCurrentQuestionNumber] = useState(1);
-  const initialLoad = useRef(false);
+  const navigate = useNavigate();
 
-  const fetchProgressFromDB = async () => {
-    try {
-      const snap = await getDoc(doc(db, 'users', userName));
-      if (!snap.exists()) return;
-      const data = snap.data();
-      const serverProg = data?.progress?.[lang]?.[difficulty] || [];
-      if (serverProg.length !== correctIndexes.length) {
-        setCorrectIndexes(serverProg);
-        storeProgressLocally(serverProg);
+  const userLang = localStorage.getItem('userLang');
+  const userDifficulty = localStorage.getItem('userDifficulty');
+  const userName = localStorage.getItem('userName');
+  const questionsList = questionsData?.[userLang]?.[userDifficulty] || [];
+
+  useEffect(() => {
+    const loadProgress = async () => {
+      try {
+        const snap = await getDoc(doc(db, 'users', userName));
+        const data = snap.exists() ? snap.data() : {};
+        const progress = data?.progress?.[userLang]?.[userDifficulty] || [];
+        setCorrectIndexes(progress);
+      } catch (e) {
+        console.error(e);
       }
-      if (data.gender) localStorage.setItem('userGender', data.gender);
-    } catch (err) {
-      console.error('Error fetching user progress:', err);
+    };
+    loadProgress();
+  }, [userLang, userDifficulty, userName]);
+
+  useEffect(() => {
+    if (questionIndex === null && questionsList.length > 0) {
+      const remaining = questionsList.map((_, i) => i).filter(i => !correctIndexes.includes(i));
+      if (remaining.length === 0 || correctIndexes.length >= MAX_QUESTIONS) {
+        const next = getNextDifficulty(userDifficulty);
+        if (next) {
+          localStorage.setItem('userDifficulty', next);
+          window.location.reload();
+        } else {
+          setShowEndModal(true);
+        }
+      } else {
+        const random = remaining[Math.floor(Math.random() * remaining.length)];
+        setQuestionIndex(random);
+        setSelected(null);
+        setLocked(false);
+        setShowHint(false);
+        setShowAutoHint(false);
+        setTime(30);
+      }
     }
+  }, [questionIndex, correctIndexes, questionsList, userDifficulty]);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTime((t) => {
+        if (t <= 1) {
+          if (!locked) {
+            setLocked(true);
+            setToast({ message: '❌ תם הזמן!', type: 'error' });
+            setTimeout(() => {
+              setToast(null);
+              setQuestionIndex(null);
+              setLocked(false);
+              setShowAutoHint(false);
+            }, 1000);
+          }
+          return 30;
+        }
+        if (t === 11) setShowAutoHint(true);
+        return t - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [locked]);
+
+  const handleAnswerClick = (idx) => {
+    if (selected !== null || locked) return;
+    setSelected(idx);
+    setLocked(true);
+
+    const correctAudio = new Audio(correctSound);
+    const wrongAudio = new Audio(wrongSound);
+    const correct = questionsList[questionIndex].correct;
+
+    if (idx === correct) {
+      correctAudio.play();
+      if (!correctIndexes.includes(questionIndex)) {
+        const updated = [...correctIndexes, questionIndex];
+        setCorrectIndexes(updated);
+        setCorrectCount(c => c + 1);
+        saveProgressToDB(updated);
+      }
+      setToast({ message: '✅ תשובה נכונה!', type: 'success' });
+    } else {
+      wrongAudio.play();
+      setToast({ message: '❌ תשובה שגויה!', type: 'error' });
+    }
+
+    setTimeout(() => {
+      setToast(null);
+      setQuestionIndex(null);
+      setLocked(false);
+    }, 1500);
   };
 
   const saveProgressToDB = async (updatedArr) => {
@@ -111,9 +147,9 @@ function Questions() {
         ...base,
         progress: {
           ...(base.progress || {}),
-          [lang]: {
-            ...(base.progress?.[lang] || {}),
-            [difficulty]: updatedArr,
+          [userLang]: {
+            ...(base.progress?.[userLang] || {}),
+            [userDifficulty]: updatedArr,
           },
         },
       }, { merge: true });
@@ -122,248 +158,46 @@ function Questions() {
     }
   };
 
-  const resetCategoryInDB = async () => {
-    try {
-      const ref = doc(db, 'users', userName);
-      const snap = await getDoc(ref);
-      const base = snap.exists() ? snap.data() : {};
-      await setDoc(ref, {
-        ...base,
-        progress: {
-          ...(base.progress || {}),
-          [lang]: {
-            ...(base.progress?.[lang] || {}),
-            [difficulty]: [],
-          },
-        },
-      }, { merge: true });
-    } catch (err) {
-      console.error('Error resetting category:', err);
-    }
-  };
-
-  useEffect(() => {
-    if (questionIndex === null && !showRestartModal) loadNextQuestion();
-    if (!initialLoad.current) {
-      fetchProgressFromDB();
-      initialLoad.current = true;
-    }
-  }, [questionIndex, showRestartModal]);
-
-  useEffect(() => {
-    const id = setInterval(() => {
-      setTime((t) => {
-        if (t <= 1) {
-          if (!locked) {
-            setLocked(true);
-            setToast({ message: '❌ תם הזמן!', type: 'error' });
-            setTimeout(() => {
-              setToast(null);
-              nextQuestionAfterTimeout();
-              setLocked(false);
-              setShowAutoHint(false);
-            }, 1000);
-          }
-          return 30;
-        }
-        if (t === 11) setShowAutoHint(true);
-        return t - 1;
-      });
-    }, 1000);
-    return () => clearInterval(id);
-  }, [locked]);
-
-  const getNextQuestionIndex = () => {
-    const candidates = questionsList.map((_, i) => i)
-      .filter(i => !seenQuestions.includes(i) && !correctIndexes.includes(i));
-    if (candidates.length === 0) return null;
-    return candidates[Math.floor(Math.random() * candidates.length)];
-  };
-
-  const loadNextQuestion = () => {
-    if (currentQuestionNumber > MAX_QUESTIONS) return setShowEndModal(true);
-    if (correctIndexes.length >= MAX_QUESTIONS_PER_CATEGORY) {
-      const nextDiff = getNextDifficulty(difficulty);
-      if (nextDiff) {
-        localStorage.setItem('userDifficulty', nextDiff);
-        window.location.reload();
-      } else {
-        setShowEndModal(true);
-      }
-      return;
-    }
-
-    const nxt = getNextQuestionIndex();
-    if (nxt === null) {
-      setSeenQuestions([]);
-      setShowEndModal(true);
-    } else {
-      setSeenQuestions(prev => [...prev, nxt]);
-      setQuestionIndex(nxt);
-      setSelected(null);
-      setShowHint(false);
-      setShowAutoHint(false);
-      setTime(30);
-    }
-  };
-
-  const nextQuestionAfterTimeout = () => {
-    const last = currentQuestionNumber >= MAX_QUESTIONS;
-    setCurrentQuestionNumber(n => n + 1);
-    if (last) setShowEndModal(true);
-    else loadNextQuestion();
-  };
-
-  const handleAnswerClick = (idx) => {
-    if (selected !== null || locked) return;
-    setSelected(idx);
-    setLocked(true);
-    const correctAudio = new Audio(correctSound);
-    const wrongAudio = new Audio(wrongSound);
-
-    if (idx === questionsList[questionIndex].correct) {
-      correctAudio.play();
-      if (!correctIndexes.includes(questionIndex)) {
-        const updated = [...correctIndexes, questionIndex];
-        setCorrectIndexes(updated);
-        storeProgressLocally(updated);
-        saveProgressToDB(updated);
-      }
-      setCorrectCount(c => c + 1);
-      setToast({ message: '✅ תשובה נכונה!', type: 'success' });
-    } else {
-      wrongAudio.play();
-      setToast({ message: '❌ תשובה שגויה!', type: 'error' });
-    }
-
-    setTimeout(() => {
-      setToast(null);
-      const isLast = currentQuestionNumber >= MAX_QUESTIONS;
-      setCurrentQuestionNumber(n => n + 1);
-      if (isLast) setShowEndModal(true); else loadNextQuestion();
-      setLocked(false);
-    }, 1500);
-  };
-
-  const question = questionIndex !== null ? questionsList[questionIndex] : { question: '', answers: [], hint: '', authohint: '' };
-  const progressPercent = ((currentQuestionNumber - 1) / MAX_QUESTIONS) * 100;
-  const formatTime = (s) => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
-
-  const getResultImage = () => [ball0, ball1, ball2, ball3, ball4, ball5, ball6, ball7, ball8, ball9, ball10][correctCount] || ball0;
+  if (!userLang || !userDifficulty || questionsList.length === 0) {
+    return <div className="p-4 text-red-600">לא ניתן לטעון את השאלות. ודא שהשפה והרמה נבחרו כראוי.</div>;
+  }
 
   return (
-    <div dir="rtl" className="bg-blue-100 text-black dark:bg-gray-900 dark:text-white min-h-screen transition-colors duration-300">
-      {/* QUIZ AREA */}
-      <div className={`relative z-10 ${showEndModal || showRestartModal ? 'pointer-events-none blur-sm' : ''}`}>
-        <div className="max-w-4xl mx-auto flex flex-col p-4 space-y-4">
-          {questionIndex === null && !showRestartModal ? (
-            <div className="p-4 text-center text-lg">טוען שאלה...</div>
-          ) : (
-            <>
-              <header className="flex flex-row-reverse justify-between items-center bg-blue-200 dark:bg-blue-950 p-4 rounded-lg shadow">
-                <button onClick={() => navigate('/')} className="text-xl font-semibold hover:underline">← חזרה לעמוד ראשי</button>
-                <div className="flex items-center mx-3 gap-2">
-                  <span className="text-base font-semibold text-gray-700 dark:text-gray-300">שאלה</span>
-                  <span className="bg-blue-500 text-white rounded-full px-3 py-1 shadow-md">{currentQuestionNumber}</span>
-                </div>
-                <div className="bg-white py-1 px-3 rounded shadow dark:bg-gray-100">
-                  <span className={time <= 5 ? 'text-red-600 font-bold' : 'text-blue-600'}>{formatTime(time)}</span>
-                </div>
-              </header>
-
-              <div className="w-full bg-gray-300 dark:bg-gray-700 h-2 rounded-full overflow-hidden mt-2">
-                <div className="bg-blue-500 h-2 transition-all duration-300" style={{ width: `${progressPercent}%` }} />
-              </div>
-              <p className="text-right text-sm text-gray-600 dark:text-gray-300">שאלה {currentQuestionNumber} מתוך {MAX_QUESTIONS}</p>
-
-              <main className="bg-white/90 dark:bg-gray-800 p-6 rounded-xl shadow-lg text-lg flex-grow transition-all duration-300">
-                <div className="flex flex-row justify-center items-center flex-wrap gap-2 text-xl font-bold text-blue-900 dark:text-blue-200">
-                  <span className="text-purple-700 dark:text-purple-400 font-bold" dir="rtl">{question.question}</span>
-                </div>
-                <ul className="space-y-2 text-right list-none p-0 m-0">
-                  {question.answers.map((ans, idx) => {
-                    const isCorrect = idx === question.correct;
-                    const isSelected = idx === selected;
-                    let bg = 'bg-white dark:bg-gray-600';
-                    if (selected !== null) {
-                      if (isSelected && isCorrect) bg = 'bg-green-400';
-                      else if (isSelected && !isCorrect) bg = 'bg-red-400';
-                      else if (isCorrect) bg = 'bg-green-400';
-                    }
-                    return (
-                      <button
-                        key={idx}
-                        onClick={() => handleAnswerClick(idx)}
-                        disabled={selected !== null || locked}
-                        className={`w-full text-right p-3 rounded-lg border shadow hover:bg-blue-100 ${bg} ${(selected !== null || locked) ? 'cursor-not-allowed' : ''}`}
-                      >
-                        {ans}
-                      </button>
-                    );
-                  })}
-                </ul>
-
-                <div className="mt-6 flex items-center justify-between">
-                  <button
-                    className="px-4 py-2 bg-yellow-400 text-black rounded hover:bg-yellow-500"
-                    onClick={() => setShowHint(true)}
-                    disabled={locked}
-                  >
-                    {currentHintText}
-                  </button>
-                </div>
-
-                {showHint && <div className="mt-2 p-3 bg-yellow-100 dark:bg-yellow-900 rounded text-right">💡 {question.hint}</div>}
-                {showAutoHint && question.authohint && (
-                  <div className="mt-2 p-3 bg-blue-100 dark:bg-blue-900 rounded text-right animate-pulse">🤖 {question.authohint}</div>
-                )}
-              </main>
-
-              <footer className="text-right text-lg mt-4">סה״כ פלאפלים שנאספו: {correctCount} 🧆</footer>
-            </>
-          )}
+    <div dir="rtl" className="bg-blue-100 text-black dark:bg-gray-900 dark:text-white min-h-screen p-6">
+      {showEndModal ? (
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-xl max-w-md mx-auto text-center">
+          <h2 className="text-2xl font-bold mb-4">סיימת את כל השאלות!</h2>
+          <p className="mb-2">תשובות נכונות: {correctCount} מתוך {MAX_QUESTIONS}</p>
+          <img src={ball10} alt="Result" className="w-32 h-32 mx-auto" />
+          <button onClick={() => navigate('/progress')} className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">חזרה לעמוד התקדמות</button>
         </div>
-      </div>
+      ) : (
+        <div className="max-w-2xl mx-auto bg-white dark:bg-gray-800 p-6 rounded-xl shadow-xl">
+          <div className="mb-4 text-xl font-bold text-center">שאלה {questionIndex + 1}</div>
+          <p className="text-lg mb-4 text-center">{questionsList[questionIndex]?.question}</p>
+          <ul className="space-y-3">
+            {questionsList[questionIndex]?.answers.map((ans, idx) => (
+              <li key={idx}>
+                <button onClick={() => handleAnswerClick(idx)} disabled={locked || selected !== null} className="w-full px-4 py-2 rounded bg-gray-100 dark:bg-gray-700 hover:bg-blue-200 disabled:opacity-50">
+                  {ans}
+                </button>
+              </li>
+            ))}
+          </ul>
 
-      {/* TOAST */}
-      {toast && (
-        <div className={`fixed bottom-6 left-1/2 transform -translate-x-1/2 px-6 py-3 rounded-full text-lg shadow-lg ${toast.type === 'success' ? 'bg-green-600' : 'bg-red-600'} text-white`}>
-          {toast.message}
+          <div className="mt-4 flex justify-between items-center">
+            <button onClick={() => setShowHint(true)} disabled={locked} className="px-3 py-1 bg-yellow-400 rounded hover:bg-yellow-500">הצג רמז</button>
+            <div className={time <= 5 ? 'text-red-600 font-bold' : 'text-blue-600'}>{time} שניות</div>
+          </div>
+
+          {showHint && <div className="mt-3 p-3 bg-yellow-100 rounded">💡 {questionsList[questionIndex]?.hint}</div>}
+          {showAutoHint && questionsList[questionIndex]?.authohint && <div className="mt-3 p-3 bg-blue-100 animate-pulse">🤖 {questionsList[questionIndex]?.authohint}</div>}
         </div>
       )}
 
-      {/* END MODAL */}
-      {showEndModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-20">
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg space-y-4 max-w-sm">
-            <h2 className="text-2xl font-bold text-center">
-              {getNextDifficulty(difficulty)
-                ? 'סיימת את הרמה הזו! ⬆️'
-                : 'סיימת את כל הרמות! 🎉'}
-            </h2>
-            <div className="flex justify-center">
-              <img src={getResultImage()} alt="Result" className="w-32 h-32" />
-            </div>
-            <p className="text-center">תשובות נכונות: {correctCount} מתוך {MAX_QUESTIONS}</p>
-            {getNextDifficulty(difficulty) ? (
-              <button
-                onClick={() => {
-                  localStorage.setItem('userDifficulty', getNextDifficulty(difficulty));
-                  window.location.reload();
-                }}
-                className="w-full py-2 bg-green-600 text-white rounded hover:bg-green-700 transition"
-              >
-                המשך לרמה הבאה
-              </button>
-            ) : (
-              <button
-                onClick={() => navigate('/progress')}
-                className="w-full py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
-              >
-                חזרה להתקדמות
-              </button>
-            )}
-          </div>
+      {toast && (
+        <div className={`fixed bottom-6 left-1/2 transform -translate-x-1/2 px-6 py-3 rounded-full text-lg shadow-lg ${toast.type === 'success' ? 'bg-green-600' : 'bg-red-600'} text-white`}>
+          {toast.message}
         </div>
       )}
     </div>
