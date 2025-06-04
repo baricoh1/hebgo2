@@ -27,7 +27,7 @@ function Questions() {
      CONSTANTS & BASIC DATA
   ------------------------------------------------------------------ */
   const MAX_QUESTIONS_PER_ROUND = 10;       // כמה שאלות ברוטציה בכל רמה
-  const MAX_QUESTIONS_PER_CATEGORY = 20;    // צריך 20 תשובות נכונות לעבור לקטגוריה הבאה
+  const MAX_QUESTIONS_PER_CATEGORY = 20;    // צריך 20 תשובות נכונות כדי לעבור אוטומטית רמה
   const navigate = useNavigate();
 
   // User preferences saved locally (difficulty now lifted into state)
@@ -121,7 +121,7 @@ function Questions() {
         setCorrectIndexes(serverProg);
         storeProgressLocally(serverProg);
       }
-      // אם יש כבר 20 תשובות נכונות בקטגוריה, צג את מודל ההתחלה מחדש
+      // אם כבר יש 20 נכונות, נציג את מודל "התחל מחדש"
       if (serverProg.length >= MAX_QUESTIONS_PER_CATEGORY) {
         setShowRestartModal(true);
       }
@@ -188,7 +188,7 @@ function Questions() {
       fetchProgressFromDB();
       initialLoad.current = true;
     }
-    // בכל פעם שמשתנה difficulty, נאפס לטעינה מחדש
+    // בכל פעם שמשתנה difficulty, נאפס הכל ונטען שאלות חדשות
     setQuestionIndex(null);
     setSeenQuestions([]);
     setCorrectIndexes(loadStoredProgress());
@@ -239,14 +239,13 @@ function Questions() {
   };
 
   const loadNextQuestion = () => {
-    // 1. אם כבר השיגו 20 תשובות נכונות ברמה הנוכחית → נעבור לרמה הבאה (או סיום כל הרמות)
+    // 1. אם השגנו ≥20 תשובות נכונות → מעבר לרמה הבאה או מודל סופי
     if (correctIndexes.length >= MAX_QUESTIONS_PER_CATEGORY) {
       const nextDiff = getNextDifficulty();
       if (nextDiff) {
-        // יש רמה הבאה – נעבור אליה אוטומטית
         localStorage.setItem('userDifficulty', nextDiff);
         setDifficultyState(nextDiff);
-        // איפוס סטייטים לקראת הרמה החדשה
+        // איפוס לרמה החדשה
         setCorrectIndexes([]);
         storeProgressLocally([]);
         setSeenQuestions([]);
@@ -255,28 +254,21 @@ function Questions() {
         setCurrentQuestionNumber(1);
         return;
       } else {
-        // זו כבר הרמה האחרונה – מציגים את המודל של "הושלמו כל הרמות"
         setShowFinalModal(true);
         return;
       }
     }
 
-    // 2. אם השיגו את כל 20 השאלות (MAX_QUESTIONS_PER_CATEGORY) בשרת → הצגת מודל התחלה מחדש
-    if (correctIndexes.length >= MAX_QUESTIONS_PER_CATEGORY) {
-      setShowRestartModal(true);
-      return;
-    }
-
-    // 3. בדיקת סוף סבב (10 שאלות לשאילתה)
+    // 2. אם כל הסבב של 10 שאלות הסתיים -> נציג מודל סיום סבב (ולא נטען שאלה חדשה)
     if (currentQuestionNumber > MAX_QUESTIONS_PER_ROUND) {
       setShowEndModal(true);
       return;
     }
 
-    // 4. טעינת שאלה חדשה מתוך אלו שלא נצפו ולא נכונות
+    // 3. טעינת שאלה חדשה מתוך אלו שלא נצפו ולא נכונות
     const nxt = getNextQuestionIndex();
     if (nxt === null) {
-      // אין שאלות נוספות ברמה (גם אם עוד לא הגענו ל־10, נניח שנגמרו)
+      // אם נגמרו השאלות (לפני 10) – גם כן נציג מודל סיום סבב, וננווט ל־Progress לאחר סוגר
       setShowEndModal(true);
     } else {
       setSeenQuestions((prev) => [...prev, nxt]);
@@ -285,15 +277,16 @@ function Questions() {
       setShowHint(false);
       setShowAutoHint(false);
       setTime(30);
+      // אין עלייה של currentQuestionNumber – נעשה זאת רק ברגע נטיעת השאלה הבאה
     }
   };
 
   const nextQuestionAfterTimeout = () => {
     const isLastInRound = currentQuestionNumber >= MAX_QUESTIONS_PER_ROUND;
-    setCurrentQuestionNumber((n) => n + 1);
     if (isLastInRound) {
       setShowEndModal(true);
     } else {
+      setCurrentQuestionNumber((n) => n + 1);
       loadNextQuestion();
       setLocked(false);
     }
@@ -325,13 +318,13 @@ function Questions() {
     setTimeout(() => {
       setToast(null);
 
-      // 1. קודם נבדוק אם זה היה סוף הסבב (10 שאלות)
       const isLastInRound = currentQuestionNumber >= MAX_QUESTIONS_PER_ROUND;
-      setCurrentQuestionNumber((n) => n + 1);
-
       if (isLastInRound) {
+        // סיימנו לענות על השאלה העשירית – נפעיל EndModal מייד, בלי להעלות ל־11
         setShowEndModal(true);
       } else {
+        // עוד סבב לא הושלם, נעבור לשאלה הבאה
+        setCurrentQuestionNumber((n) => n + 1);
         loadNextQuestion();
         setLocked(false);
       }
@@ -531,13 +524,12 @@ function Questions() {
             </p>
             <button
               onClick={() => {
-                setShowEndModal(false);
-                // אחרי סגירת המודל, נטען את השאלות הבאות אם אין 20 נכונות עדיין
-                loadNextQuestion();
+                // כאן אנחנו רוצים לנווט ל־Progress
+                navigate('/progress');
               }}
               className="w-full py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
             >
-              המשך
+              להמשיך להתקדמות
             </button>
           </div>
         </div>
@@ -551,7 +543,12 @@ function Questions() {
             <p className="text-center">כבר השגת 20 תשובות נכונות בקטגוריה זו.</p>
             <div className="flex justify-between space-x-4 rtl:space-x-reverse">
               <button
-                onClick={() => setShowRestartModal(false)}
+                onClick={() => {
+                  setShowRestartModal(false);
+                  // אם המשתמש בוחר "לא", בכל מקרה loadNextQuestion יזהה שיש ≥20 נכונות
+                  // ויעביר רמה אוטומטית (או יציג את ה־FinalModal)
+                  loadNextQuestion();
+                }}
                 className="flex-1 py-2 bg-gray-300 text-black rounded hover:bg-gray-400 transition"
               >
                 לא, תודה
