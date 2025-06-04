@@ -170,10 +170,84 @@ function Questions() {
     return <div className="p-4 text-red-600">לא ניתן לטעון את השאלות. ודא שהשפה והרמה נבחרו כראוי.</div>;
   }
 
+  const question = questionsList[questionIndex];
+  const progressPercent = ((correctIndexes.length) / MAX_QUESTIONS) * 100;
+  const formatTime = (s) => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+  const getResultImage = () => [ball0, ball1, ball2, ball3, ball4, ball5, ball6, ball7, ball8, ball9, ball10][correctCount] || ball0;
+
   return (
     <div dir="rtl" className="bg-blue-100 text-black dark:bg-gray-900 dark:text-white min-h-screen p-6">
-      {/* Content remains the same */}
-      {/* ... */}
+      <div className="max-w-4xl mx-auto">
+        <header className="flex flex-row-reverse justify-between items-center bg-blue-200 dark:bg-blue-950 p-4 rounded-lg shadow">
+          <button onClick={() => navigate('/')} className="text-xl font-semibold hover:underline">← חזרה לעמוד ראשי</button>
+          <div className="flex items-center gap-2">
+            <span className="text-base font-semibold text-gray-700 dark:text-gray-300">שאלה</span>
+            <span className="bg-blue-500 text-white rounded-full px-3 py-1 shadow-md">{correctIndexes.length + 1}</span>
+          </div>
+          <div className="bg-white py-1 px-3 rounded shadow dark:bg-gray-100">
+            <span className={time <= 5 ? 'text-red-600 font-bold' : 'text-blue-600'}>{formatTime(time)}</span>
+          </div>
+        </header>
+
+        <main className="mt-4 bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg">
+          <div className="text-xl font-bold mb-4">{question.question}</div>
+          <ul className="space-y-2">
+            {question.answers.map((ans, idx) => {
+              const isCorrect = idx === question.correct;
+              const isSelected = idx === selected;
+              let bg = 'bg-white dark:bg-gray-600';
+              if (selected !== null) {
+                if (isSelected && isCorrect) bg = 'bg-green-400';
+                else if (isSelected && !isCorrect) bg = 'bg-red-400';
+                else if (isCorrect) bg = 'bg-green-400';
+              }
+              return (
+                <button key={idx} onClick={() => handleAnswerClick(idx)} disabled={selected !== null || locked} className={`w-full text-right p-3 rounded-lg border shadow hover:bg-blue-100 ${bg}`}>
+                  {ans}
+                </button>
+              );
+            })}
+          </ul>
+          <div className="mt-4">
+            <button className="px-4 py-2 bg-yellow-400 text-black rounded hover:bg-yellow-500" onClick={() => setShowHint(true)} disabled={locked}>הצג רמז</button>
+            {showHint && <div className="mt-2 p-3 bg-yellow-100 dark:bg-yellow-900 rounded">💡 {question.hint}</div>}
+            {showAutoHint && question.authohint && <div className="mt-2 p-3 bg-blue-100 dark:bg-blue-900 rounded animate-pulse">🤖 {question.authohint}</div>}
+          </div>
+        </main>
+
+        <footer className="mt-4 text-right">סה״כ פלאפלים שנאספו: {correctCount} 🧆</footer>
+      </div>
+
+      {toast && (
+        <div className={`fixed bottom-6 left-1/2 transform -translate-x-1/2 px-6 py-3 rounded-full text-lg shadow-lg ${toast.type === 'success' ? 'bg-green-600' : 'bg-red-600'} text-white`}>
+          {toast.message}
+        </div>
+      )}
+
+      {showEndModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-20">
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg space-y-4 max-w-sm">
+            <h2 className="text-2xl font-bold text-center">
+              {getNextDifficulty(userDifficulty) ? 'סיימת את הרמה הזו! ⬆️' : 'סיימת את כל הרמות! 🎉'}
+            </h2>
+            <div className="flex justify-center">
+              <img src={getResultImage()} alt="Result" className="w-32 h-32" />
+            </div>
+            <p className="text-center">תשובות נכונות: {correctCount} מתוך {MAX_QUESTIONS}</p>
+            <button onClick={() => {
+              const next = getNextDifficulty(userDifficulty);
+              if (next) {
+                localStorage.setItem('userDifficulty', next);
+                window.location.reload();
+              } else {
+                navigate('/progress');
+              }
+            }} className="w-full py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition">
+              {getNextDifficulty(userDifficulty) ? 'המשך לרמה הבאה' : 'חזרה להתקדמות'}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
