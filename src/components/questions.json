@@ -6,10 +6,10 @@
         "answers": [
           "Window",
           "Chair",
-          "Door",
-          "Book"
+          "Book",
+          "Door"
         ],
-        "correct": 2,
+        "correct": 3,
         "hint": "It's a basic item in a house. You use it to enter or exit a room",
         "authohint": "You need to open and close this to go into or out of rooms"
       },
@@ -42,22 +42,22 @@
         "answers": [
           "Car",
           "School",
-          "House",
-          "Store"
+          "Store",
+          "House"
         ],
-        "correct": 2,
+        "correct": 3,
         "hint": "It's where most people live",
         "authohint": "You sleep and eat there"
       },
       {
         "question": "?'מים' What is the correct translation of the Hebrew word",
         "answers": [
-          "Fire",
           "Water",
+          "Fire",
           "Air",
           "Earth"
         ],
-        "correct": 1,
+        "correct": 0,
         "hint": "You drink it when you're thirsty",
         "authohint": "This clear liquid comes from the tap and is essential for life"
       },
@@ -78,10 +78,10 @@
         "answers": [
           "Drink",
           "Walk",
-          "Eat",
-          "Sleep"
+          "Sleep",
+          "Eat"
         ],
-        "correct": 2,
+        "correct": 3,
         "hint": "It's something you do when you're hungry",
         "authohint": "This is what you put in your mouth when you want a meal"
       },
@@ -113,11 +113,11 @@
         "question": "?'שמש' What is the correct translation of the Hebrew word",
         "answers": [
           "Moon",
-          "Star",
           "Sun",
+          "Star",
           "Cloud"
         ],
-        "correct": 2,
+        "correct": 1,
         "hint": "It shines in the sky during the day",
         "authohint": "This gives us light and warmth every day"
       },
@@ -149,11 +149,11 @@
         "question": "?'מים קרים' What is the correct translation of the Hebrew phrase",
         "answers": [
           "Hot water",
-          "Cold water",
           "Milk",
-          "Juice"
+          "Juice",
+          "Cold water"
         ],
-        "correct": 1,
+        "correct": 3,
         "hint": "You drink it when it's hot outside",
         "authohint": "You might want ice in your glass with this drink"
       },
@@ -198,8 +198,8 @@
         "answers": [
           "Run",
           "Go",
-          "Walk",
-          "Stay"
+          "Stay",
+          "Walk"
         ],
         "correct": 2,
         "hint": "You do this with your feet to move forward",
@@ -234,11 +234,11 @@
         "answers": [
           "Blender",
           "Tidy room",
-          "Mix / Mess",
-          "Fruit"
+          "Fruit",
+          "Mix / Mess"
         ],
-        "correct": 2,
-        "hint": "It describes a situation where many things are mixed together in a messy way",
+        "correct": 3,
+        "hint": "Imagine your laundry, your playlist, and your lunch... all in one bowly",
         "authohint": "This word means things are jumbled up and not in order"
       }
     ],
@@ -260,22 +260,22 @@
         "answers": [
           "שולחן",
           "תפוח",
-          "כלב",
+          "בקבוק",
           "מכונית"
         ],
         "correct": 1,
-        "hint": "Think of something you can eat",
+        "hint": "Think about something you can eat",
         "authohint": "It's a fruit that is red or green and often found in lunchboxes"
       },
       {
         "question": "?'אני שותה _____' Complete the sentence:",
         "answers": [
           "לחם",
-          "מים",
           "מכונית",
-          "כיסא"
+          "כיסא",
+          "מים"
         ],
-        "correct": 1,
+        "correct": 3,
         "hint": "Think about what people drink",
         "authohint": "It's a clear, tasteless liquid essential for life"
       },
@@ -295,7 +295,7 @@
         "question": "?'אני הולך ל_____' Complete the sentence:",
         "answers": [
           "חתול",
-          "בית",
+          "ידיים",
           "בית ספר",
           "עץ"
         ],
@@ -304,7 +304,7 @@
         "authohint": "You carry a backpack when you go here as a child"
       },
       {
-        "question": "?'אני רואה _____' Complete the sentence:",
+        "question": "? בערב אני יושב בסלון וצופה ב _____' Complete the sentence:",
         "answers": [
           "טלוויזיה",
           "ספר",
@@ -332,8 +332,8 @@
         "answers": [
           "כיסא",
           "דלת",
-          "חולצה",
-          "יד"
+          "דשא",
+          "גרב"
         ],
         "correct": 1,
         "hint": "You open it to enter a room",
@@ -342,10 +342,10 @@
       {
         "question": "?'אני לובש _____' Complete the sentence:",
         "answers": [
-          "חולצה",
           "שולחן",
           "מיטה",
-          "בקבוק"
+          "בקבוק",
+          "חולצה"
         ],
         "correct": 0,
         "hint": "You wear it on your upper body",
@@ -354,17 +354,17 @@
       {
         "question": "?'אני משחק עם _____' Complete the sentence:",
         "answers": [
-          "ילד",
-          "עץ",
-          "כיסא",
-          "חלון"
+          "כביש",
+          "קניון",
+          "סטייק",
+          "ילד"
         ],
-        "correct": 0,
+        "correct": 3,
         "hint": "Think of someone you can play with",
         "authohint": "This is a person, often your age, who joins you in games"
       },
       {
-        "question": "?'אני כותב עם _____' Complete the sentence:",
+        "question": "?'אני כותב בעזרת _____' Complete the sentence:",
         "answers": [
           "ספר",
           "עט",
@@ -378,17 +378,17 @@
       {
         "question": "?'אני שוכב על ה_____' Complete the sentence:",
         "answers": [
-          "כיסא",
+          "בית",
+          "לוויין",
           "מיטה",
-          "שולחן",
           "חלון"
         ],
-        "correct": 1,
+        "correct": 2,
         "hint": "You lie down here to sleep",
         "authohint": "You cover yourself with a blanket while resting on this"
       },
       {
-        "question": "?'אני אוכל עם _____' Complete the sentence:",
+        "question": "?' אני אוכל בעזרת _____' Complete the sentence:",
         "answers": [
           "מזלג",
           "ספר",
@@ -402,41 +402,41 @@
       {
         "question": "?'אני שם את הספר על ה_____' Complete the sentence:",
         "answers": [
-          "חלון",
+          "שמפו",
           "שולחן",
-          "רצפה",
-          "כיסא"
+          "עכבר",
+          "קש"
         ],
         "correct": 1,
         "hint": "Common furniture where you place things",
         "authohint": "This piece of furniture often holds plates, books, or laptops"
       },
       {
-        "question": "?'אני מדבר עם ה_____' Complete the sentence:",
+        "question": "?'אני מדבר עם ___' Complete the sentence:",
         "answers": [
-          "חבר",
-          "ספר",
+          "אוויר",
           "דלת",
+           "חבר",
           "כוס"
         ],
-        "correct": 0,
+        "correct": 2,
         "hint": "Someone you talk to",
         "authohint": "It's a person who listens to you and shares with you"
       },
       {
         "question": "?'אני שוטף את ה_____' Complete the sentence:",
         "answers": [
-          "ידיים",
           "כיסא",
-          "מכנסיים",
-          "עץ"
+          "שעון",
+          "עץ",
+          "ידיים"
         ],
-        "correct": 0,
+        "correct": 3,
         "hint": "You do this before eating or after the bathroom",
         "authohint": "Soap and water are usually involved when you clean these"
       },
       {
-        "question": "?'אני שם מים בכ_____' Complete the sentence:",
+        "question": "?'אני מוזג מים ל____' Complete the sentence:",
         "answers": [
           "כוס",
           "חלון",
@@ -450,17 +450,17 @@
       {
         "question": "?'אני רץ ל_____' Complete the sentence:",
         "answers": [
-          "בית ספר",
           "שולחן",
+          "בית ספר",
           "קיר",
-          "ספר"
+          "מטבע"
         ],
-        "correct": 0,
+        "correct": 1,
         "hint": "Where kids go every morning",
         "authohint": "A yellow bus often drops students off at this place"
       },
       {
-        "question": "'אני לובש _____' Complete the sentence:",
+        "question": "?'אני נועל _____' Complete the sentence:",
         "answers": [
           "נעליים",
           "חלון",
@@ -472,10 +472,10 @@
         "authohint": "You tie their laces and walk outside with them on"
       },
       {
-        "question": "'אני מחפש את ה_____' Complete the sentence:",
+        "question": "?' אני מחפש את ה_____כדי לפתוח את המכונית' Complete the sentence:",
         "answers": [
-          "מפתח",
           "אור",
+          "מפתח",
           "כיסא",
           "קיר"
         ],
@@ -485,162 +485,45 @@
       }
     ],
     "hard": [
+{
+  "question": "'ההשתמטות שלו מהשירות הצבאי עוררה הרבה ביקורת' – What does the word 'השתמטות' mean in this sentence?",
+  "answers": [
+    "Avoidance",
+    "Participation",
+    "Endurance",
+    "Justification"
+  ],
+  "correct": 0,
+  "hint": "Think of someone who tries to escape a duty or responsibility",
+  "authohint": "In this case, it's about not fulfilling an expected obligation"
+},
+
       {
-        "question": "'הרים גבה'  Choose the correct meaning of the sentence:",
-        "answers": [
-          "Was surprised",
-          "Got angry",
-          "Was happy",
-          "Got scared"
-        ],
-        "correct": 0,
-        "hint": "He was surprised or skeptical",
-        "authohint": "Used when someone reacts with surprise or disbelief"
-      },
-      {
-        "question": "'הורידה את הראש'  Choose the correct meaning of the sentence:",
-        "answers": [
-          "Was offended",
-          "Was disappointed",
-          "Was happy",
-          "Was excited"
-        ],
-        "correct": 1,
-        "hint": "She accepted disappointment or gave up",
-        "authohint": "Describes someone humbling themselves or surrendering"
-      },
-      {
-        "question": "'שבר את הקרח'  Choose the correct meaning of the sentence:",
-        "answers": [
-          "Made the atmosphere easier",
-          "Hurt others",
-          "Surprised everyone",
-          "Disappeared immediately"
-        ],
-        "correct": 0,
-        "hint": "He made the situation more relaxed",
-        "authohint": "Used when someone helps others feel more comfortable"
-      },
-      {
-        "question": "יצא לו שם של קמצן'  Choose the correct meaning of the sentence:",
-        "answers": [
-          "He is considered stingy",
-          "He became famous",
-          "He disappeared",
-          "He was fired"
-        ],
-        "correct": 0,
-        "hint": "People think he is stingy",
-        "authohint": "Said when someone is known for being cheap"
-      },
-      {
-        "question": "שבר את הכלים ולא משחק'  Choose the correct meaning of the sentence:",
-        "answers": [
-          "He quit in anger",
-          "He behaved nicely",
-          "He lost",
-          "He played again"
-        ],
-        "correct": 0,
-        "hint": "He quit angrily",
-        "authohint": "Refers to someone who gave up in protest or frustration"
-      },
-      {
-        "question": "העניינים יצאו משליטה'  Choose the correct meaning of the sentence:",
-        "answers": [
-          "No control over the situation",
-          "Everything is calm",
-          "He fell asleep",
-          "He is in control"
-        ],
-        "correct": 0,
-        "hint": "Things are out of control",
-        "authohint": "Describes a situation that's gotten chaotic"
-      },
-      {
-        "question": "הלך בין הטיפות'  Choose the correct meaning of the sentence:",
-        "answers": [
-          "Acted very carefully",
-          "Got very wet",
-          "Was fast",
-          "Avoided work"
-        ],
-        "correct": 0,
-        "hint": "He acted very cautiously",
-        "authohint": "Means he navigated a tricky situation carefully"
-      },
-      {
-        "question": "ישב על הגדר'  Choose the correct meaning of the sentence:",
-        "answers": [
-          "Hesitated to decide",
-          "Fell",
-          "Ignored everything",
-          "Reacted quickly"
-        ],
-        "correct": 0,
-        "hint": "He didn’t take a side",
-        "authohint": "Means he stayed neutral or undecided"
-      },
-      {
-        "question": "עלה לו לראש'  Choose the correct meaning of the sentence:",
-        "answers": [
-          "Became arrogant",
-          "Got sick",
-          "Became tired",
-          "Was very excited"
-        ],
-        "correct": 0,
-        "hint": "He became arrogant",
-        "authohint": "Used when someone lets success inflate their ego"
-      },
-      {
-        "question": "?אכל את הלב'  Choose the correct meaning of the sentence:",
-        "answers": [
-          "Deeply regretted",
-          "Ate a lot",
-          "Was very happy",
-          "Didn't understand"
-        ],
-        "correct": 0,
-        "hint": "He deeply regretted something",
-        "authohint": "Describes someone who's very upset or envious"
-      },
-      {
-        "question": "?'הִתְפַּקּוּת'  Translate this Hebrew word to English:",
-        "answers": [
-          "Retention",
-          "Self-control",
-          "Eruption",
-          "Regression"
-        ],
-        "correct": 1,
-        "hint": "The ability to restrain yourself from acting or speaking",
-        "authohint": "It's the word for stopping yourself from doing something you want to do"
-      },
-      {
-        "question": "?'אֲרִיכָה'  Translate this Hebrew word to English:",
-        "answers": [
-          "Lengthening",
-          "Indictment",
-          "Edition",
-          "Cooperation"
-        ],
-        "correct": 2,
-        "hint": "A published version of a text, film, or music track",
-        "authohint": "It's a word used for the specific version of a book or newspaper"
-      },
-      {
-        "question": "?'תְּחִינָה'  Translate this Hebrew word to English:",
-        "answers": [
-          "Plea / Supplication",
-          "Grinding",
-          "Flirtation",
-          "Excavation"
-        ],
-        "correct": 0,
-        "hint": "A heartfelt request, often to a higher power",
-        "authohint": "It's what you do when you beg for mercy or help"
-      },
+  "question": "?'אֵין דָּבָר הָעוֹמֵד בִּפְנֵי הָרָצוֹן' – What does this Hebrew saying mean?",
+  "answers": [
+    "You should always stand tall",
+    "No one can block your path",
+    "Where there's a will, there's a way",
+    "Desire is stronger than fear"
+  ],
+  "correct": 2,
+  "hint": "It’s about determination – if you want it badly enough, you’ll succeed",
+  "authohint": "This encourages strong willpower to overcome obstacles"
+},
+
+                
+{
+  "question": "הם הרימו גבה כששמעו את המחיר",
+  "answers": [
+    "They lowered their heads in shame",
+    "They looked the other way",
+    "They burst into laughter",
+    "They raised an eyebrow when they heard the price"
+  ],
+  "correct": 3,
+  "hint": "They were surprised or skeptical",
+  "authohint": "This is an idiom that shows surprise or doubt"
+},
       {
         "question": "?'עֵרֶךְ מוֹסָף'  Translate this Hebrew term to English:",
         "answers": [
@@ -677,39 +560,39 @@
         "hint": "An idiom meaning he made the atmosphere more relaxed",
         "authohint": "This is a phrase used when someone makes others comfortable to start talking"
       },
-      {
-        "question": "?'הם הגיעו מים עד נפש'  Translate this Hebrew idiom to English:",
-        "answers": [
-          "They’re up to their necks in trouble",
-          "They’re thirsty for life",
-          "They reached calm waters",
-          "They’re sailing smoothly"
-        ],
-        "correct": 0,
-        "hint": "Literally “waters reached the soul” – they can’t take it anymore",
-        "authohint": "This is said when someone can't handle more stress or problems"
-      },
+{
+  "question": "הוא אכל את הלב אחרי שהפסיד",
+  "answers": [
+    "He lost his appetite",
+    "He cheered himself up",
+    "He was heartbroken after losing",
+    "He asked for a second chance"
+  ],
+  "correct": 2,
+  "hint": "He deeply regretted or was very upset",
+  "authohint": "This phrase describes strong emotional regret or jealousy"
+},
       {
         "question": "?'ככלב השב אל קיאו'  Translate this biblical-style phrase:",
         "answers": [
-          "Like a dog returning to its vomit",
           "Like a lion guarding its cubs",
+          "Like a dog returning to its vomit",
           "Like a bird fleeing the net",
           "Like a fish seeking water"
         ],
-        "correct": 0,
+        "correct": 1,
         "hint": "Used to describe someone repeating a bad mistake",
         "authohint": "It's about someone repeating the same mistake despite knowing better"
       },
       {
         "question": "?'סגרתי מעגל'  Translate this colloquial Hebrew phrase:",
         "answers": [
-          "I completed the circle / found closure",
           "I missed the mark",
           "I shut the gate",
-          "I solved the puzzle"
+          "I solved the puzzle",
+          "I found closure"
         ],
-        "correct": 0,
+        "correct": 3,
         "hint": "Means finally finishing something unresolved",
         "authohint": "It's about resolving unfinished business or achieving closure"
       },
@@ -725,66 +608,66 @@
         "hint": "Equivalent to 'You can’t have it both ways'",
         "authohint": "It's a phrase for situations where you have to choose—you can't have both options"
       },
-      {
-        "question": "?'חִנָּה'  Translate this Hebrew word to English:",
-        "answers": [
-          "Grace / Charm",
-          "Parking fine",
-          "Pity",
-          "Jealousy"
-        ],
-        "correct": 0,
-        "hint": "Also the name of a traditional North-African Jewish ceremony",
-        "authohint": "It's a quality that makes someone attractive or pleasant"
-      },
-      {
-        "question": "?'תַּעֲלוּל'  Translate this Hebrew word to English:",
-        "answers": [
-          "Prank",
-          "Achievement",
-          "Revival",
-          "Collapse"
-        ],
-        "correct": 0,
-        "hint": "A mischievous trick, often by children",
-        "authohint": "It's a playful trick, often meant to make people laugh"
-      },
-      {
-        "question": "?'הִתגַלּוּת'  Translate this Hebrew word to English:",
-        "answers": [
-          "Discovery / Revelation",
-          "Migration",
-          "Conspiracy",
-          "Decoration"
-        ],
-        "correct": 0,
-        "hint": "When something hidden becomes known",
-        "authohint": "It's what happens when a secret is finally revealed"
-      },
-      {
-        "question": "?'מַסְלוּל'  Translate this Hebrew word to English:",
-        "answers": [
-          "Traction",
-          "Track / Route",
-          "Wound",
-          "Gesture"
-        ],
-        "correct": 1,
-        "hint": "What hikers or university students might follow",
-        "authohint": "It's a path or course that guides you from one place to another"
-      },
-      {
-        "question": "?'צִפְיוֹן'  Translate this Hebrew zoology word:",
-        "answers": [
-          "Chameleon",
-          "Gazelle",
-          "Sea horse",
-          "Sand viper"
-        ],
-        "correct": 2,
-        "hint": "A delicate marine creature that looks like a tiny horse",
-        "authohint": "It's a small sea animal with a curled tail and horse-like head"
-      },
+{
+  "question": "כשהיא עזבה, הלך לו האור מהעיניים",
+  "answers": [
+    "He needed sunglasses",
+    "He lost his spark when she left",
+    "He fell asleep",
+    "He started dancing"
+  ],
+  "correct": 1,
+  "hint": "He lost his joy or spirit",
+  "authohint": "This Hebrew phrase means someone became very sad or lifeless emotionally"
+},
+{
+  "question": "כבר מהיום הראשון בעבודה, הוא שם עליה עין",
+  "answers": [
+    "He ignored her completely",
+    "He thought she was suspicious",
+    "He had his eye on her from the first day at work",
+    "He gave her a hard time"
+  ],
+  "correct": 2,
+  "hint": "He showed interest or attraction",
+  "authohint": "This phrase is often used when someone is romantically or personally interested in another person"
+},
+{
+  "question": "כשהיה ריב במשרד, הוא הלך בין הטיפות",
+  "answers": [
+    "He got soaking wet on the way to work",
+    "He took the side of the manager",
+    "He ignored everyone completely",
+    "He walked on eggshells during the argument at work"
+  ],
+  "correct": 3,
+  "hint": "He was very careful not to get involved or cause trouble",
+  "authohint": "This is a phrase about avoiding conflict carefully"
+},
+{
+  "question": "הוא לא סותם את הפה כבר שעה",
+  "answers": [
+    "He won’t stop talking for the past hour",
+    "He is chewing too loudly",
+    "He is too shy to speak",
+    "He keeps forgetting what to say"
+  ],
+  "correct": 0,
+  "hint": "He's talking nonstop",
+  "authohint": "This phrase means someone is talking way too much"
+},
+{
+  "question": "בכל ויכוח הוא יושב על הגדר ולא אומר מה הוא חושב",
+  "answers": [
+    "He likes to climb fences during arguments",
+    "He always stays on the fence and doesn’t say what he thinks",
+    "He jumps into every argument",
+    "He whispers his opinion quietly"
+  ],
+  "correct": 1,
+  "hint": "He avoids taking a clear side",
+  "authohint": "This Hebrew idiom means someone refuses to choose between options"
+},
       {
         "question": "?'אל תסתכל בקנקן אלא במה שיש בו'  Translate this saying:",
         "answers": [
@@ -800,12 +683,12 @@
       {
         "question": "?'הוא ירד מהפסים'  Translate this expression:",
         "answers": [
-          "He went off the rails / lost his mind",
           "He missed the train",
           "He fixed the tracks",
+          "He lost his mind",
           "He slowed down"
         ],
-        "correct": 0,
+        "correct": 2,
         "hint": "Means someone acting irrationally",
         "authohint": "It's used for someone who is behaving in a crazy or abnormal way"
       },
@@ -821,30 +704,30 @@
         "hint": "A very quick social call",
         "authohint": "This means someone visited for only a very short time"
       },
-      {
-        "question": "?'נַעֲצָה'  Translate this Hebrew verb (passive form) to English:",
-        "answers": [
-          "Was advised",
-          "Was inserted",
-          "Was injured",
-          "Was painted"
-        ],
-        "correct": 1,
-        "hint": "Root נ-ע-ץ, as 'to stick/insert a pin'",
-        "authohint": "It's the passive form of the action you do when putting a pin into a board"
-      },
-      {
-        "question": "?'הִקָּרוּת'  Translate this Hebrew noun to English:",
-        "answers": [
-          "Coincidence / Chance encounter",
-          "Prediction",
-          "Instruction",
-          "Harvest"
-        ],
-        "correct": 0,
-        "hint": "From the root ק-ר-ה (to happen)",
-        "authohint": "It's a word for a meeting that happens purely by chance"
-      }
+{
+  "question": "הוא הצליח סוף סוף, ואז מישהו שם לו רגל",
+  "answers": [
+    "Someone tripped him up just as he succeeded",
+    "Someone gave him a standing ovation",
+    "He kicked someone out",
+    "He hurt his leg on the way"
+  ],
+  "correct": 0,
+  "hint": "It's about sabotage or making someone fail on purpose",
+  "authohint": "This phrase means someone caused another person to stumble, metaphorically"
+},
+{
+  "question": "מאז שקיבל קידום, הוא לא רואה ממטר",
+  "answers": [
+    "He needs glasses after his promotion",
+    "He looks at everything carefully now",
+    "He’s trying to keep a low profile",
+    "He acts like he’s above everyone since his promotion"
+  ],
+  "correct": 3,
+  "hint": "Describes someone arrogant or overly confident",
+  "authohint": "This phrase means someone ignores others, thinking they’re better"
+}
     ]
   },
   "es": {
@@ -1094,10 +977,10 @@
       {
         "question": "?'אני גר ב_____' Completa la frase: (Yo vivo en _____)",
         "answers": [
-          "תפוח (manzana)",
-          "ספר (libro)",
-          "בית (casa)",
-          "חתול (gato)"
+          "תפוח ",
+          "ספר ",
+          "בית ",
+          "חתול "
         ],
         "correct": 2,
         "hint": "Piensa en el lugar donde vive una persona",
@@ -1106,10 +989,10 @@
       {
         "question": "?'אני אוהב לאכול _____' Completa la frase: (Me gusta comer _____)",
         "answers": [
-          "שולחן (mesa)",
-          "תפוח (manzana)",
-          "כלב (perro)",
-          "מכונית (coche)"
+          "שולחן ",
+          "תפוח ",
+          "קלמר ",
+          "מכונית "
         ],
         "correct": 1,
         "hint": "Algo que se puede comer",
@@ -1118,10 +1001,10 @@
       {
         "question": "?'אני שותה _____' Completa la frase: (Yo bebo _____)",
         "answers": [
-          "לחם (pan)",
-          "מים (agua)",
-          "מכונית (coche)",
-          "כיסא (silla)"
+          "לחם ",
+          "מים ",
+          "מכונית ",
+          "כיסא "
         ],
         "correct": 1,
         "hint": "Algo que la gente bebe",
@@ -1130,10 +1013,10 @@
       {
         "question": "?'אני קורא _____' Completa la frase: (Yo leo _____)",
         "answers": [
-          "ספר (libro)",
-          "שולחן (mesa)",
-          "חלון (ventana)",
-          "מזלג (tenedor)"
+          "ספר ",
+          "שולחן ",
+          "חלון ",
+          "מזלג "
         ],
         "correct": 0,
         "hint": "Algo que se puede leer",
@@ -1142,10 +1025,10 @@
       {
         "question": "?'אני הולך ל_____' Completa la frase: (Yo voy a _____)",
         "answers": [
-          "חתול (gato)",
-          "בית (casa)",
-          "בית ספר (escuela)",
-          "עץ (árbol)"
+          "חתול ",
+          "בית ",
+          "בית ספר ",
+          "עץ "
         ],
         "correct": 2,
         "hint": "Lugar donde aprenden los niños",
@@ -1154,10 +1037,10 @@
       {
         "question": "?'אני רואה _____' Completa la frase: (Yo veo _____)",
         "answers": [
-          "טלוויזיה (televisión)",
-          "ספר (libro)",
-          "אוטובוס (autobús)",
-          "אור (luz)"
+          "טלוויזיה ",
+          "ספר ",
+          "אוטובוס ",
+          "אור "
         ],
         "correct": 0,
         "hint": "Algo que sueles mirar por la noche en casa",
@@ -1166,10 +1049,10 @@
       {
         "question": "?'אני שומע _____' Completa la frase: (Yo escucho _____)",
         "answers": [
-          "שיר (canción)",
-          "דלת (puerta)",
-          "מכנסיים (pantalones)",
-          "אבן (piedra)"
+          "שיר ",
+          "דלת ",
+          "מכנסיים ",
+          "אבן "
         ],
         "correct": 0,
         "hint": "Lo escuchas, a menudo con música",
@@ -1178,10 +1061,10 @@
       {
         "question": "?'אני פותח את ה_____' Completa la frase: (Yo abro la/el _____)",
         "answers": [
-          "כיסא (silla)",
-          "דלת (puerta)",
-          "חולצה (camisa)",
-          "יד (mano)"
+          "כיסא ",
+          "דלת ",
+          "חולצה ",
+          "יד "
         ],
         "correct": 1,
         "hint": "La abres para entrar en una habitación",
@@ -1190,10 +1073,10 @@
       {
         "question": "?'אני לובש _____' Completa la frase: (Yo llevo _____)",
         "answers": [
-          "חולצה (camisa)",
-          "שולחן (mesa)",
-          "מיטה (cama)",
-          "בקבוק (botella)"
+          "חולצה ",
+          "שולחן ",
+          "מיטה ",
+          "בקבוק "
         ],
         "correct": 0,
         "hint": "Prenda que va en la parte superior del cuerpo",
@@ -1202,10 +1085,10 @@
       {
         "question": "?'אני משחק עם _____' Completa la frase: (Yo juego con _____)",
         "answers": [
-          "ילד (niño)",
-          "עץ (árbol)",
-          "כיסא (silla)",
-          "חלון (ventana)"
+          "ילד ",
+          "עץ ",
+          "כיסא ",
+          "חלון "
         ],
         "correct": 0,
         "hint": "Piensa en alguien con quien puedes jugar",
@@ -1214,10 +1097,10 @@
       {
         "question": "?'אני כותב עם _____' Completa la frase: (Yo escribo con _____)",
         "answers": [
-          "ספר (libro)",
-          "עט (bolígrafo)",
-          "שולחן (mesa)",
-          "כוס (vaso)"
+          "ספר ",
+          "עט ",
+          "שולחן ",
+          "כוס "
         ],
         "correct": 1,
         "hint": "Herramienta común para escribir",
@@ -1226,10 +1109,10 @@
       {
         "question": "?'אני שוכב על ה_____' Completa la frase: (Yo me acuesto en la _____)",
         "answers": [
-          "כיסא (silla)",
-          "מיטה (cama)",
-          "שולחן (mesa)",
-          "חלון (ventana)"
+          "כיסא ",
+          "מיטה ",
+          "שולחן ",
+          "חלון "
         ],
         "correct": 1,
         "hint": "Lugar donde duermes",
@@ -1238,10 +1121,10 @@
       {
         "question": "?'אני אוכל עם _____' Completa la frase: (Yo como con _____)",
         "answers": [
-          "מזלג (tenedor)",
-          "ספר (libro)",
-          "טלפון (teléfono)",
-          "דלת (puerta)"
+          "מזלג ",
+          "ספר ",
+          "טלפון ",
+          "דלת "
         ],
         "correct": 0,
         "hint": "Utensilio para comer",
@@ -1250,10 +1133,10 @@
       {
         "question": "?'אני שם את הספר על ה_____' Completa la frase: (Pongo el libro en la/el _____)",
         "answers": [
-          "חלון (ventana)",
-          "שולחן (mesa)",
-          "רצפה (suelo)",
-          "כיסא (silla)"
+          "חלון ",
+          "שולחן ",
+          "רצפה ",
+          "כיסא "
         ],
         "correct": 1,
         "hint": "Mueble común donde colocas cosas",
@@ -1262,10 +1145,10 @@
       {
         "question": "?'אני מדבר עם ה_____' Completa la frase: (Hablo con el/la _____)",
         "answers": [
-          "חבר (amigo)",
-          "ספר (libro)",
-          "דלת (puerta)",
-          "כוס (vaso)"
+          "חבר ",
+          "ספר ",
+          "דלת ",
+          "כוס "
         ],
         "correct": 0,
         "hint": "Persona con quien charlas",
@@ -1274,10 +1157,10 @@
       {
         "question": "?'אני שוטף את ה_____' Completa la frase: (Me lavo las _____)",
         "answers": [
-          "ידיים (manos)",
-          "כיסא (silla)",
-          "מכנסיים (pantalones)",
-          "עץ (árbol)"
+          "ידיים ",
+          "כיסא ",
+          "מכנסיים ",
+          "עץ "
         ],
         "correct": 0,
         "hint": "Lo haces antes de comer o después del baño",
@@ -1286,10 +1169,10 @@
       {
         "question": "?'אני שם מים בכ_____' Completa la frase: (Pongo agua en el/la _____)",
         "answers": [
-          "כוס (vaso)",
-          "חלון (ventana)",
-          "מיטה (cama)",
-          "תמונה (cuadro)"
+          "כוס ",
+          "חלון ",
+          "מיטה ",
+          "תמונה "
         ],
         "correct": 0,
         "hint": "Lo usas para beber agua",
@@ -1298,10 +1181,10 @@
       {
         "question": "?'אני רץ ל_____' Completa la frase: (Corro hacia la/el _____)",
         "answers": [
-          "בית ספר (escuela)",
-          "שולחן (mesa)",
-          "קיר (pared)",
-          "ספר (libro)"
+          "בית ספר ",
+          "שולחן ",
+          "קיר ",
+          "ספר "
         ],
         "correct": 0,
         "hint": "Adónde van los niños cada mañana",
@@ -1310,10 +1193,10 @@
       {
         "question": "?'אני לובש _____' Completa la frase: (Yo llevo _____)",
         "answers": [
-          "נעליים (zapatos)",
-          "חלון (ventana)",
-          "שולחן (mesa)",
-          "ספר (libro)"
+          "נעליים ",
+          "חלון ",
+          "שולחן ",
+          "ספר "
         ],
         "correct": 0,
         "hint": "Las llevas en los pies",
@@ -1322,10 +1205,10 @@
       {
         "question": "?'אני מחפש את ה_____' Completa la frase: (Busco la/el _____)",
         "answers": [
-          "מפתח (llave)",
-          "אור (luz)",
-          "כיסא (silla)",
-          "קיר (pared)"
+          "מפתח ",
+          "אור ",
+          "כיסא ",
+          "קיר "
         ],
         "correct": 0,
         "hint": "La necesitas para abrir la puerta",
@@ -1834,10 +1717,10 @@
       {
         "question": "?'אני גר ב_____' Дополните предложение: (Я живу в _____)",
         "answers": [
-          "תפוח (яблоко)",
-          "ספר (книга)",
-          "בית (дом)",
-          "חתול (кот)"
+          "תפוח ",
+          "ספר ",
+          "בית ",
+          "חתול "
         ],
         "correct": 2,
         "hint": "Место проживания человека",
@@ -1846,10 +1729,10 @@
       {
         "question": "?'אני אוהב לאכול _____' Дополните предложение: (Я люблю есть _____)",
         "answers": [
-          "שולחן (стол)",
-          "תפוח (яблоко)",
-          "כלב (собака)",
-          "מכונית (машина)"
+          "שולחן ",
+          "תפוח ",
+          "כלב ",
+          "מכונית "
         ],
         "correct": 1,
         "hint": "То, что можно съесть",
@@ -1858,10 +1741,10 @@
       {
         "question": "?'אני שותה _____' Дополните предложение: (Я пью _____)",
         "answers": [
-          "לחם (хлеб)",
-          "מים (вода)",
-          "מכונית (машина)",
-          "כיסא (стул)"
+          "לחם ",
+          "מים ",
+          "מכונית ",
+          "כיסא "
         ],
         "correct": 1,
         "hint": "То, что обычно пьют",
@@ -1870,10 +1753,10 @@
       {
         "question": "?'אני קורא _____' Дополните предложение: (Я читаю _____)",
         "answers": [
-          "ספר (книга)",
-          "שולחן (стол)",
-          "חלון (окно)",
-          "מזלג (вилка)"
+          "ספר ",
+          "שולחן ",
+          "חלון ",
+          "מזלג "
         ],
         "correct": 0,
         "hint": "Его читают",
@@ -1882,22 +1765,22 @@
       {
         "question": "?'אני הולך ל_____' Дополните предложение: (Я иду в _____)",
         "answers": [
-          "חתול (кот)",
-          "בית (дом)",
-          "בית ספר (школа)",
-          "עץ (дерево)"
+          "חתול ",
+          "בית ",
+          "בית ספר ",
+          "עץ "
         ],
         "correct": 2,
         "hint": "Туда ходят учиться дети",
         "authohint": "You might have seen this in your daily life"
       },
       {
-        "question": "?'אני רואה _____' Дополните предложение: (Я вижу _____)",
+        "question": "?'אני צופה ב _____' Дополните предложение: (Я вижу _____)",
         "answers": [
-          "טלוויזיה (телевизор)",
-          "ספר (книга)",
-          "אוטובוס (автобус)",
-          "אור (свет)"
+          "טלוויזיה ",
+          "ספר ",
+          "אוטובוס ",
+          "אור "
         ],
         "correct": 0,
         "hint": "Смотришь по вечерам дома",
@@ -1906,10 +1789,10 @@
       {
         "question": "?'אני שומע _____' Дополните предложение: (Я слышу _____)",
         "answers": [
-          "שיר (песня)",
-          "דלת (дверь)",
-          "מכנסיים (штаны)",
-          "אבן (камень)"
+          "שיר ",
+          "דלת ",
+          "מכנסיים ",
+          "אבן "
         ],
         "correct": 0,
         "hint": "Часто с музыкой",
@@ -1918,10 +1801,10 @@
       {
         "question": "?'אני פותח את ה_____' Дополните предложение: (Я открываю _____)",
         "answers": [
-          "כיסא (стул)",
-          "דלת (дверь)",
-          "חולצה (рубашка)",
-          "יד (рука)"
+          "כיסא ",
+          "דלת ",
+          "חולצה ",
+          "יד "
         ],
         "correct": 1,
         "hint": "Открывают, чтобы войти",
@@ -1930,10 +1813,10 @@
       {
         "question": "?'אני לובש _____' Дополните предложение: (Я надеваю _____)",
         "answers": [
-          "חולצה (рубашка)",
-          "שולחן (стол)",
-          "מיטה (кровать)",
-          "בקבוק (бутылка)"
+          "חולצה ",
+          "שולחן ",
+          "מיטה ",
+          "בקבוק "
         ],
         "correct": 0,
         "hint": "Носишь на верхней части тела",
@@ -1942,10 +1825,10 @@
       {
         "question": "?'אני משחק עם _____' Дополните предложение: (Я играю с _____)",
         "answers": [
-          "ילד (мальчик)",
-          "עץ (дерево)",
-          "כיסא (стул)",
-          "חלון (окно)"
+          "ילד ",
+          "עץ ",
+          "כיסא ",
+          "חלון "
         ],
         "correct": 0,
         "hint": "Кто-то, с кем можно играть",
@@ -1954,10 +1837,10 @@
       {
         "question": "?'אני כותב עם _____' Дополните предложение: (Я пишу _____)",
         "answers": [
-          "ספר (книга)",
-          "עט (ручка)",
-          "שולחן (стол)",
-          "כוס (кружка)"
+          "ספר ",
+          "עט ",
+          "שולחן ",
+          "כוס "
         ],
         "correct": 1,
         "hint": "Обычный инструмент письма",
@@ -1966,10 +1849,10 @@
       {
         "question": "?'אני שוכב על ה_____' Дополните предложение: (Я лежу на _____)",
         "answers": [
-          "כיסא (стул)",
-          "מיטה (кровать)",
-          "שולחן (стол)",
-          "חלון (окно)"
+          "כיסא ",
+          "מיטה ",
+          "שולחן ",
+          "חלון "
         ],
         "correct": 1,
         "hint": "Спишь здесь",
@@ -1978,10 +1861,10 @@
       {
         "question": "?'אני אוכל עם _____' Дополните предложение: (Я ем _____)",
         "answers": [
-          "מזלג (вилка)",
-          "ספר (книга)",
-          "טלפון (телефон)",
-          "דלת (дверь)"
+          "מזלג ",
+          "ספר ",
+          "טלפון ",
+          "דלת "
         ],
         "correct": 0,
         "hint": "Столовый прибор",
@@ -1990,10 +1873,10 @@
       {
         "question": "?'אני שם את הספר על ה_____' Дополните предложение: (Я кладу книгу на _____)",
         "answers": [
-          "חלון (окно)",
-          "שולחן (стол)",
-          "רצפה (пол)",
-          "כיסא (стул)"
+          "חלון ",
+          "שולחן ",
+          "רצפה ",
+          "כיסא "
         ],
         "correct": 1,
         "hint": "Обычная мебель для вещей",
@@ -2002,10 +1885,10 @@
       {
         "question": "?'אני מדבר עם ה_____' Дополните предложение: (Я говорю с _____)",
         "answers": [
-          "חבר (друг)",
-          "ספר (книга)",
-          "דלת (дверь)",
-          "כוס (кружка)"
+          "חבר ",
+          "ספר ",
+          "דלת ",
+          "כוס "
         ],
         "correct": 0,
         "hint": "Собеседник",
@@ -2014,10 +1897,10 @@
       {
         "question": "?'אני שוטף את ה_____' Дополните предложение: (Я мою _____)",
         "answers": [
-          "ידיים (руки)",
-          "כיסא (стул)",
-          "מכנסיים (штаны)",
-          "עץ (дерево)"
+          "ידיים ",
+          "כיסא ",
+          "מכנסיים ",
+          "עץ "
         ],
         "correct": 0,
         "hint": "Делаешь перед едой",
@@ -2026,10 +1909,10 @@
       {
         "question": "?'אני שם מים בכ_____' Дополните предложение: (Я наливаю воду в _____)",
         "answers": [
-          "כוס (кружку)",
-          "חלון (окно)",
-          "מיטה (кровать)",
-          "תמונה (картину)"
+          "כוס ",
+          "חלון ",
+          "מיטה ",
+          "תמונה "
         ],
         "correct": 0,
         "hint": "Посудина для питья",
@@ -2038,22 +1921,22 @@
       {
         "question": "?'אני רץ ל_____' Дополните предложение: (Я бегу в _____)",
         "answers": [
-          "בית ספר (школу)",
-          "שולחן (стол)",
-          "קיר (стену)",
-          "ספר (книгу)"
+          "בית ספר ",
+          "שולחן ",
+          "קיר ",
+          "ספר "
         ],
         "correct": 0,
         "hint": "Дети ходят туда утром",
         "authohint": "You might have seen this in your daily life"
       },
       {
-        "question": "?'אני לובש _____' Дополните предложение: (Я надеваю _____)",
+        "question": "?'אני נועל _____' Дополните предложение: (Я надеваю _____)",
         "answers": [
-          "נעליים (ботинки)",
-          "חלון (окно)",
-          "שולחן (стол)",
-          "ספר (книга)"
+          "נעליים ",
+          "חלון ",
+          "שולחן ",
+          "ספר "
         ],
         "correct": 0,
         "hint": "Носишь на ногах",
@@ -2062,10 +1945,10 @@
       {
         "question": "?'אני מחפש את ה_____' Дополните предложение: (Я ищу _____)",
         "answers": [
-          "מפתח (ключ)",
-          "אור (свет)",
-          "כיסא (стул)",
-          "קיר (стена)"
+          "מפתח ",
+          "אור ",
+          "כיסא ",
+          "קיר "
         ],
         "correct": 0,
         "hint": "Нужен, чтобы открыть дверь",
