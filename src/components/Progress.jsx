@@ -1,4 +1,3 @@
-// src/components/Progress.jsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { doc, getDoc } from 'firebase/firestore';
@@ -14,96 +13,93 @@ import lvl2girl from '../images/lvl2girl.png';
 import lvl3girl from '../images/lvl3girl.png';
 
 function Progress() {
+  const MAX_QUESTIONS = 20;
   const navigate = useNavigate();
 
-  // 1. קבלת שם המשתמש והמגדר מתוך localStorage (ברירת מחדל)
-  const [userName] = useState(() => localStorage.getItem('userName') || 'משתמש');
+  const [userName, setUserName] = useState(() => localStorage.getItem('userName') || null);
   const [gender, setGender] = useState(() => localStorage.getItem('userGender') || 'other');
+  const [trueLevel, setTrueLevel] = useState(() => localStorage.getItem('userDifficulty') || 'easy');
+  const [selectedLang, setSelectedLang] = useState('us');
 
-  // 2. קבלת הרמה הישירה מתוך localStorage.userDifficulty  (easy|medium|hard)
-  //    אם אין מפתח כזה, נקבע כברירת מחדל "easy"
-  const [trueLevel, setTrueLevel] = useState(
-    () => localStorage.getItem('userDifficulty') || 'easy'
-  );
+  const defaultProgress = {
+    us: { easy: [], medium: [], hard: [] },
+    es: { easy: [], medium: [], hard: [] },
+    ru: { easy: [], medium: [], hard: [] },
+  };
 
-  // 3. מאזין לאירוע storage, כדי לעדכן trueLevel אוטומטית כש־localStorage.userDifficulty משתנה
+  const [progress, setProgress] = useState(() => {
+    try {
+      const stored = localStorage.getItem('userProgress');
+      return stored ? JSON.parse(stored) : defaultProgress;
+    } catch {
+      return defaultProgress;
+    }
+  });
+
   useEffect(() => {
-    const onStorage = (e) => {
-      if (e.key === 'userDifficulty') {
-        setTrueLevel(e.newValue || 'easy');
-      }
-    };
-    window.addEventListener('storage', onStorage);
-    return () => {
-      window.removeEventListener('storage', onStorage);
-    };
-  }, []);
-
-  // 4. (אופציונלי) לבדוק אם ב־Firebase יש ערך דינמי של difficulty ולקבל אותו
-  useEffect(() => {
-    async function fetchUserData() {
+    const fetchUserData = async () => {
       if (!userName) return;
+
       try {
         const userDoc = await getDoc(doc(db, 'users', userName));
         if (userDoc.exists()) {
           const data = userDoc.data();
-          // אם יש gender ב-DB, נשמור אותו ונעדכן state
+
+          if (data.progress) {
+            setProgress(data.progress);
+            localStorage.setItem('userProgress', JSON.stringify(data.progress));
+          }
+
           if (data.gender) {
             setGender(data.gender);
             localStorage.setItem('userGender', data.gender);
           }
-          // אם יש difficulty ב-DB, נשמור אותו ונעדכן את ה־trueLevel
+
           if (data.difficulty) {
-            localStorage.setItem('userDifficulty', data.difficulty);
             setTrueLevel(data.difficulty);
+            localStorage.setItem('userDifficulty', data.difficulty);
           }
         }
       } catch (err) {
         console.error('Error fetching user document:', err);
       }
-    }
+    };
+
     fetchUserData();
   }, [userName]);
 
-  // 5. מיפוי תוויות בעברית לכל רמה
   const levelLabels = {
     easy: 'קל',
     medium: 'בינוני',
     hard: 'קשה',
   };
 
-  // 6. בחירת התמונה הנכונה לפי מגדר + הרמה (trueLevel)
+  const easy = progress[selectedLang]?.easy?.length || 0;
+  const medium = progress[selectedLang]?.medium?.length || 0;
+  const hard = progress[selectedLang]?.hard?.length || 0;
+  const falafels = easy + medium + hard;
+
+  const easyDone = easy >= MAX_QUESTIONS;
+  const mediumDone = medium >= MAX_QUESTIONS;
+  const hardDone = hard >= MAX_QUESTIONS;
+
   let levelImage;
   if (gender === 'female') {
-    if (trueLevel === 'hard')   levelImage = lvl3girl;
-    else if (trueLevel === 'medium') levelImage = lvl2girl;
-    else                           levelImage = lvl1girl;
+    if (easyDone && mediumDone && hardDone) levelImage = lvl3girl;
+    else if (easyDone && mediumDone) levelImage = lvl2girl;
+    else if (easyDone) levelImage = lvl1girl;
+    else levelImage = lvl0girl;
   } else {
-    if (trueLevel === 'hard')   levelImage = lvl3;
-    else if (trueLevel === 'medium') levelImage = lvl2;
-    else                           levelImage = lvl1;
+    if (easyDone && mediumDone && hardDone) levelImage = lvl3;
+    else if (easyDone && mediumDone) levelImage = lvl2;
+    else if (easyDone) levelImage = lvl1;
+    else levelImage = lvl0;
   }
 
-  // 7. (אופציונלי) עבור פסי התקדמות: נטען את ה־progress מ־localStorage
-  const [progress, setProgress] = useState({ us: { easy: [], medium: [], hard: [] } });
-  useEffect(() => {
-    const stored = localStorage.getItem('userProgress');
-    if (stored) {
-      setProgress(JSON.parse(stored));
-    }
-  }, []);
-
-  const easyCount   = progress.us.easy.length   || 0;
-  const mediumCount = progress.us.medium.length || 0;
-  const hardCount   = progress.us.hard.length   || 0;
-  const getPercent = (val) => `${(val / 20) * 100}%`;
+  const getPercent = (val) => `${(val / MAX_QUESTIONS) * 100}%`;
 
   return (
-    <div
-      className="min-h-screen bg-blue-100 text-black dark:bg-gray-900 dark:text-white transition-colors duration-300 p-6"
-      dir="rtl"
-    >
-      {/* ---------- תמונת הרמה + טקסט ---------- */}
+    <div className="min-h-screen bg-blue-100 text-black dark:bg-gray-900 dark:text-white transition-colors duration-300 p-6" dir="rtl">
       <div className="flex flex-col items-center mb-6">
         <img
           src={levelImage}
@@ -115,48 +111,52 @@ function Progress() {
         </p>
       </div>
 
-      {/* ---------- ברכה אישית ---------- */}
       <p className="text-center text-lg text-gray-600 dark:text-gray-300 mb-6">
         {gender === 'female' ? 'ברוכה הבאה' : 'ברוך הבא'}, {userName} 👋
       </p>
 
-      {/* ---------- פסים גרפיים להצגת התקדמות ---------- */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-4xl mx-auto">
-        {/* קל */}
         <div className="p-4 bg-green-100 dark:bg-green-800 rounded shadow text-center">
           <p className="font-bold text-lg">🔰 קל</p>
           <div className="h-3 bg-gray-300 dark:bg-gray-700 rounded mt-2">
-            <div className="h-3 bg-green-500 rounded" style={{ width: getPercent(easyCount) }} />
+            <div className="h-3 bg-green-500 rounded" style={{ width: getPercent(easy) }} />
           </div>
           <p className="mt-2">
-            {easyCount} מתוך 20 (נותרו {20 - easyCount})
+            {easy} מתוך {MAX_QUESTIONS} (נותרו {MAX_QUESTIONS - easy})
           </p>
         </div>
 
-        {/* בינוני */}
         <div className="p-4 bg-yellow-100 dark:bg-yellow-700 rounded shadow text-center">
           <p className="font-bold text-lg">⚔️ בינוני</p>
           <div className="h-3 bg-gray-300 dark:bg-gray-700 rounded mt-2">
-            <div className="h-3 bg-yellow-500 rounded" style={{ width: getPercent(mediumCount) }} />
+            <div className="h-3 bg-yellow-500 rounded" style={{ width: getPercent(medium) }} />
           </div>
           <p className="mt-2">
-            {mediumCount} מתוך 20 (נותרו {20 - mediumCount})
+            {medium} מתוך {MAX_QUESTIONS} (נותרו {MAX_QUESTIONS - medium})
           </p>
         </div>
 
-        {/* קשה */}
         <div className="p-4 bg-red-100 dark:bg-red-700 rounded shadow text-center">
           <p className="font-bold text-lg">🔥 קשה</p>
           <div className="h-3 bg-gray-300 dark:bg-gray-700 rounded mt-2">
-            <div className="h-3 bg-red-500 rounded" style={{ width: getPercent(hardCount) }} />
+            <div className="h-3 bg-red-500 rounded" style={{ width: getPercent(hard) }} />
           </div>
           <p className="mt-2">
-            {hardCount} מתוך 20 (נותרו {20 - hardCount})
+            {hard} מתוך {MAX_QUESTIONS} (נותרו {MAX_QUESTIONS - hard})
           </p>
         </div>
       </div>
 
-      {/* ---------- כפתור חזרה ---------- */}
+      <div className="text-center mt-6 text-lg text-gray-700 dark:text-gray-300">
+        🥙 סה״כ פלאפלים שנאספו: <span className="font-bold">{falafels}</span>
+      </div>
+
+      {easyDone && mediumDone && hardDone && (
+        <div className="mt-6 max-w-md mx-auto p-4 bg-green-200 dark:bg-green-700 rounded text-center shadow text-xl font-semibold text-green-900 dark:text-green-100">
+          🏆 כל הכבוד! השלמת את כל השלבים!
+        </div>
+      )}
+
       <div className="flex justify-center mt-10">
         <button
           onClick={() => navigate('/')}
