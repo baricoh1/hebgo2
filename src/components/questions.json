@@ -479,7 +479,7 @@
           "כיסא",
           "קיר"
         ],
-        "correct": 0,
+        "correct": 1,
         "hint": "You need it to open the door",
         "authohint": "It unlocks locks and is usually carried on a ring"
       }
