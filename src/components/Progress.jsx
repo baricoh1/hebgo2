@@ -16,17 +16,17 @@ import lvl3girl from '../images/lvl3girl.png';
 function Progress() {
   const navigate = useNavigate();
 
-  // 1. קבלת שם המשתמש והמגדר מתוך localStorage (ברירת מחדל)
-  const [userName] = useState(() => localStorage.getItem('userName') || 'משתמש');
+  // 1. Retrieve username and gender from localStorage (or default)
+  const [userName] = useState(() => localStorage.getItem('userName') || 'User');
   const [gender, setGender] = useState(() => localStorage.getItem('userGender') || 'other');
 
-  // 2. קבלת הרמה הישירה מתוך localStorage.userDifficulty  (easy|medium|hard)
-  //    אם אין מפתח כזה, נקבע כברירת מחדל "easy"
+  // 2. Retrieve difficulty directly from localStorage.userDifficulty (easy|medium|hard)
+  //    Default to "easy" if not present
   const [trueLevel, setTrueLevel] = useState(
     () => localStorage.getItem('userDifficulty') || 'easy'
   );
 
-  // 3. מאזין לאירוע storage, כדי לעדכן trueLevel אוטומטית כש־localStorage.userDifficulty משתנה
+  // 3. Listen for changes to localStorage.userDifficulty and update trueLevel accordingly
   useEffect(() => {
     const onStorage = (e) => {
       if (e.key === 'userDifficulty') {
@@ -39,24 +39,21 @@ function Progress() {
     };
   }, []);
 
-  // 4. (אופציונלי) לבדוק אם ב־Firebase יש ערך דינמי של difficulty ולקבל אותו
+  // 4. Optionally fetch gender and difficulty from Firestore and sync to localStorage
   useEffect(() => {
     async function fetchUserData() {
       if (!userName) return;
       try {
         const userDoc = await getDoc(doc(db, 'users', userName));
-        if (userDoc.exists()) {
-          const data = userDoc.data();
-          // אם יש gender ב-DB, נשמור אותו ונעדכן state
-          if (data.gender) {
-            setGender(data.gender);
-            localStorage.setItem('userGender', data.gender);
-          }
-          // אם יש difficulty ב-DB, נשמור אותו ונעדכן את ה־trueLevel
-          if (data.difficulty) {
-            localStorage.setItem('userDifficulty', data.difficulty);
-            setTrueLevel(data.difficulty);
-          }
+        if (!userDoc.exists()) return;
+        const data = userDoc.data();
+        if (data.gender) {
+          setGender(data.gender);
+          localStorage.setItem('userGender', data.gender);
+        }
+        if (data.difficulty) {
+          localStorage.setItem('userDifficulty', data.difficulty);
+          setTrueLevel(data.difficulty);
         }
       } catch (err) {
         console.error('Error fetching user document:', err);
@@ -65,37 +62,50 @@ function Progress() {
     fetchUserData();
   }, [userName]);
 
-  // 5. מיפוי תוויות בעברית לכל רמה
+  // 5. Map English keys to Hebrew labels
   const levelLabels = {
     easy: 'קל',
     medium: 'בינוני',
     hard: 'קשה',
   };
 
-  // 6. בחירת התמונה הנכונה לפי מגדר + הרמה (trueLevel)
+  // 6. Choose appropriate image based on trueLevel and gender
   let levelImage;
   if (gender === 'female') {
-    if (trueLevel === 'hard')   levelImage = lvl3girl;
+    if (trueLevel === 'hard') levelImage = lvl3girl;
     else if (trueLevel === 'medium') levelImage = lvl2girl;
-    else                           levelImage = lvl1girl;
+    else levelImage = lvl1girl;
   } else {
-    if (trueLevel === 'hard')   levelImage = lvl3;
+    if (trueLevel === 'hard') levelImage = lvl3;
     else if (trueLevel === 'medium') levelImage = lvl2;
-    else                           levelImage = lvl1;
+    else levelImage = lvl1;
   }
 
-  // 7. (אופציונלי) עבור פסי התקדמות: נטען את ה־progress מ־localStorage
-  const [progress, setProgress] = useState({ us: { easy: [], medium: [], hard: [] } });
+  // 7. Optionally load progress from localStorage for progress bars
+  const [progress, setProgress] = useState({
+    us: { easy: [], medium: [], hard: [] },
+  });
   useEffect(() => {
     const stored = localStorage.getItem('userProgress');
     if (stored) {
-      setProgress(JSON.parse(stored));
+      try {
+        const parsed = JSON.parse(stored);
+        setProgress((prev) => ({
+          ...prev,
+          ...(parsed.us && typeof parsed.us === 'object' ? { us: parsed.us } : {}),
+        }));
+      } catch {
+        // If JSON.parse fails, keep the default structure
+      }
     }
   }, []);
 
-  const easyCount   = progress.us.easy.length   || 0;
-  const mediumCount = progress.us.medium.length || 0;
-  const hardCount   = progress.us.hard.length   || 0;
+  // 8. Safely count correct answers in each category using optional chaining and fallback to empty array
+  const easyCount = (progress.us?.easy ?? []).length;
+  const mediumCount = (progress.us?.medium ?? []).length;
+  const hardCount = (progress.us?.hard ?? []).length;
+
+  // 9. Helper to calculate width percentage for a 20-question progress bar
   const getPercent = (val) => `${(val / 20) * 100}%`;
 
   return (
@@ -103,11 +113,11 @@ function Progress() {
       className="min-h-screen bg-blue-100 text-black dark:bg-gray-900 dark:text-white transition-colors duration-300 p-6"
       dir="rtl"
     >
-      {/* ---------- תמונת הרמה + טקסט ---------- */}
+      {/* Top section: level image and label */}
       <div className="flex flex-col items-center mb-6">
         <img
           src={levelImage}
-          alt="רמת שחקן"
+          alt="Player Level"
           className="w-48 h-auto rounded-full border-4 border-blue-300 shadow-xl"
         />
         <p className="text-xl mt-1 font-bold text-indigo-700 dark:text-indigo-300">
@@ -115,40 +125,49 @@ function Progress() {
         </p>
       </div>
 
-      {/* ---------- ברכה אישית ---------- */}
+      {/* Welcome message */}
       <p className="text-center text-lg text-gray-600 dark:text-gray-300 mb-6">
         {gender === 'female' ? 'ברוכה הבאה' : 'ברוך הבא'}, {userName} 👋
       </p>
 
-      {/* ---------- פסים גרפיים להצגת התקדמות ---------- */}
+      {/* Progress bars for easy, medium, hard */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-4xl mx-auto">
-        {/* קל */}
+        {/* Easy bar */}
         <div className="p-4 bg-green-100 dark:bg-green-800 rounded shadow text-center">
           <p className="font-bold text-lg">🔰 קל</p>
           <div className="h-3 bg-gray-300 dark:bg-gray-700 rounded mt-2">
-            <div className="h-3 bg-green-500 rounded" style={{ width: getPercent(easyCount) }} />
+            <div
+              className="h-3 bg-green-500 rounded"
+              style={{ width: getPercent(easyCount) }}
+            />
           </div>
           <p className="mt-2">
             {easyCount} מתוך 20 (נותרו {20 - easyCount})
           </p>
         </div>
 
-        {/* בינוני */}
+        {/* Medium bar */}
         <div className="p-4 bg-yellow-100 dark:bg-yellow-700 rounded shadow text-center">
           <p className="font-bold text-lg">⚔️ בינוני</p>
           <div className="h-3 bg-gray-300 dark:bg-gray-700 rounded mt-2">
-            <div className="h-3 bg-yellow-500 rounded" style={{ width: getPercent(mediumCount) }} />
+            <div
+              className="h-3 bg-yellow-500 rounded"
+              style={{ width: getPercent(mediumCount) }}
+            />
           </div>
           <p className="mt-2">
             {mediumCount} מתוך 20 (נותרו {20 - mediumCount})
           </p>
         </div>
 
-        {/* קשה */}
+        {/* Hard bar */}
         <div className="p-4 bg-red-100 dark:bg-red-700 rounded shadow text-center">
           <p className="font-bold text-lg">🔥 קשה</p>
           <div className="h-3 bg-gray-300 dark:bg-gray-700 rounded mt-2">
-            <div className="h-3 bg-red-500 rounded" style={{ width: getPercent(hardCount) }} />
+            <div
+              className="h-3 bg-red-500 rounded"
+              style={{ width: getPercent(hardCount) }}
+            />
           </div>
           <p className="mt-2">
             {hardCount} מתוך 20 (נותרו {20 - hardCount})
@@ -156,7 +175,7 @@ function Progress() {
         </div>
       </div>
 
-      {/* ---------- כפתור חזרה ---------- */}
+      {/* Back button */}
       <div className="flex justify-center mt-10">
         <button
           onClick={() => navigate('/')}
