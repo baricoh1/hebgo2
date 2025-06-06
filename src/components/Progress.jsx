@@ -16,30 +16,33 @@ import lvl3girl from '../images/lvl3girl.png';
 function Progress() {
   const navigate = useNavigate();
 
-  // 1. Retrieve username and gender from localStorage (or default)
+  // 1. Retrieve userName and gender from localStorage (or default)
   const [userName] = useState(() => localStorage.getItem('userName') || 'User');
   const [gender, setGender] = useState(() => localStorage.getItem('userGender') || 'other');
 
-  // 2. Retrieve difficulty directly from localStorage.userDifficulty (easy|medium|hard)
-  //    Default to "easy" if not present
+  // 2. Build the per-user localStorage keys:
+  //    - PROGRESS_KEY holds progress arrays per category (easy, medium, hard)
+  //    - DIFF_KEY holds the current difficulty string ("easy","medium","hard")
+  const PROGRESS_KEY = `userProgress_${userName}`;
+  const DIFF_KEY     = `userDifficulty_${userName}`;
+
+  // 3. trueLevel comes from localStorage.userDifficulty_<userName>, default "easy"
   const [trueLevel, setTrueLevel] = useState(
-    () => localStorage.getItem('userDifficulty') || 'easy'
+    () => localStorage.getItem(DIFF_KEY) || 'easy'
   );
 
-  // 3. Listen for changes to localStorage.userDifficulty and update trueLevel accordingly
+  // 4. Whenever localStorage.userDifficulty_<userName> changes, update trueLevel
   useEffect(() => {
     const onStorage = (e) => {
-      if (e.key === 'userDifficulty') {
+      if (e.key === DIFF_KEY) {
         setTrueLevel(e.newValue || 'easy');
       }
     };
     window.addEventListener('storage', onStorage);
-    return () => {
-      window.removeEventListener('storage', onStorage);
-    };
-  }, []);
+    return () => window.removeEventListener('storage', onStorage);
+  }, [DIFF_KEY]);
 
-  // 4. Optionally fetch gender and difficulty from Firestore and sync to localStorage
+  // 5. Optionally fetch gender and (if stored) difficulty from Firestore, then sync to localStorage
   useEffect(() => {
     async function fetchUserData() {
       if (!userName) return;
@@ -52,7 +55,7 @@ function Progress() {
           localStorage.setItem('userGender', data.gender);
         }
         if (data.difficulty) {
-          localStorage.setItem('userDifficulty', data.difficulty);
+          localStorage.setItem(DIFF_KEY, data.difficulty);
           setTrueLevel(data.difficulty);
         }
       } catch (err) {
@@ -60,16 +63,16 @@ function Progress() {
       }
     }
     fetchUserData();
-  }, [userName]);
+  }, [userName, DIFF_KEY]);
 
-  // 5. Map English keys to Hebrew labels
+  // 6. Map English keys to Hebrew labels
   const levelLabels = {
     easy: 'קל',
     medium: 'בינוני',
     hard: 'קשה',
   };
 
-  // 6. Choose appropriate image based on trueLevel and gender
+  // 7. Choose the correct image based on trueLevel + gender
   let levelImage;
   if (gender === 'female') {
     if (trueLevel === 'hard') levelImage = lvl3girl;
@@ -81,31 +84,33 @@ function Progress() {
     else levelImage = lvl1;
   }
 
-  // 7. Optionally load progress from localStorage for progress bars
+  // 8. Load progress from localStorage under PROGRESS_KEY,
+  //    which must be an object shaped like { us: { easy:[], medium:[], hard:[] }, ... }
+  //    Default empty for “us” if nothing’s present
   const [progress, setProgress] = useState({
     us: { easy: [], medium: [], hard: [] },
   });
+
   useEffect(() => {
-    const stored = localStorage.getItem('userProgress');
-    if (stored) {
+    const raw = localStorage.getItem(PROGRESS_KEY);
+    if (raw) {
       try {
-        const parsed = JSON.parse(stored);
-        setProgress((prev) => ({
-          ...prev,
-          ...(parsed.us && typeof parsed.us === 'object' ? { us: parsed.us } : {}),
-        }));
+        const parsed = JSON.parse(raw);
+        if (parsed.us && typeof parsed.us === 'object') {
+          setProgress((prev) => ({ ...prev, us: parsed.us }));
+        }
       } catch {
-        // If JSON.parse fails, keep the default structure
+        // If parse fails, ignore and keep default
       }
     }
-  }, []);
+  }, [PROGRESS_KEY]);
 
-  // 8. Safely count correct answers in each category using optional chaining and fallback to empty array
+  // 9. Safely compute counts with optional chaining + fallback to empty array
   const easyCount = (progress.us?.easy ?? []).length;
   const mediumCount = (progress.us?.medium ?? []).length;
   const hardCount = (progress.us?.hard ?? []).length;
 
-  // 9. Helper to calculate width percentage for a 20-question progress bar
+  // 10. Helper to get width percentage of a 20-question bar
   const getPercent = (val) => `${(val / 20) * 100}%`;
 
   return (
@@ -113,7 +118,7 @@ function Progress() {
       className="min-h-screen bg-blue-100 text-black dark:bg-gray-900 dark:text-white transition-colors duration-300 p-6"
       dir="rtl"
     >
-      {/* Top section: level image and label */}
+      {/* --- Top section: level image + label --- */}
       <div className="flex flex-col items-center mb-6">
         <img
           src={levelImage}
@@ -125,14 +130,14 @@ function Progress() {
         </p>
       </div>
 
-      {/* Welcome message */}
+      {/* --- Welcome message --- */}
       <p className="text-center text-lg text-gray-600 dark:text-gray-300 mb-6">
         {gender === 'female' ? 'ברוכה הבאה' : 'ברוך הבא'}, {userName} 👋
       </p>
 
-      {/* Progress bars for easy, medium, hard */}
+      {/* --- Progress bars for Easy/Medium/Hard --- */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-4xl mx-auto">
-        {/* Easy bar */}
+        {/* Easy Bar */}
         <div className="p-4 bg-green-100 dark:bg-green-800 rounded shadow text-center">
           <p className="font-bold text-lg">🔰 קל</p>
           <div className="h-3 bg-gray-300 dark:bg-gray-700 rounded mt-2">
@@ -146,7 +151,7 @@ function Progress() {
           </p>
         </div>
 
-        {/* Medium bar */}
+        {/* Medium Bar */}
         <div className="p-4 bg-yellow-100 dark:bg-yellow-700 rounded shadow text-center">
           <p className="font-bold text-lg">⚔️ בינוני</p>
           <div className="h-3 bg-gray-300 dark:bg-gray-700 rounded mt-2">
@@ -160,7 +165,7 @@ function Progress() {
           </p>
         </div>
 
-        {/* Hard bar */}
+        {/* Hard Bar */}
         <div className="p-4 bg-red-100 dark:bg-red-700 rounded shadow text-center">
           <p className="font-bold text-lg">🔥 קשה</p>
           <div className="h-3 bg-gray-300 dark:bg-gray-700 rounded mt-2">
@@ -175,7 +180,7 @@ function Progress() {
         </div>
       </div>
 
-      {/* Back button */}
+      {/* --- Back to Home button --- */}
       <div className="flex justify-center mt-10">
         <button
           onClick={() => navigate('/')}
