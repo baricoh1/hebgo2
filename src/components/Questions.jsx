@@ -59,6 +59,8 @@ function Questions() {
   const [toast, setToast]                 = useState(null);
   const [showEndModal, setShowEndModal]   = useState(false);
   const [currentQuestionNumber, setCurrentQuestionNumber] = useState(1);
+  const [questionsThisRound, setQuestionsThisRound] = useState(MAX_QUESTIONS);
+
 
   // hide quiz UI during level-up
   const [isLevelingUp, setIsLevelingUp] = useState(false);
@@ -84,8 +86,17 @@ function Questions() {
       if (!snap.exists()) return;
       const data = snap.data();
 
-      const serverProg = data.progress?.[lang]?.[currentDifficulty] || [];
-      setCorrectIndexes(serverProg);
+const serverProg = data.progress?.[lang]?.[currentDifficulty] || [];
+setCorrectIndexes(serverProg);
+
+const remaining = MAX_QUESTIONS_PER_CATEGORY - serverProg.length;
+if (remaining <= 0) {
+  setShowEndModal(true);
+  return;
+}
+setQuestionsThisRound(Math.min(remaining, MAX_QUESTIONS));
+
+
 
       // AUTO LEVEL-UP
       if (serverProg.length >= MAX_QUESTIONS_PER_CATEGORY) {
@@ -195,7 +206,7 @@ function Questions() {
   };
 
   const loadNextQuestion = () => {
-    if (currentQuestionNumber > MAX_QUESTIONS) return setShowEndModal(true);
+    if (currentQuestionNumber > questionsThisRound) return setShowEndModal(true);
     const nxt = getNextQuestionIndex();
     if (nxt === null) {
       setSeenQuestions([]);
@@ -210,14 +221,19 @@ function Questions() {
     }
   };
 
-  const nextQuestionAfterTimeout = () => {
-    const last = currentQuestionNumber >= MAX_QUESTIONS;
-    setCurrentQuestionNumber((n) => n + 1);
-    if (last) setShowEndModal(true);
-    else loadNextQuestion();
-  };
+const nextQuestionAfterTimeout = async () => {
+  if (correctIndexes.length >= MAX_QUESTIONS_PER_CATEGORY) return;
+  const last = currentQuestionNumber >= questionsThisRound;
+  if (last) setShowEndModal(true);
+  else {
+    setCurrentQuestionNumber(n => n + 1);
+    loadNextQuestion();
+  }
+};
 
-  const handleAnswerClick = (idx) => {
+
+
+  const handleAnswerClick = async (idx) => {
     if (selected !== null || locked) return;
     setSelected(idx);
     setLocked(true);
@@ -342,7 +358,7 @@ function Questions() {
                 />
               </div>
               <p className="text-right text-sm text-gray-600 dark:text-gray-300">
-                שאלה {currentQuestionNumber} מתוך {MAX_QUESTIONS}
+                שאלה {Math.min(currentQuestionNumber, questionsThisRound)} מתוך {questionsThisRound}
               </p>
 
               {/* Question Card */}
