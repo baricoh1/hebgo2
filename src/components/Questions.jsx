@@ -274,6 +274,8 @@ function Questions() {
       : { question: '', answers: [], hint: '', authohint: '' };
 
   const progressPercent = ((currentQuestionNumber - 1) / MAX_QUESTIONS) * 100;
+  const remainingQuestions = MAX_QUESTIONS - (currentQuestionNumber - 1);
+  const displayTotal = remainingQuestions < 10 ? remainingQuestions : MAX_QUESTIONS;
   const { enPart, hePart, punctuation } = splitQuestionText(question.question);
 
   // EARLY RETURN DURING LEVEL-UP
@@ -342,7 +344,7 @@ function Questions() {
                 />
               </div>
               <p className="text-right text-sm text-gray-600 dark:text-gray-300">
-                שאלה {currentQuestionNumber} מתוך {MAX_QUESTIONS}
+                שאלה {currentQuestionNumber} מתוך {displayTotal}
               </p>
 
               {/* Question Card */}
