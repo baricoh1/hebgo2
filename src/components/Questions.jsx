@@ -59,6 +59,7 @@ function Questions() {
   const [toast, setToast]                 = useState(null);
   const [showEndModal, setShowEndModal]   = useState(false);
   const [currentQuestionNumber, setCurrentQuestionNumber] = useState(1);
+  const [questionsThisRound, setQuestionsThisRound] = useState(MAX_QUESTIONS);
 
   // NEW: hide quiz UI during level-up
   const [isLevelingUp, setIsLevelingUp] = useState(false);
@@ -88,6 +89,9 @@ function Questions() {
 
       const serverProg = data.progress?.[lang]?.[currentDifficulty] || [];
       setCorrectIndexes(serverProg);
+      const remaining = MAX_QUESTIONS_PER_CATEGORY - serverProg.length;
+      setQuestionsThisRound(Math.min(remaining, MAX_QUESTIONS));
+
 
       // AUTO LEVEL-UP
       if (serverProg.length >= MAX_QUESTIONS_PER_CATEGORY) {
@@ -199,7 +203,7 @@ function Questions() {
   };
 
   const loadNextQuestion = () => {
-    if (currentQuestionNumber > MAX_QUESTIONS) return setShowEndModal(true);
+    if (currentQuestionNumber > questionsThisRound) return setShowEndModal(true);
     const nxt = getNextQuestionIndex();
     if (nxt === null) {
       setSeenQuestions([]);
@@ -215,7 +219,7 @@ function Questions() {
   };
 
   const nextQuestionAfterTimeout = () => {
-    const last = currentQuestionNumber >= MAX_QUESTIONS;
+    const last = currentQuestionNumber >= questionsThisRound;
     setCurrentQuestionNumber((n) => n + 1);
     if (last) setShowEndModal(true);
     else loadNextQuestion();
@@ -277,7 +281,7 @@ function Questions() {
       ? questionsList[questionIndex]
       : { question: '', answers: [], hint: '', authohint: '' };
 
-  const progressPercent = ((currentQuestionNumber - 1) / MAX_QUESTIONS) * 100;
+  const progressPercent = ((currentQuestionNumber - 1) / questionsThisRound) * 100;
   const { enPart, hePart, punctuation } = splitQuestionText(question.question);
 
   // EARLY RETURN DURING LEVEL-UP: full background + toast only
@@ -329,7 +333,7 @@ function Questions() {
               <div className="w-full bg-gray-300 dark:bg-gray-700 h-2 rounded-full overflow-hidden mt-2">
                 <div className="bg-blue-500 h-2 transition-all duration-300" style={{ width: `${progressPercent}%` }} />
               </div>
-              <p className="text-right text-sm text-gray-600 dark:text-gray-300">שאלה {currentQuestionNumber} מתוך {MAX_QUESTIONS}</p>
+              <p className="text-right text-sm text-gray-600 dark:text-gray-300">שאלה {currentQuestionNumber} מתוך {questionsThisRound}</p>
 
               {/* Question Card */}
               <main className="bg-white/90 dark:bg-gray-800 p-6 rounded-xl shadow-lg text-lg flex-grow transition-all duration-300">
@@ -401,11 +405,11 @@ function Questions() {
       {showEndModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-20">
           <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg space-y-4 max-w-sm">
-            <h2 className="text-2xl font-bold text-center">סיימת את כל {MAX_QUESTIONS} השאלות!</h2>
+            <h2 className="text-2xl font-bold text-center">סיימת את כל {questionsThisRound} השאלות!</h2>
             <div className="flex justify-center">
               <img src={getResultImage()} alt="Result" className="w-32 h-32" />
             </div>
-            <p className="text-center">תשובות נכונות: {correctCount} מתוך {MAX_QUESTIONS}</p>
+            <p className="text-center">תשובות נכונות: {correctCount} מתוך {questionsThisRound}</p>
             <button
               onClick={() => { setShowEndModal(false); navigate('/progress'); }}
               className="w-full py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
