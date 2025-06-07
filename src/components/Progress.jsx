@@ -16,49 +16,31 @@ function Progress() {
   const MAX_QUESTIONS = 20;
   const navigate = useNavigate();
 
-  const [userName, setUserName] = useState(() => localStorage.getItem('userName') || null);
-  const [gender, setGender] = useState(() => localStorage.getItem('userGender') || 'other');
-  const [trueLevel, setTrueLevel] = useState(() => localStorage.getItem('userDifficulty') || 'easy');
+  const [userName, setUserName] = useState(null);
+  const [gender, setGender] = useState('other');
+  const [trueLevel, setTrueLevel] = useState('easy');
   const [selectedLang, setSelectedLang] = useState('us');
-
-  const defaultProgress = {
+  const [progress, setProgress] = useState({
     us: { easy: [], medium: [], hard: [] },
     es: { easy: [], medium: [], hard: [] },
     ru: { easy: [], medium: [], hard: [] },
-  };
-
-  const [progress, setProgress] = useState(() => {
-    try {
-      const stored = localStorage.getItem('userProgress');
-      return stored ? JSON.parse(stored) : defaultProgress;
-    } catch {
-      return defaultProgress;
-    }
   });
 
   useEffect(() => {
     const fetchUserData = async () => {
-      if (!userName) return;
+      const localName = localStorage.getItem('userName');
+      if (!localName) return;
+      setUserName(localName);
 
       try {
-        const userDoc = await getDoc(doc(db, 'users', userName));
+        const userDoc = await getDoc(doc(db, 'users', localName));
         if (userDoc.exists()) {
           const data = userDoc.data();
 
-          if (data.progress) {
-            setProgress(data.progress);
-            localStorage.setItem('userProgress', JSON.stringify(data.progress));
-          }
-
-          if (data.gender) {
-            setGender(data.gender);
-            localStorage.setItem('userGender', data.gender);
-          }
-
-          if (data.difficulty) {
-            setTrueLevel(data.difficulty);
-            localStorage.setItem('userDifficulty', data.difficulty);
-          }
+          if (data.progress) setProgress(data.progress);
+          if (data.gender) setGender(data.gender);
+          if (data.difficulty) setTrueLevel(data.difficulty);
+          if (data.language) setSelectedLang(data.language);
         }
       } catch (err) {
         console.error('Error fetching user document:', err);
@@ -66,7 +48,7 @@ function Progress() {
     };
 
     fetchUserData();
-  }, [userName]);
+  }, []);
 
   const levelLabels = {
     easy: 'קל',

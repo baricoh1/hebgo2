@@ -32,11 +32,11 @@ function Register() {
         alert('שם המשתמש כבר קיים. אנא בחר שם אחר.');
         return;
       }
-      
-      
+
       await setDoc(doc(db, 'users', userName), {
         password,
         gender,
+        language: lang, // ✅ Added language field here
         progress: defaultProgress,
         difficulty: 'easy'
       });
