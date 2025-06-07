@@ -164,9 +164,6 @@ function Questions() {
       if (nextLevel) {
         setToast({ message: `🎉 כל הכבוד! עברת לרמה: ${nextLevel}`, type: 'success' });
         setTimeout(() => {
-          localStorage.setItem('userDifficulty', nextLevel);
-          storeProgressLocally([]);
-          setCorrectIndexes([]);
           window.location.reload();
         }, 2000);
         return;
