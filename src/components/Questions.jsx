@@ -45,42 +45,12 @@ function Questions() {
   }
 
   /* ------------------------------------------------------------------
-     HELPERS TO INTERACT WITH LOCAL STORAGE
-  ------------------------------------------------------------------ */
-  const loadStoredProgress = () => {
-    try {
-      const raw = localStorage.getItem('userProgress');
-      if (!raw) return [];
-      const parsed = JSON.parse(raw);
-      return parsed?.[lang]?.[currentDifficulty] || [];
-    } catch {
-      return [];
-    }
-  };
-
-  const storeProgressLocally = (array) => {
-    try {
-      const prev = JSON.parse(localStorage.getItem('userProgress') || '{}');
-      const upd  = {
-        ...prev,
-        [lang]: {
-          ...(prev[lang] || {}),
-          [currentDifficulty]: array,
-        },
-      };
-      localStorage.setItem('userProgress', JSON.stringify(upd));
-    } catch (e) {
-      console.error('localStorage error:', e);
-    }
-  };
-
-  /* ------------------------------------------------------------------
      REACT STATE
   ------------------------------------------------------------------ */
   const [questionIndex, setQuestionIndex]       = useState(null);
   const [seenQuestions, setSeenQuestions]       = useState([]);
   const [selected, setSelected]                 = useState(null);
-  const [correctIndexes, setCorrectIndexes]     = useState(loadStoredProgress);
+  const [correctIndexes, setCorrectIndexes]     = useState([]);
   const [correctCount, setCorrectCount]         = useState(0);
   const [locked, setLocked]                     = useState(false);
   const [showHint, setShowHint]                 = useState(false);
@@ -113,10 +83,8 @@ function Questions() {
       const data = snap.data();
 
       const serverProg = data?.progress?.[lang]?.[currentDifficulty] || [];
-      if (serverProg.length !== correctIndexes.length) {
-        setCorrectIndexes(serverProg);
-        storeProgressLocally(serverProg);
-      }
+      setCorrectIndexes(serverProg);
+      
       if (serverProg.length >= MAX_QUESTIONS_PER_CATEGORY){
         const next = getNextDifficulty(currentDifficulty);
         if (next) {
@@ -176,7 +144,10 @@ function Questions() {
      UPDATE PROGRESS WHEN DIFFICULTY CHANGES
   ------------------------------------------------------------------ */
   useEffect(() => {
-    setCorrectIndexes(loadStoredProgress());
+    setCorrectIndexes([]);
+    if (currentDifficulty) {
+      fetchProgressFromDB();
+    }
   }, [currentDifficulty]);
 
   /* ------------------------------------------------------------------
@@ -251,7 +222,6 @@ function Questions() {
       if (!correctIndexes.includes(questionIndex)) {
         const updated = [...correctIndexes, questionIndex];
         setCorrectIndexes(updated);
-        storeProgressLocally(updated);
         saveProgressToDB(updated);
       }
       setCorrectCount(c => c + 1);
