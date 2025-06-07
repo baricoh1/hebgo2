@@ -250,7 +250,7 @@ const nextQuestionAfterTimeout = () => {
 };
 
 
-  const handleAnswerClick = (idx) => {
+  const handleAnswerClick = async (idx) => {
     if (selected !== null || locked) return;
     setSelected(idx);
     setLocked(true);
@@ -264,7 +264,7 @@ const nextQuestionAfterTimeout = () => {
 if (!correctIndexes.includes(questionIndex)) {
   const updated = [...correctIndexes, questionIndex];
   setCorrectIndexes(updated);
-  saveProgressToDB(updated);
+  await saveProgressToDB(updated);
 
 
   if (updated.length >= MAX_QUESTIONS_PER_CATEGORY) {
