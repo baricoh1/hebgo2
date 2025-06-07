@@ -219,10 +219,13 @@ function Questions() {
   };
 
   const nextQuestionAfterTimeout = () => {
-    const last = currentQuestionNumber >= questionsThisRound;
-    setCurrentQuestionNumber((n) => n + 1);
-    if (last) setShowEndModal(true);
-    else loadNextQuestion();
+const last = currentQuestionNumber >= questionsThisRound;
+if (last) {
+  setShowEndModal(true);
+} else {
+  setCurrentQuestionNumber((n) => n + 1);
+  loadNextQuestion();
+}
   };
 
   const handleAnswerClick = (idx) => {
@@ -247,14 +250,18 @@ function Questions() {
       setToast({ message: '❌ תשובה שגויה!', type: 'error' });
     }
 
-    setTimeout(() => {
-      setToast(null);
-      const isLast = currentQuestionNumber >= MAX_QUESTIONS;
-      setCurrentQuestionNumber((n) => n + 1);
-      if (isLast) setShowEndModal(true);
-      else loadNextQuestion();
-      setLocked(false);
-    }, 1500);
+setTimeout(() => {
+  setToast(null);
+  const isLast = currentQuestionNumber >= questionsThisRound;
+  if (isLast) {
+    setShowEndModal(true);
+  } else {
+    setCurrentQuestionNumber((n) => n + 1);
+    loadNextQuestion();
+  }
+  setLocked(false);
+}, 1500);
+
   };
 
   function splitQuestionText(text) {
