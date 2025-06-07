@@ -104,7 +104,7 @@ function Progress() {
             <div className="h-3 bg-green-500 rounded" style={{ width: getPercent(easy) }} />
           </div>
           <p className="mt-2">
-            {easy} מתוך {MAX_QUESTIONS} (נותרו {MAX_QUESTIONS - easy})
+            {easy} מתוך {MAX_QUESTIONS} (נותרו {Math.max(0, MAX_QUESTIONS - easy)})
           </p>
         </div>
 
@@ -114,7 +114,7 @@ function Progress() {
             <div className="h-3 bg-yellow-500 rounded" style={{ width: getPercent(medium) }} />
           </div>
           <p className="mt-2">
-            {medium} מתוך {MAX_QUESTIONS} (נותרו {MAX_QUESTIONS - medium})
+            {medium} מתוך {MAX_QUESTIONS} (נותרו {Math.max(0, MAX_QUESTIONS - medium)})
           </p>
         </div>
 
@@ -124,7 +124,7 @@ function Progress() {
             <div className="h-3 bg-red-500 rounded" style={{ width: getPercent(hard) }} />
           </div>
           <p className="mt-2">
-            {hard} מתוך {MAX_QUESTIONS} (נותרו {MAX_QUESTIONS - hard})
+            {hard} מתוך {MAX_QUESTIONS} (נותרו {Math.max(0, MAX_QUESTIONS - hard)})
           </p>
         </div>
       </div>
