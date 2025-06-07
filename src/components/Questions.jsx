@@ -23,6 +23,11 @@
   import wrongSound from '../sounds/wrong_answer.mp3';
   
   function Questions() {
+  const getNextDifficulty = (current) => {
+    const order = ['easy', 'medium', 'hard'];
+    const idx = order.indexOf(current);
+    return idx >= 0 && idx < order.length - 1 ? order[idx + 1] : null;
+  };
     /* ------------------------------------------------------------------
        CONSTANTS & BASIC DATA
     ------------------------------------------------------------------ */
