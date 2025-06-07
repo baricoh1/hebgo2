@@ -90,7 +90,9 @@ function Questions() {
       const serverProg = data.progress?.[lang]?.[currentDifficulty] || [];
       setCorrectIndexes(serverProg);
       const remaining = MAX_QUESTIONS_PER_CATEGORY - serverProg.length;
-      setQuestionsThisRound(Math.min(remaining, MAX_QUESTIONS));
+      const paddedRemaining = remaining > 0 && remaining < MAX_QUESTIONS ? remaining + 1 : remaining;
+
+setQuestionsThisRound(Math.min(paddedRemaining, MAX_QUESTIONS));
 
 
       // AUTO LEVEL-UP
