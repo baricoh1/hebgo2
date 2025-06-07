@@ -26,19 +26,19 @@ function Questions() {
   /* ------------------------------------------------------------------
      CONSTANTS & BASIC DATA
   ------------------------------------------------------------------ */
-  const MAX_QUESTIONS = 10;               // how many questions per round
-  const MAX_QUESTIONS_PER_CATEGORY = 20;  // total questions available in a category
+  const MAX_QUESTIONS = 10;               // questions per round
+  const MAX_QUESTIONS_PER_CATEGORY = 20;  // total questions per difficulty
   const navigate = useNavigate();
 
-  // User preferences saved locally
-  const userName   = localStorage.getItem('userName');
-  const lang       = localStorage.getItem('userLang');
-  const [currentDifficulty, setCurrentDifficulty] = useState(localStorage.getItem('userDifficulty'));
+  const userName = localStorage.getItem('userName');
+  const lang     = localStorage.getItem('userLang');
+  const [currentDifficulty, setCurrentDifficulty] = useState(
+    localStorage.getItem('userDifficulty')
+  );
 
   const hintTextMap = { en: 'Show Hint', es: 'Mostrar pista', ru: 'Показать подсказку' };
   const currentHintText = hintTextMap[lang] || 'Show Hint';
 
-  // Load questions from JSON bundle
   const questionsList = questionsData?.[lang]?.[currentDifficulty] || [];
   if (!lang || !currentDifficulty || questionsList.length === 0) {
     return <div className="p-4 text-red-600">לא ניתן לטעון את השאלות. ודא שהשפה והרמה נבחרו כראוי.</div>;
@@ -47,28 +47,28 @@ function Questions() {
   /* ------------------------------------------------------------------
      REACT STATE
   ------------------------------------------------------------------ */
-  const [questionIndex, setQuestionIndex]       = useState(null);
-  const [seenQuestions, setSeenQuestions]       = useState([]);
-  const [selected, setSelected]                 = useState(null);
-  const [correctIndexes, setCorrectIndexes]     = useState([]);
-  const [correctCount, setCorrectCount]         = useState(0);
-  const [locked, setLocked]                     = useState(false);
-  const [showHint, setShowHint]                 = useState(false);
-  const [showAutoHint, setShowAutoHint]         = useState(false);
-  const [time, setTime]                         = useState(30);
-  const [toast, setToast]                       = useState(null);
-  const [showEndModal, setShowEndModal]         = useState(false);
+  const [questionIndex, setQuestionIndex] = useState(null);
+  const [seenQuestions, setSeenQuestions] = useState([]);
+  const [selected, setSelected]           = useState(null);
+  const [correctIndexes, setCorrectIndexes] = useState([]);
+  const [correctCount, setCorrectCount]   = useState(0);
+  const [locked, setLocked]               = useState(false);
+  const [showHint, setShowHint]           = useState(false);
+  const [showAutoHint, setShowAutoHint]   = useState(false);
+  const [time, setTime]                   = useState(30);
+  const [toast, setToast]                 = useState(null);
+  const [showEndModal, setShowEndModal]   = useState(false);
   const [currentQuestionNumber, setCurrentQuestionNumber] = useState(1);
 
-  // NEW: flag to hide quiz UI during level-up
+  // NEW: hide quiz UI during level-up
   const [isLevelingUp, setIsLevelingUp] = useState(false);
 
   const initialLoad = useRef(false);
 
   const getNextDifficulty = (level) => {
     const levels = ['easy', 'medium', 'hard'];
-    const currentIndex = levels.indexOf(level);
-    return currentIndex < levels.length - 1 ? levels[currentIndex + 1] : null;
+    const idx = levels.indexOf(level);
+    return idx < levels.length - 1 ? levels[idx + 1] : null;
   };
 
   const getDifficultyDisplayName = (level) => {
@@ -84,8 +84,8 @@ function Questions() {
       const userRef = doc(db, 'users', userName);
       const snap = await getDoc(userRef);
       if (!snap.exists()) return;
-
       const data = snap.data();
+
       const serverProg = data.progress?.[lang]?.[currentDifficulty] || [];
       setCorrectIndexes(serverProg);
 
@@ -98,21 +98,13 @@ function Questions() {
             message: `🎉 כל הכבוד! עלית לרמה ${getDifficultyDisplayName(next)}!`,
             type: 'levelup'
           });
-
           // 2) hide the quiz UI
           setIsLevelingUp(true);
-
-          // 3) persist the new difficulty in Firestore
-          await setDoc(
-            userRef,
-            { difficulty: next },
-            { merge: true }
-          );
-
-          // 4) update localStorage so Questions.jsx picks it up immediately
+          // 3) persist new difficulty to Firestore
+          await setDoc(userRef, { difficulty: next }, { merge: true });
+          // 4) update localStorage
           localStorage.setItem('userDifficulty', next);
-
-          // 5) after the toast, reload to reflect new level everywhere
+          // 5) reload after toast
           setTimeout(() => {
             setToast(null);
             setCurrentDifficulty(next);
@@ -121,7 +113,7 @@ function Questions() {
         }
       }
 
-      // keep gender in sync
+      // sync gender in localStorage
       if (data.gender) {
         localStorage.setItem('userGender', data.gender);
       }
@@ -135,23 +127,27 @@ function Questions() {
       const ref = doc(db, 'users', userName);
       const snap = await getDoc(ref);
       const base = snap.exists() ? snap.data() : {};
-      await setDoc(ref, {
-        ...base,
-        progress: {
-          ...(base.progress || {}),
-          [lang]: {
-            ...(base.progress?.[lang] || {}),
-            [currentDifficulty]: updatedArr,
+      await setDoc(
+        ref,
+        {
+          ...base,
+          progress: {
+            ...(base.progress || {}),
+            [lang]: {
+              ...(base.progress?.[lang] || {}),
+              [currentDifficulty]: updatedArr,
+            },
           },
         },
-      }, { merge: true });
+        { merge: true }
+      );
     } catch (err) {
       console.error('Error writing progress:', err);
     }
   };
 
   /* ------------------------------------------------------------------
-     INITIAL LOAD
+     EFFECTS
   ------------------------------------------------------------------ */
   useEffect(() => {
     if (questionIndex === null) loadNextQuestion();
@@ -161,9 +157,6 @@ function Questions() {
     }
   }, [questionIndex]);
 
-  /* ------------------------------------------------------------------
-     UPDATE PROGRESS WHEN DIFFICULTY CHANGES
-  ------------------------------------------------------------------ */
   useEffect(() => {
     setCorrectIndexes([]);
     if (currentDifficulty) {
@@ -171,9 +164,6 @@ function Questions() {
     }
   }, [currentDifficulty]);
 
-  /* ------------------------------------------------------------------
-     TIMER HOOK
-  ------------------------------------------------------------------ */
   useEffect(() => {
     const id = setInterval(() => {
       setTime((t) => {
@@ -201,21 +191,21 @@ function Questions() {
      QUESTION FLOW HELPERS
   ------------------------------------------------------------------ */
   const getNextQuestionIndex = () => {
-    const candidates = questionsList.map((_, i) => i)
-      .filter(i => !seenQuestions.includes(i) && !correctIndexes.includes(i));
+    const candidates = questionsList
+      .map((_, i) => i)
+      .filter((i) => !seenQuestions.includes(i) && !correctIndexes.includes(i));
     if (candidates.length === 0) return null;
     return candidates[Math.floor(Math.random() * candidates.length)];
   };
 
   const loadNextQuestion = () => {
     if (currentQuestionNumber > MAX_QUESTIONS) return setShowEndModal(true);
-
     const nxt = getNextQuestionIndex();
     if (nxt === null) {
       setSeenQuestions([]);
       setShowEndModal(true);
     } else {
-      setSeenQuestions(prev => [...prev, nxt]);
+      setSeenQuestions((prev) => [...prev, nxt]);
       setQuestionIndex(nxt);
       setSelected(null);
       setShowHint(false);
@@ -226,8 +216,9 @@ function Questions() {
 
   const nextQuestionAfterTimeout = () => {
     const last = currentQuestionNumber >= MAX_QUESTIONS;
-    setCurrentQuestionNumber(n => n + 1);
-    if (last) setShowEndModal(true); else loadNextQuestion();
+    setCurrentQuestionNumber((n) => n + 1);
+    if (last) setShowEndModal(true);
+    else loadNextQuestion();
   };
 
   const handleAnswerClick = (idx) => {
@@ -245,7 +236,7 @@ function Questions() {
         setCorrectIndexes(updated);
         saveProgressToDB(updated);
       }
-      setCorrectCount(c => c + 1);
+      setCorrectCount((c) => c + 1);
       setToast({ message: '✅ תשובה נכונה!', type: 'success' });
     } else {
       wrongAudio.play();
@@ -255,37 +246,48 @@ function Questions() {
     setTimeout(() => {
       setToast(null);
       const isLast = currentQuestionNumber >= MAX_QUESTIONS;
-      setCurrentQuestionNumber(n => n + 1);
-      if (isLast) setShowEndModal(true); else loadNextQuestion();
+      setCurrentQuestionNumber((n) => n + 1);
+      if (isLast) setShowEndModal(true);
+      else loadNextQuestion();
       setLocked(false);
     }, 1500);
   };
 
   function splitQuestionText(text) {
     const heMatch = text.match(/['״'][א-ת\s_\-.,:()]+['״]/);
-    const hePart = heMatch ? heMatch[0] : '';
-
-    const enPart = hePart ? text.replace(hePart, '').replace(/[?؟!]/g, '').trim() : text;
-
+    const hePart  = heMatch ? heMatch[0] : '';
+    const enPart  = hePart ? text.replace(hePart, '').replace(/[?؟!]/g, '').trim() : text;
     const punctuationMatch = text.trim().match(/[?؟!]+$/);
     const punctuation = punctuationMatch ? punctuationMatch[0] : '';
-
     return { enPart, hePart, punctuation };
   }
 
   /* ------------------------------------------------------------------
      RENDER HELPERS
   ------------------------------------------------------------------ */
-  const formatTime = (s) => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
-  const getResultImage = () => [ball0, ball1, ball2, ball3, ball4, ball5, ball6, ball7, ball8, ball9, ball10][correctCount] || ball0;
-  const question = questionIndex !== null ? questionsList[questionIndex] : { question: '', answers: [], hint: '', authohint: '' };
+  const formatTime = (s) =>
+    `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+  const getResultImage = () =>
+    [ball0, ball1, ball2, ball3, ball4, ball5, ball6, ball7, ball8, ball9, ball10][
+      correctCount
+    ] || ball0;
+
+  const question =
+    questionIndex !== null
+      ? questionsList[questionIndex]
+      : { question: '', answers: [], hint: '', authohint: '' };
+
   const progressPercent = ((currentQuestionNumber - 1) / MAX_QUESTIONS) * 100;
   const { enPart, hePart, punctuation } = splitQuestionText(question.question);
 
-  // EARLY RETURN DURING LEVEL-UP: only show the toast
+  // EARLY RETURN DURING LEVEL-UP: full background + toast only
   if (isLevelingUp) {
     return (
-      <>
+      <div
+        dir="rtl"
+        className="bg-blue-100 dark:bg-gray-900 text-black dark:text-white min-h-screen
+                   flex items-center justify-center transition-colors duration-300"
+      >
         {toast && (
           <div
             className="fixed bottom-6 left-1/2 transform -translate-x-1/2
@@ -295,15 +297,15 @@ function Questions() {
             {toast.message}
           </div>
         )}
-      </>
+      </div>
     );
   }
 
   /* ------------------------------------------------------------------
-     JSX RETURN
+     MAIN JSX RETURN
   ------------------------------------------------------------------ */
   return (
-    <div dir="rtl" className="bg-blue-100 text-black dark:bg-gray-900 dark:text-white min-h-screen transition-colors duration-300">
+    <div dir="rtl" className="bg-blue-100 dark:bg-gray-900 text-black dark:text-white min-h-screen transition-colors duration-300">
       {/* --------------------------- QUIZ AREA --------------------------- */}
       <div className={`relative z-10 ${showEndModal ? 'pointer-events-none blur-sm' : ''}`}>
         <div className="max-w-4xl mx-auto flex flex-col p-4 space-y-4">
