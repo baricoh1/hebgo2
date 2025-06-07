@@ -93,6 +93,14 @@ function Questions() {
 
   const initialLoad = useRef(false);
 
+  const getNextDifficulty = (level) => {
+  const levels = ['easy', 'medium', 'hard'];
+  const currentIndex = levels.indexOf(level);
+  return currentIndex < levels.length - 1 ? levels[currentIndex + 1] : null;
+};
+
+
+
   /* ------------------------------------------------------------------
      FIREBASE HELPERS
   ------------------------------------------------------------------ */
@@ -107,7 +115,13 @@ function Questions() {
         setCorrectIndexes(serverProg);
         storeProgressLocally(serverProg);
       }
-      if (serverProg.length >= MAX_QUESTIONS_PER_CATEGORY) setShowRestartModal(true);
+      if (serverProg.length >= MAX_QUESTIONS_PER_CATEGORY){
+        const next = getNextDifficulty(difficulty);
+        if (next) {
+          difficulty = next; 
+        }
+      }
+        
 
       if (data.gender)      localStorage.setItem('userGender', data.gender);
     } catch (err) {
