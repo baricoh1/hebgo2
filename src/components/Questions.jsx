@@ -77,37 +77,53 @@ function Questions() {
      FIREBASE HELPERS
   ------------------------------------------------------------------ */
   const fetchProgressFromDB = async () => {
-    try {
-      const snap = await getDoc(doc(db, 'users', userName));
-      if (!snap.exists()) return;
-      const data = snap.data();
+  try {
+    const userRef = doc(db, 'users', userName);
+    const snap = await getDoc(userRef);
+    if (!snap.exists()) return;
 
-      const serverProg = data?.progress?.[lang]?.[currentDifficulty] || [];
-      setCorrectIndexes(serverProg);
-      
-      if (serverProg.length >= MAX_QUESTIONS_PER_CATEGORY){
-        const next = getNextDifficulty(currentDifficulty);
-        if (next) {
-          // Show level up toast
-          setToast({ 
-            message: `🎉 כל הכבוד! עלית לרמה ${getDifficultyDisplayName(next)}!`, 
-            type: 'levelup' 
-          });
-          
-          setTimeout(() => {
-            setToast(null);
-            setCurrentDifficulty(next);
-            localStorage.setItem('userDifficulty', next);
-            window.location.reload();
-          }, 3000);
-        }
-      }     
-        
-      if (data.gender) localStorage.setItem('userGender', data.gender);
-    } catch (err) {
-      console.error('Error fetching user progress:', err);
+    const data = snap.data();
+    const serverProg = data.progress?.[lang]?.[currentDifficulty] || [];
+    setCorrectIndexes(serverProg);
+
+    // AUTO LEVEL-UP
+    if (serverProg.length >= MAX_QUESTIONS_PER_CATEGORY) {
+      const next = getNextDifficulty(currentDifficulty);
+      if (next) {
+        // 1) show level-up toast
+        setToast({
+          message: `🎉 כל הכבוד! עלית לרמה ${getDifficultyDisplayName(next)}!`,
+          type: 'levelup'
+        });
+
+        // 2) persist the new difficulty in Firestore
+        await setDoc(
+          userRef,
+          { difficulty: next },
+          { merge: true }
+        );
+
+        // 3) update localStorage so Questions.jsx in-memory state picks it up
+        localStorage.setItem('userDifficulty', next);
+
+        // 4) after the toast, reload to re-run fetchProgressFromDB with the new level
+        setTimeout(() => {
+          setToast(null);
+          setCurrentDifficulty(next);
+          window.location.reload();
+        }, 3000);
+      }
     }
-  };
+
+    // keep gender in sync too
+    if (data.gender) {
+      localStorage.setItem('userGender', data.gender);
+    }
+
+  } catch (err) {
+    console.error('Error fetching user progress:', err);
+  }
+};
 
   const saveProgressToDB = async (updatedArr) => {
     try {
