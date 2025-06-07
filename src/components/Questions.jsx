@@ -168,9 +168,20 @@ function Questions() {
       if (correctIndexes.length >= MAX_QUESTIONS_PER_CATEGORY) {
         const nextLevel = getNextDifficulty(difficulty);
         if (nextLevel) {
-          setToast({ message: `🎉 כל הכבוד! עברת לרמה: ${nextLevel}`, type: 'success' });
-        setTimeout(() => {
+          try {
+            const ref = doc(db, 'users', userName);
+            const snap = await getDoc(ref);
+            const base = snap.exists() ? snap.data() : {};
+            await setDoc(ref, {
+              ...base,
+              difficulty: nextLevel
+            }, { merge: true });
+          } catch (err) {
+            console.error('Error updating difficulty in DB:', err);
+          }
           localStorage.setItem('userDifficulty', nextLevel);
+          setToast({ message: `🎉 כל הכבוד! עברת לרמה: ${nextLevel}`, type: 'success' });
+          setTimeout(() => {
           window.location.reload();
           }, 2000);
           return;
