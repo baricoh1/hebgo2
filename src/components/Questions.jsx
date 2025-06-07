@@ -26,8 +26,8 @@ function Questions() {
   /* ------------------------------------------------------------------
      CONSTANTS & BASIC DATA
   ------------------------------------------------------------------ */
-  const MAX_QUESTIONS = 10;               // questions per round
-  const MAX_QUESTIONS_PER_CATEGORY = 20;  // total questions per difficulty
+  const MAX_QUESTIONS = 10;
+  const MAX_QUESTIONS_PER_CATEGORY = 20;
   const navigate = useNavigate();
 
   const userName = localStorage.getItem('userName');
@@ -59,12 +59,9 @@ function Questions() {
   const [toast, setToast]                 = useState(null);
   const [showEndModal, setShowEndModal]   = useState(false);
   const [currentQuestionNumber, setCurrentQuestionNumber] = useState(1);
-  const [questionsThisRound, setQuestionsThisRound] = useState(MAX_QUESTIONS);
 
-  // NEW: hide quiz UI during level-up
+  // hide quiz UI during level-up
   const [isLevelingUp, setIsLevelingUp] = useState(false);
-
-  const initialLoad = useRef(false);
 
   const getNextDifficulty = (level) => {
     const levels = ['easy', 'medium', 'hard'];
@@ -89,45 +86,18 @@ function Questions() {
 
       const serverProg = data.progress?.[lang]?.[currentDifficulty] || [];
       setCorrectIndexes(serverProg);
-      if (serverProg.length >= MAX_QUESTIONS_PER_CATEGORY) {
-  const next = getNextDifficulty(currentDifficulty);
-  if (next) {
-    setToast({
-      message: `🎉 כל הכבוד! עלית לרמה ${getDifficultyDisplayName(next)}!`,
-      type: 'levelup'
-    });
-    setIsLevelingUp(true);
-    await setDoc(userRef, { difficulty: next }, { merge: true });
-    localStorage.setItem('userDifficulty', next);
-    setTimeout(() => {
-      setToast(null);
-      setCurrentDifficulty(next);
-      window.location.reload();
-    }, 3000);
-  }
-  return; 
-}
-
-const remaining = MAX_QUESTIONS_PER_CATEGORY - serverProg.length;
-setQuestionsThisRound(Math.min(remaining, MAX_QUESTIONS));
-
 
       // AUTO LEVEL-UP
       if (serverProg.length >= MAX_QUESTIONS_PER_CATEGORY) {
         const next = getNextDifficulty(currentDifficulty);
         if (next) {
-          // 1) show level-up toast
           setToast({
             message: `🎉 כל הכבוד! עלית לרמה ${getDifficultyDisplayName(next)}!`,
             type: 'levelup'
           });
-          // 2) hide the quiz UI
           setIsLevelingUp(true);
-          // 3) persist new difficulty to Firestore
           await setDoc(userRef, { difficulty: next }, { merge: true });
-          // 4) update localStorage
           localStorage.setItem('userDifficulty', next);
-          // 5) reload after toast
           setTimeout(() => {
             setToast(null);
             setCurrentDifficulty(next);
@@ -136,7 +106,6 @@ setQuestionsThisRound(Math.min(remaining, MAX_QUESTIONS));
         }
       }
 
-      // sync gender in localStorage
       if (data.gender) {
         localStorage.setItem('userGender', data.gender);
       }
@@ -172,21 +141,25 @@ setQuestionsThisRound(Math.min(remaining, MAX_QUESTIONS));
   /* ------------------------------------------------------------------
      EFFECTS
   ------------------------------------------------------------------ */
+  // 1) Fetch progress once on mount
   useEffect(() => {
-    if (questionIndex === null) loadNextQuestion();
-    if (!initialLoad.current) {
-      fetchProgressFromDB();
-      initialLoad.current = true;
+    fetchProgressFromDB();
+  }, []);
+
+  // 2) Re-fetch (and clear) when difficulty changes
+  useEffect(() => {
+    setCorrectIndexes([]);
+    fetchProgressFromDB();
+  }, [currentDifficulty]);
+
+  // 3) Only load next question when questionIndex is null
+  useEffect(() => {
+    if (questionIndex === null) {
+      loadNextQuestion();
     }
   }, [questionIndex]);
 
-  useEffect(() => {
-    setCorrectIndexes([]);
-    if (currentDifficulty) {
-      fetchProgressFromDB();
-    }
-  }, [currentDifficulty]);
-
+  // Timer
   useEffect(() => {
     const id = setInterval(() => {
       setTime((t) => {
@@ -222,7 +195,7 @@ setQuestionsThisRound(Math.min(remaining, MAX_QUESTIONS));
   };
 
   const loadNextQuestion = () => {
-    if (currentQuestionNumber > questionsThisRound) return setShowEndModal(true);
+    if (currentQuestionNumber > MAX_QUESTIONS) return setShowEndModal(true);
     const nxt = getNextQuestionIndex();
     if (nxt === null) {
       setSeenQuestions([]);
@@ -237,38 +210,14 @@ setQuestionsThisRound(Math.min(remaining, MAX_QUESTIONS));
     }
   };
 
-const nextQuestionAfterTimeout = () => {
-  const totalCorrect = correctIndexes.length;
-
-  if (totalCorrect >= MAX_QUESTIONS_PER_CATEGORY) {
-    const next = getNextDifficulty(currentDifficulty);
-    if (next) {
-      setToast({
-        message: `🎉 כל הכבוד! עלית לרמה ${getDifficultyDisplayName(next)}!`,
-        type: 'levelup'
-      });
-      setIsLevelingUp(true);
-      localStorage.setItem('userDifficulty', next);
-      setTimeout(() => {
-        setToast(null);
-        setCurrentDifficulty(next);
-        window.location.reload();
-      }, 3000);
-      return;
-    }
-  }
-
-  const last = currentQuestionNumber >= questionsThisRound;
-  if (last) {
-    setShowEndModal(true);
-  } else {
+  const nextQuestionAfterTimeout = () => {
+    const last = currentQuestionNumber >= MAX_QUESTIONS;
     setCurrentQuestionNumber((n) => n + 1);
-    loadNextQuestion();
-  }
-};
+    if (last) setShowEndModal(true);
+    else loadNextQuestion();
+  };
 
-
-  const handleAnswerClick = async (idx) => {
+  const handleAnswerClick = (idx) => {
     if (selected !== null || locked) return;
     setSelected(idx);
     setLocked(true);
@@ -278,31 +227,11 @@ const nextQuestionAfterTimeout = () => {
 
     if (idx === question.correct) {
       correctAudio.play();
-
-if (!correctIndexes.includes(questionIndex)) {
-  const updated = [...correctIndexes, questionIndex];
-  setCorrectIndexes(updated);
-  await saveProgressToDB(updated);
-
-
-  if (updated.length >= MAX_QUESTIONS_PER_CATEGORY) {
-    const next = getNextDifficulty(currentDifficulty);
-    if (next) {
-      setToast({
-        message: `🎉 כל הכבוד! עלית לרמה ${getDifficultyDisplayName(next)}!`,
-        type: 'levelup'
-      });
-      setIsLevelingUp(true);
-      localStorage.setItem('userDifficulty', next);
-      setTimeout(() => {
-        setToast(null);
-        setCurrentDifficulty(next);
-        window.location.reload();
-      }, 3000);
-      return; 
-    }
-  }
-}
+      if (!correctIndexes.includes(questionIndex)) {
+        const updated = [...correctIndexes, questionIndex];
+        setCorrectIndexes(updated);
+        saveProgressToDB(updated);
+      }
       setCorrectCount((c) => c + 1);
       setToast({ message: '✅ תשובה נכונה!', type: 'success' });
     } else {
@@ -310,18 +239,14 @@ if (!correctIndexes.includes(questionIndex)) {
       setToast({ message: '❌ תשובה שגויה!', type: 'error' });
     }
 
-setTimeout(() => {
-  setToast(null);
-  const isLast = currentQuestionNumber >= questionsThisRound;
-  if (isLast) {
-    setShowEndModal(true);
-  } else {
-    setCurrentQuestionNumber((n) => n + 1);
-    loadNextQuestion();
-  }
-  setLocked(false);
-}, 1500);
-
+    setTimeout(() => {
+      setToast(null);
+      const isLast = currentQuestionNumber >= MAX_QUESTIONS;
+      setCurrentQuestionNumber((n) => n + 1);
+      if (isLast) setShowEndModal(true);
+      else loadNextQuestion();
+      setLocked(false);
+    }, 1500);
   };
 
   function splitQuestionText(text) {
@@ -348,10 +273,10 @@ setTimeout(() => {
       ? questionsList[questionIndex]
       : { question: '', answers: [], hint: '', authohint: '' };
 
-  const progressPercent = ((currentQuestionNumber - 1) / questionsThisRound) * 100;
+  const progressPercent = ((currentQuestionNumber - 1) / MAX_QUESTIONS) * 100;
   const { enPart, hePart, punctuation } = splitQuestionText(question.question);
 
-  // EARLY RETURN DURING LEVEL-UP: full background + toast only
+  // EARLY RETURN DURING LEVEL-UP
   if (isLevelingUp) {
     return (
       <div
@@ -372,12 +297,12 @@ setTimeout(() => {
     );
   }
 
-  /* ------------------------------------------------------------------
-     MAIN JSX RETURN
-  ------------------------------------------------------------------ */
   return (
-    <div dir="rtl" className="bg-blue-100 dark:bg-gray-900 text-black dark:text-white min-h-screen transition-colors duration-300">
-      {/* --------------------------- QUIZ AREA --------------------------- */}
+    <div
+      dir="rtl"
+      className="bg-blue-100 dark:bg-gray-900 text-black dark:text-white min-h-screen transition-colors duration-300"
+    >
+      {/* QUIZ AREA */}
       <div className={`relative z-10 ${showEndModal ? 'pointer-events-none blur-sm' : ''}`}>
         <div className="max-w-4xl mx-auto flex flex-col p-4 space-y-4">
           {questionIndex === null ? (
@@ -386,45 +311,70 @@ setTimeout(() => {
             <>
               {/* Header */}
               <header className="flex flex-row-reverse justify-between items-center bg-blue-200 dark:bg-blue-950 p-4 rounded-lg shadow">
-                <button onClick={() => navigate('/')} className="text-xl font-semibold hover:underline">← חזרה לעמוד ראשי</button>
+                <button
+                  onClick={() => navigate('/')}
+                  className="text-xl font-semibold hover:underline"
+                >
+                  ← חזרה לעמוד ראשי
+                </button>
                 <div className="flex items-center mx-3 gap-2">
-                  <span className="text-base font-semibold text-gray-700 dark:text-gray-300">שאלה</span>
-                  <span className="bg-blue-500 text-white rounded-full px-3 py-1 shadow-md">{currentQuestionNumber}</span>
+                  <span className="text-base font-semibold text-gray-700 dark:text-gray-300">
+                    שאלה
+                  </span>
+                  <span className="bg-blue-500 text-white rounded-full px-3 py-1 shadow-md">
+                    {currentQuestionNumber}
+                  </span>
                 </div>
                 <div className="bg-white py-1 px-3 rounded shadow dark:bg-gray-100">
-                  <span className={time <= 5 ? 'text-red-600 font-bold' : 'text-blue-600'}>{formatTime(time)}</span>
+                  <span
+                    className={time <= 5 ? 'text-red-600 font-bold' : 'text-blue-600'}
+                  >
+                    {formatTime(time)}
+                  </span>
                 </div>
               </header>
 
               {/* Progress Bar */}
               <div className="w-full bg-gray-300 dark:bg-gray-700 h-2 rounded-full overflow-hidden mt-2">
-                <div className="bg-blue-500 h-2 transition-all duration-300" style={{ width: `${progressPercent}%` }} />
+                <div
+                  className="bg-blue-500 h-2 transition-all duration-300"
+                  style={{ width: `${progressPercent}%` }}
+                />
               </div>
-              <p className="text-right text-sm text-gray-600 dark:text-gray-300">שאלה {Math.min(currentQuestionNumber, questionsThisRound)} מתוך {questionsThisRound}</p>
+              <p className="text-right text-sm text-gray-600 dark:text-gray-300">
+                שאלה {currentQuestionNumber} מתוך {MAX_QUESTIONS}
+              </p>
 
               {/* Question Card */}
               <main className="bg-white/90 dark:bg-gray-800 p-6 rounded-xl shadow-lg text-lg flex-grow transition-all duration-300">
                 <div className="flex flex-row justify-center items-center flex-wrap gap-2 text-xl font-bold text-blue-900 dark:text-blue-200">
-                  <span className="text-purple-700 dark:text-purple-400 font-bold" dir="rtl">{hePart}{punctuation}</span>
-                  <span className="text-blue-900 dark:text-blue-200" dir="ltr">{enPart}</span>
+                  <span className="text-purple-700 dark:text-purple-400 font-bold" dir="rtl">
+                    {hePart}
+                    {punctuation}
+                  </span>
+                  <span className="text-blue-900 dark:text-blue-200" dir="ltr">
+                    {enPart}
+                  </span>
                 </div>
 
                 <ul className="space-y-2 text-right list-none p-0 m-0">
                   {question.answers.map((ans, idx) => {
-                    const isCorrect   = idx === question.correct;
-                    const isSelected  = idx === selected;
+                    const isCorrect = idx === question.correct;
+                    const isSelected = idx === selected;
                     let bg = 'bg-white dark:bg-gray-600';
                     if (selected !== null) {
-                      if (isSelected && isCorrect)      bg = 'bg-green-400';
+                      if (isSelected && isCorrect) bg = 'bg-green-400';
                       else if (isSelected && !isCorrect) bg = 'bg-red-400';
-                      else if (isCorrect)                bg = 'bg-green-400';
+                      else if (isCorrect) bg = 'bg-green-400';
                     }
                     return (
                       <button
                         key={idx}
                         onClick={() => handleAnswerClick(idx)}
                         disabled={selected !== null || locked}
-                        className={`w-full text-right p-3 rounded-lg border shadow hover:bg-blue-100 ${bg} ${(selected !== null || locked) ? 'cursor-not-allowed' : ''}`}
+                        className={`w-full text-right p-3 rounded-lg border shadow hover:bg-blue-100 ${bg} ${
+                          selected !== null || locked ? 'cursor-not-allowed' : ''
+                        }`}
                       >
                         {ans}
                       </button>
@@ -442,43 +392,60 @@ setTimeout(() => {
                   </button>
                 </div>
 
-                {showHint && <div className="mt-2 p-3 bg-yellow-100 dark:bg-yellow-900 rounded text-right">💡 {question.hint}</div>}
-                {showAutoHint && question.authohint && <div className="mt-2 p-3 bg-blue-100 dark:bg-blue-900 rounded text-right animate-pulse">🤖 {question.authohint}</div>}
+                {showHint && (
+                  <div className="mt-2 p-3 bg-yellow-100 dark:bg-yellow-900 rounded text-right">
+                    💡 {question.hint}
+                  </div>
+                )}
+                {showAutoHint && question.authohint && (
+                  <div className="mt-2 p-3 bg-blue-100 dark:bg-blue-900 rounded text-right animate-pulse">
+                    🤖 {question.authohint}
+                  </div>
+                )}
               </main>
 
               {/* Footer */}
-              <footer className="text-right text-lg mt-4">סה״כ פלאפלים שנאספו: {correctCount} 🧆</footer>
+              <footer className="text-right text-lg mt-4">
+                סה״כ פלאפלים שנאספו: {correctCount} 🧆
+              </footer>
             </>
           )}
         </div>
       </div>
 
-      {/* --------------------------- TOAST --------------------------- */}
+      {/* TOAST */}
       {toast && !isLevelingUp && (
         <div
           className={`fixed bottom-6 left-1/2 transform -translate-x-1/2 px-6 py-3 rounded-full text-lg shadow-lg ${
             toast.type === 'success'
               ? 'bg-green-600'
               : toast.type === 'levelup'
-                ? 'bg-gradient-to-r from-purple-600 to-pink-600 animate-pulse'
-                : 'bg-red-600'
+              ? 'bg-gradient-to-r from-purple-600 to-pink-600 animate-pulse'
+              : 'bg-red-600'
           } text-white`}
         >
           {toast.message}
         </div>
       )}
 
-      {/* --------------------------- END MODAL --------------------------- */}
+      {/* END MODAL */}
       {showEndModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-20">
           <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg space-y-4 max-w-sm">
-            <h2 className="text-2xl font-bold text-center">סיימת את כל {questionsThisRound} השאלות!</h2>
+            <h2 className="text-2xl font-bold text-center">
+              סיימת את כל {MAX_QUESTIONS} השאלות!
+            </h2>
             <div className="flex justify-center">
               <img src={getResultImage()} alt="Result" className="w-32 h-32" />
             </div>
-            <p className="text-center">תשובות נכונות: {correctCount} מתוך {questionsThisRound}</p>
+            <p className="text-center">
+              תשובות נכונות: {correctCount} מתוך {MAX_QUESTIONS}
+            </p>
             <button
-              onClick={() => { setShowEndModal(false); navigate('/progress'); }}
+              onClick={() => {
+                setShowEndModal(false);
+                navigate('/progress');
+              }}
               className="w-full py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
             >
               חזרה להתקדמות
