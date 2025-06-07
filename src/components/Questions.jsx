@@ -218,15 +218,37 @@ function Questions() {
     }
   };
 
-  const nextQuestionAfterTimeout = () => {
-const last = currentQuestionNumber >= questionsThisRound;
-if (last) {
-  setShowEndModal(true);
-} else {
-  setCurrentQuestionNumber((n) => n + 1);
-  loadNextQuestion();
-}
-  };
+const nextQuestionAfterTimeout = () => {
+  const totalCorrect = correctIndexes.length;
+
+  if (totalCorrect >= MAX_QUESTIONS_PER_CATEGORY) {
+    const next = getNextDifficulty(currentDifficulty);
+    if (next) {
+      setToast({
+        message: `🎉 כל הכבוד! עלית לרמה ${getDifficultyDisplayName(next)}!`,
+        type: 'levelup'
+      });
+      setIsLevelingUp(true);
+      setDoc(doc(db, 'users', userName), { difficulty: next }, { merge: true });
+      localStorage.setItem('userDifficulty', next);
+      setTimeout(() => {
+        setToast(null);
+        setCurrentDifficulty(next);
+        window.location.reload();
+      }, 3000);
+      return;
+    }
+  }
+
+  const last = currentQuestionNumber >= questionsThisRound;
+  if (last) {
+    setShowEndModal(true);
+  } else {
+    setCurrentQuestionNumber((n) => n + 1);
+    loadNextQuestion();
+  }
+};
+
 
   const handleAnswerClick = (idx) => {
     if (selected !== null || locked) return;
@@ -238,11 +260,32 @@ if (last) {
 
     if (idx === question.correct) {
       correctAudio.play();
-      if (!correctIndexes.includes(questionIndex)) {
-        const updated = [...correctIndexes, questionIndex];
-        setCorrectIndexes(updated);
-        saveProgressToDB(updated);
-      }
+
+if (!correctIndexes.includes(questionIndex)) {
+  const updated = [...correctIndexes, questionIndex];
+  setCorrectIndexes(updated);
+  saveProgressToDB(updated);
+
+
+  if (updated.length >= MAX_QUESTIONS_PER_CATEGORY) {
+    const next = getNextDifficulty(currentDifficulty);
+    if (next) {
+      setToast({
+        message: `🎉 כל הכבוד! עלית לרמה ${getDifficultyDisplayName(next)}!`,
+        type: 'levelup'
+      });
+      setIsLevelingUp(true);
+      setDoc(doc(db, 'users', userName), { difficulty: next }, { merge: true });
+      localStorage.setItem('userDifficulty', next);
+      setTimeout(() => {
+        setToast(null);
+        setCurrentDifficulty(next);
+        window.location.reload();
+      }, 3000);
+      return; 
+    }
+  }
+}
       setCorrectCount((c) => c + 1);
       setToast({ message: '✅ תשובה נכונה!', type: 'success' });
     } else {
