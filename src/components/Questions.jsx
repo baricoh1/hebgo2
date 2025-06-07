@@ -88,7 +88,6 @@ function Questions() {
   const [time, setTime]                         = useState(30);
   const [toast, setToast]                       = useState(null);
   const [showEndModal, setShowEndModal]         = useState(false);
-  const [showRestartModal, setShowRestartModal] = useState(false);
   const [currentQuestionNumber, setCurrentQuestionNumber] = useState(1);
 
   const initialLoad = useRef(false);
@@ -150,36 +149,16 @@ function Questions() {
     }
   };
 
-  const resetCategoryInDB = async () => {
-    try {
-      const ref = doc(db, 'users', userName);
-      const snap = await getDoc(ref);
-      const base = snap.exists() ? snap.data() : {};
-      await setDoc(ref, {
-        ...base,
-        progress: {
-          ...(base.progress || {}),
-          [lang]: {
-            ...(base.progress?.[lang] || {}),
-            [difficulty]: [],
-          },
-        },
-      }, { merge: true });
-    } catch (err) {
-      console.error('Error resetting category:', err);
-    }
-  };
-
   /* ------------------------------------------------------------------
      INITIAL LOAD
   ------------------------------------------------------------------ */
   useEffect(() => {
-    if (questionIndex === null && !showRestartModal) loadNextQuestion();
+    if (questionIndex === null) loadNextQuestion();
     if (!initialLoad.current) {
       fetchProgressFromDB();
       initialLoad.current = true;
     }
-  }, [questionIndex, showRestartModal]);
+  }, [questionIndex]);
 
   /* ------------------------------------------------------------------
      TIMER HOOK
@@ -219,7 +198,6 @@ function Questions() {
 
   const loadNextQuestion = () => {
     if (currentQuestionNumber > MAX_QUESTIONS) return setShowEndModal(true);
-    if (correctIndexes.length >= MAX_QUESTIONS_PER_CATEGORY) return setShowRestartModal(true);
 
     const nxt = getNextQuestionIndex();
     if (nxt === null) {
@@ -306,9 +284,9 @@ function Questions() {
   return (
     <div dir="rtl" className="bg-blue-100 text-black dark:bg-gray-900 dark:text-white min-h-screen transition-colors duration-300">
       {/* --------------------------- QUIZ AREA --------------------------- */}
-      <div className={`relative z-10 ${showEndModal || showRestartModal ? 'pointer-events-none blur-sm' : ''}`}>
+      <div className={`relative z-10 ${showEndModal ? 'pointer-events-none blur-sm' : ''}`}>
         <div className="max-w-4xl mx-auto flex flex-col p-4 space-y-4">
-          {questionIndex === null && !showRestartModal ? (
+          {questionIndex === null ? (
             <div className="p-4 text-center text-lg">טוען שאלה...</div>
           ) : (
             <>
@@ -382,20 +360,6 @@ function Questions() {
             <div className="flex justify-center"><img src={getResultImage()} alt="Result" className="w-32 h-32" /></div>
             <p className="text-center">תשובות נכונות: {correctCount} מתוך {MAX_QUESTIONS}</p>
             <button onClick={() => { setShowEndModal(false); navigate('/progress'); }} className="w-full py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition">חזרה להתקדמות</button>
-          </div>
-        </div>
-      )}
-
-      {/* --------------------------- RESTART MODAL --------------------------- */}
-      {showRestartModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-20">
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg space-y-4 max-w-sm">
-            <h2 className="text-2xl font-bold text-center">האם ברצונך להתחיל מחדש?</h2>
-            <p className="text-center">כבר השלמת את כל השאלות בקטגוריה זו.</p>
-            <div className="flex justify-between space-x-4 rtl:space-x-reverse">
-              <button onClick={() => setShowRestartModal(false)} className="flex-1 py-2 bg-gray-300 text-black rounded hover:bg-gray-400 transition">לא, תודה</button>
-              <button onClick={async () => { await resetCategoryInDB(); setCorrectIndexes([]); setSeenQuestions([]); setCurrentQuestionNumber(1); storeProgressLocally([]); setShowRestartModal(false); loadNextQuestion(); }} className="flex-1 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition">כן, התחל מחדש</button>
-            </div>
           </div>
         </div>
       )}
