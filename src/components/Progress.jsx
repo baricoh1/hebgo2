@@ -18,7 +18,7 @@ function Progress() {
 
   const [userName, setUserName] = useState(() => localStorage.getItem('userName') || null);
   const [gender, setGender] = useState(() => localStorage.getItem('userGender') || 'other');
-  const [trueLevel, setTrueLevel] = useState(() => localStorage.getItem('userDifficulty') || 'easy');
+  const [trueLevel, setTrueLevel] = useState(() => localStorage.getItem('userDifficulty'));
   const [selectedLang, setSelectedLang] = useState('us');
 
   const defaultProgress = {
