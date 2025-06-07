@@ -26,8 +26,7 @@ function Questions() {
   /* ------------------------------------------------------------------
      CONSTANTS & BASIC DATA
   ------------------------------------------------------------------ */
- 
-  const MAX_QUESTIONS  = Math.min(10, questionsList.length);
+  const MAX_QUESTIONS = 10;
   const MAX_QUESTIONS_PER_CATEGORY = 20;
   const navigate = useNavigate();
 
@@ -60,6 +59,8 @@ function Questions() {
   const [toast, setToast]                 = useState(null);
   const [showEndModal, setShowEndModal]   = useState(false);
   const [currentQuestionNumber, setCurrentQuestionNumber] = useState(1);
+  const [questionsThisRound, setQuestionsThisRound] = useState(MAX_QUESTIONS);
+
 
   // hide quiz UI during level-up
   const [isLevelingUp, setIsLevelingUp] = useState(false);
@@ -85,8 +86,17 @@ function Questions() {
       if (!snap.exists()) return;
       const data = snap.data();
 
-      const serverProg = data.progress?.[lang]?.[currentDifficulty] || [];
-      setCorrectIndexes(serverProg);
+const serverProg = data.progress?.[lang]?.[currentDifficulty] || [];
+setCorrectIndexes(serverProg);
+
+const remaining = MAX_QUESTIONS_PER_CATEGORY - serverProg.length;
+if (remaining <= 0) {
+  setShowEndModal(true);
+  return;
+}
+setQuestionsThisRound(Math.min(remaining, MAX_QUESTIONS));
+
+
 
       // AUTO LEVEL-UP
       if (serverProg.length >= MAX_QUESTIONS_PER_CATEGORY) {
@@ -196,7 +206,7 @@ function Questions() {
   };
 
   const loadNextQuestion = () => {
-    if (currentQuestionNumber > MAX_QUESTIONS) return setShowEndModal(true);
+    if (currentQuestionNumber > questionsThisRound) return setShowEndModal(true);
     const nxt = getNextQuestionIndex();
     if (nxt === null) {
       setSeenQuestions([]);
@@ -211,14 +221,19 @@ function Questions() {
     }
   };
 
-  const nextQuestionAfterTimeout = () => {
-    const last = currentQuestionNumber >= MAX_QUESTIONS;
-    setCurrentQuestionNumber((n) => n + 1);
-    if (last) setShowEndModal(true);
-    else loadNextQuestion();
-  };
+const nextQuestionAfterTimeout = async () => {
+  if (correctIndexes.length >= MAX_QUESTIONS_PER_CATEGORY) return;
+  const last = currentQuestionNumber >= questionsThisRound;
+  if (last) setShowEndModal(true);
+  else {
+    setCurrentQuestionNumber(n => n + 1);
+    loadNextQuestion();
+  }
+};
 
-  const handleAnswerClick = (idx) => {
+
+
+  const handleAnswerClick = async (idx) => {
     if (selected !== null || locked) return;
     setSelected(idx);
     setLocked(true);
@@ -275,8 +290,6 @@ function Questions() {
       : { question: '', answers: [], hint: '', authohint: '' };
 
   const progressPercent = ((currentQuestionNumber - 1) / MAX_QUESTIONS) * 100;
-  const remainingQuestions = MAX_QUESTIONS - (currentQuestionNumber - 1);
-  const displayTotal = remainingQuestions < 10 ? remainingQuestions : MAX_QUESTIONS;
   const { enPart, hePart, punctuation } = splitQuestionText(question.question);
 
   // EARLY RETURN DURING LEVEL-UP
@@ -345,7 +358,7 @@ function Questions() {
                 />
               </div>
               <p className="text-right text-sm text-gray-600 dark:text-gray-300">
-                שאלה {currentQuestionNumber} מתוך {displayTotal}
+                שאלה {Math.min(currentQuestionNumber, questionsThisRound)} מתוך {questionsThisRound}
               </p>
 
               {/* Question Card */}
