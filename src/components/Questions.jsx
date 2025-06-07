@@ -119,6 +119,7 @@ function Questions() {
         const next = getNextDifficulty(difficulty);
         if (next) {
           difficulty = next; 
+          localStorage.setItem('userDifficulty', difficulty);
         }
       }
         
