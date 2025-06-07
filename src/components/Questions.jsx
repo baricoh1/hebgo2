@@ -89,8 +89,27 @@ function Questions() {
 
       const serverProg = data.progress?.[lang]?.[currentDifficulty] || [];
       setCorrectIndexes(serverProg);
-      const remaining = MAX_QUESTIONS_PER_CATEGORY - serverProg.length;
-      setQuestionsThisRound(Math.min(remaining, MAX_QUESTIONS));
+      if (serverProg.length >= MAX_QUESTIONS_PER_CATEGORY) {
+  const next = getNextDifficulty(currentDifficulty);
+  if (next) {
+    setToast({
+      message: `🎉 כל הכבוד! עלית לרמה ${getDifficultyDisplayName(next)}!`,
+      type: 'levelup'
+    });
+    setIsLevelingUp(true);
+    await setDoc(userRef, { difficulty: next }, { merge: true });
+    localStorage.setItem('userDifficulty', next);
+    setTimeout(() => {
+      setToast(null);
+      setCurrentDifficulty(next);
+      window.location.reload();
+    }, 3000);
+  }
+  return; 
+}
+
+const remaining = MAX_QUESTIONS_PER_CATEGORY - serverProg.length;
+setQuestionsThisRound(Math.min(remaining, MAX_QUESTIONS));
 
 
       // AUTO LEVEL-UP
@@ -229,7 +248,6 @@ const nextQuestionAfterTimeout = () => {
         type: 'levelup'
       });
       setIsLevelingUp(true);
-      setDoc(doc(db, 'users', userName), { difficulty: next }, { merge: true });
       localStorage.setItem('userDifficulty', next);
       setTimeout(() => {
         setToast(null);
@@ -275,7 +293,6 @@ if (!correctIndexes.includes(questionIndex)) {
         type: 'levelup'
       });
       setIsLevelingUp(true);
-      setDoc(doc(db, 'users', userName), { difficulty: next }, { merge: true });
       localStorage.setItem('userDifficulty', next);
       setTimeout(() => {
         setToast(null);
