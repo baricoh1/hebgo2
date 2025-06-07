@@ -109,51 +109,39 @@ function Questions() {
      FIREBASE HELPERS
   ------------------------------------------------------------------ */
   const fetchProgressFromDB = async () => {
-  try {
-    const snap = await getDoc(doc(db, 'users', userName));
-    if (!snap.exists()) return;
-    const data = snap.data();
+    try {
+      const snap = await getDoc(doc(db, 'users', userName));
+      if (!snap.exists()) return;
+      const data = snap.data();
 
-    const serverProg = data?.progress?.[lang]?.[currentDifficulty] || [];
-    if (serverProg.length !== correctIndexes.length) {
-      setCorrectIndexes(serverProg);
-      storeProgressLocally(serverProg);
-    }
-
-    if (serverProg.length >= MAX_QUESTIONS_PER_CATEGORY) {
-      const next = getNextDifficulty(currentDifficulty);
-      if (next) {
-        // ✅ Set new difficulty in Firebase
-        await setDoc(doc(db, 'users', userName), {
-          difficulty: next
-        }, { merge: true });
-
-        // ✅ Show level-up toast
-        setToast({
-          message: `🎉 כל הכבוד! עלית לרמה ${getDifficultyDisplayName(next)}!`,
-          type: 'levelup'
-        });
-
-        // ✅ Save locally before reload
-        localStorage.setItem('userDifficulty', next);
-
-        // ✅ Reload to apply changes
-        setTimeout(() => {
-          window.location.reload();
-        }, 3000);
+      const serverProg = data?.progress?.[lang]?.[currentDifficulty] || [];
+      if (serverProg.length !== correctIndexes.length) {
+        setCorrectIndexes(serverProg);
+        storeProgressLocally(serverProg);
       }
+      if (serverProg.length >= MAX_QUESTIONS_PER_CATEGORY){
+        const next = getNextDifficulty(currentDifficulty);
+        if (next) {
+          setLevelingUp(true); // ✅ NEW
+          setToast({ 
+          message: `🎉 כל הכבוד! עלית לרמה ${getDifficultyDisplayName(next)}!`, 
+          type: 'levelup' 
+           }); // ✅ NEW
+
+      localStorage.setItem('userDifficulty', next); // ✅ move outside timeout
+
+      setTimeout(() => {
+        window.location.reload(); // ✅ no need to reset state
+      }, 3000);
+      }
+
+      }     
+        
+      if (data.gender) localStorage.setItem('userGender', data.gender);
+    } catch (err) {
+      console.error('Error fetching user progress:', err);
     }
-
-    // Only store gender locally, don't overwrite difficulty
-    if (data.gender) {
-      localStorage.setItem('userGender', data.gender);
-    }
-
-  } catch (err) {
-    console.error('Error fetching user progress:', err);
-  }
-};
-
+  };
 
   const saveProgressToDB = async (updatedArr) => {
     try {
