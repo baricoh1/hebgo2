@@ -33,6 +33,7 @@ function Questions() {
   // User preferences saved locally
   const userName   = localStorage.getItem('userName');
   const lang       = localStorage.getItem('userLang');
+  const [currentDifficulty, setCurrentDifficulty] = useState(localStorage.getItem('userDifficulty'));
 
   const hintTextMap = { en: 'Show Hint', es: 'Mostrar pista', ru: 'Показать подсказку' };
   const currentHintText = hintTextMap[lang] || 'Show Hint';
@@ -88,9 +89,6 @@ function Questions() {
   const [toast, setToast]                       = useState(null);
   const [showEndModal, setShowEndModal]         = useState(false);
   const [currentQuestionNumber, setCurrentQuestionNumber] = useState(1);
-  const [levelingUp, setLevelingUp] = useState(false);
-  const [currentDifficulty, setCurrentDifficulty] = useState(localStorage.getItem('userDifficulty'));
-
 
   const initialLoad = useRef(false);
 
@@ -122,21 +120,18 @@ function Questions() {
       if (serverProg.length >= MAX_QUESTIONS_PER_CATEGORY){
         const next = getNextDifficulty(currentDifficulty);
         if (next) {
-          setLevelingUp(true); // ✅ NEW
+          // Show level up toast
           setToast({ 
-          message: `🎉 כל הכבוד! עלית לרמה ${getDifficultyDisplayName(next)}!`, 
-          type: 'levelup' 
-           }); // ✅ NEW
-
-          localStorage.setItem('userDifficulty', next); // ✅ move outside timeout
-          await setDoc(doc(db, 'users', userName), {
-          difficulty: next
-        }, { merge: true });
-
-        setTimeout(() => {
-          window.location.reload(); // ✅ no need to reset state
-        }, 3000);
-
+            message: `🎉 כל הכבוד! עלית לרמה ${getDifficultyDisplayName(next)}!`, 
+            type: 'levelup' 
+          });
+          
+          setTimeout(() => {
+            setToast(null);
+            setCurrentDifficulty(next);
+            localStorage.setItem('userDifficulty', next);
+            window.location.reload();
+          }, 3000);
         }
       }     
         
@@ -369,13 +364,13 @@ function Questions() {
       {toast && (
         <div className={`fixed bottom-6 left-1/2 transform -translate-x-1/2 px-6 py-3 rounded-full text-lg shadow-lg ${
           toast.type === 'success' ? 'bg-green-600' : 
-          toast.type === 'levelup' ? 'bg-gradient-to-r from-purple-600 to-pink-600 animate-bounceSlow' : 
+          toast.type === 'levelup' ? 'bg-gradient-to-r from-purple-600 to-pink-600 animate-pulse' : 
           'bg-red-600'
         } text-white`}>{toast.message}</div>
       )}
 
       {/* --------------------------- END MODAL --------------------------- */}
-      {showEndModal && !levelingUp && (
+      {showEndModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-20">
           <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg space-y-4 max-w-sm">
             <h2 className="text-2xl font-bold text-center">סיימת את כל {MAX_QUESTIONS} השאלות!</h2>
