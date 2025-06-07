@@ -29,7 +29,7 @@ function Register() {
       const userSnap = await getDoc(userRef);
 
       if (userSnap.exists()) {
-        alert('שם המשתמש כבר קיים. אנא בחר שם אחר.');
+        alert('שם המשתמש כבר קיים.. אנא בחר שם אחר.');
         return;
       }
 
