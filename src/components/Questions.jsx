@@ -366,7 +366,7 @@ function Questions() {
       {toast && (
         <div className={`fixed bottom-6 left-1/2 transform -translate-x-1/2 px-6 py-3 rounded-full text-lg shadow-lg ${
           toast.type === 'success' ? 'bg-green-600' : 
-          toast.type === 'levelup' ? 'bg-gradient-to-r from-purple-600 to-pink-600 animate-pulse' : 
+          toast.type === 'levelup' ? 'bg-gradient-to-r from-purple-600 to-pink-600 animate-bounceSlow' : 
           'bg-red-600'
         } text-white`}>{toast.message}</div>
       )}
