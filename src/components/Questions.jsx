@@ -33,7 +33,6 @@ function Questions() {
   // User preferences saved locally
   const userName   = localStorage.getItem('userName');
   const lang       = localStorage.getItem('userLang');
-  const [currentDifficulty, setCurrentDifficulty] = useState(localStorage.getItem('userDifficulty'));
 
   const hintTextMap = { en: 'Show Hint', es: 'Mostrar pista', ru: 'Показать подсказку' };
   const currentHintText = hintTextMap[lang] || 'Show Hint';
@@ -90,6 +89,7 @@ function Questions() {
   const [showEndModal, setShowEndModal]         = useState(false);
   const [currentQuestionNumber, setCurrentQuestionNumber] = useState(1);
   const [levelingUp, setLevelingUp] = useState(false);
+  const [currentDifficulty, setCurrentDifficulty] = useState(localStorage.getItem('userDifficulty'));
 
 
   const initialLoad = useRef(false);
