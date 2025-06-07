@@ -30,9 +30,6 @@ function Questions() {
   const MAX_QUESTIONS_PER_CATEGORY = 20;  // total questions available in a category
   const navigate = useNavigate();
 
-  // Define difficulty progression
-  const DIFFICULTY_ORDER = ['easy', 'medium', 'hard'];
-
   // User preferences saved locally
   const userName   = localStorage.getItem('userName');
   const lang       = localStorage.getItem('userLang');
@@ -77,37 +74,6 @@ function Questions() {
     }
   };
 
-  // Helper to get next difficulty level
-  const getNextDifficulty = (currentDiff) => {
-    const currentIndex = DIFFICULTY_ORDER.indexOf(currentDiff);
-    return currentIndex < DIFFICULTY_ORDER.length - 1 ? DIFFICULTY_ORDER[currentIndex + 1] : null;
-  };
-
-  // Helper to advance to next difficulty
-  const advanceToNextDifficulty = () => {
-    const nextDiff = getNextDifficulty(difficulty);
-    if (nextDiff) {
-      localStorage.setItem('userDifficulty', nextDiff);
-      // Show success message and redirect
-      setToast({ 
-        message: `🎉 עברת לרמת קושי הבאה: ${nextDiff}!`, 
-        type: 'success' 
-      });
-      setTimeout(() => {
-        navigate('/questions'); // This will reload the component with new difficulty
-      }, 2000);
-    } else {
-      // If no next difficulty, show completion message
-      setToast({ 
-        message: '🎖️ כל הכבוד! השלמת את כל רמות הקושי!', 
-        type: 'success' 
-      });
-      setTimeout(() => {
-        navigate('/progress');
-      }, 2000);
-    }
-  };
-
   /* ------------------------------------------------------------------
      REACT STATE
   ------------------------------------------------------------------ */
@@ -122,6 +88,7 @@ function Questions() {
   const [time, setTime]                         = useState(30);
   const [toast, setToast]                       = useState(null);
   const [showEndModal, setShowEndModal]         = useState(false);
+  const [showRestartModal, setShowRestartModal] = useState(false);
   const [currentQuestionNumber, setCurrentQuestionNumber] = useState(1);
 
   const initialLoad = useRef(false);
@@ -140,8 +107,9 @@ function Questions() {
         setCorrectIndexes(serverProg);
         storeProgressLocally(serverProg);
       }
+      if (serverProg.length >= MAX_QUESTIONS_PER_CATEGORY) setShowRestartModal(true);
 
-      if (data.gender) localStorage.setItem('userGender', data.gender);
+      if (data.gender)      localStorage.setItem('userGender', data.gender);
     } catch (err) {
       console.error('Error fetching user progress:', err);
     }
@@ -162,18 +130,28 @@ function Questions() {
           },
         },
       }, { merge: true });
-
-      // Check if user just completed all questions in current difficulty
-      if (updatedArr.length >= MAX_QUESTIONS_PER_CATEGORY) {
-        // Set flag to advance difficulty for next game
-        const nextDiff = getNextDifficulty(difficulty);
-        if (nextDiff) {
-          localStorage.setItem('shouldAdvanceDifficulty', 'true');
-          localStorage.setItem('nextDifficulty', nextDiff);
-        }
-      }
     } catch (err) {
       console.error('Error writing progress:', err);
+    }
+  };
+
+  const resetCategoryInDB = async () => {
+    try {
+      const ref = doc(db, 'users', userName);
+      const snap = await getDoc(ref);
+      const base = snap.exists() ? snap.data() : {};
+      await setDoc(ref, {
+        ...base,
+        progress: {
+          ...(base.progress || {}),
+          [lang]: {
+            ...(base.progress?.[lang] || {}),
+            [difficulty]: [],
+          },
+        },
+      }, { merge: true });
+    } catch (err) {
+      console.error('Error resetting category:', err);
     }
   };
 
@@ -181,36 +159,12 @@ function Questions() {
      INITIAL LOAD
   ------------------------------------------------------------------ */
   useEffect(() => {
-    // Check if we should advance difficulty for this new game
-    const shouldAdvance = localStorage.getItem('shouldAdvanceDifficulty');
-    const nextDiff = localStorage.getItem('nextDifficulty');
-    
-    if (shouldAdvance === 'true' && nextDiff) {
-      // Clear the flags
-      localStorage.removeItem('shouldAdvanceDifficulty');
-      localStorage.removeItem('nextDifficulty');
-      
-      // Update the difficulty for this game
-      localStorage.setItem('userDifficulty', nextDiff);
-      
-      // Show advancement message and reload
-      setToast({ 
-        message: `🎉 עברת לרמת קושי הבאה: ${nextDiff}!`, 
-        type: 'success' 
-      });
-      
-      setTimeout(() => {
-        window.location.reload(); // Reload to use new difficulty
-      }, 2000);
-      return;
-    }
-
-    if (questionIndex === null) loadNextQuestion();
+    if (questionIndex === null && !showRestartModal) loadNextQuestion();
     if (!initialLoad.current) {
       fetchProgressFromDB();
       initialLoad.current = true;
     }
-  }, [questionIndex]);
+  }, [questionIndex, showRestartModal]);
 
   /* ------------------------------------------------------------------
      TIMER HOOK
@@ -250,6 +204,7 @@ function Questions() {
 
   const loadNextQuestion = () => {
     if (currentQuestionNumber > MAX_QUESTIONS) return setShowEndModal(true);
+    if (correctIndexes.length >= MAX_QUESTIONS_PER_CATEGORY) return setShowRestartModal(true);
 
     const nxt = getNextQuestionIndex();
     if (nxt === null) {
@@ -313,7 +268,10 @@ function Questions() {
     const punctuation = punctuationMatch ? punctuationMatch[0] : '';
 
     return { enPart, hePart, punctuation };
-  }
+ }
+
+
+
 
   /* ------------------------------------------------------------------
      RENDER HELPERS
@@ -325,15 +283,17 @@ function Questions() {
   const progressPercent = ((currentQuestionNumber - 1) / MAX_QUESTIONS) * 100;
   const { enPart, hePart, punctuation } = splitQuestionText(question.question);
 
+
+
   /* ------------------------------------------------------------------
      JSX RETURN
   ------------------------------------------------------------------ */
   return (
     <div dir="rtl" className="bg-blue-100 text-black dark:bg-gray-900 dark:text-white min-h-screen transition-colors duration-300">
       {/* --------------------------- QUIZ AREA --------------------------- */}
-      <div className={`relative z-10 ${showEndModal ? 'pointer-events-none blur-sm' : ''}`}>
+      <div className={`relative z-10 ${showEndModal || showRestartModal ? 'pointer-events-none blur-sm' : ''}`}>
         <div className="max-w-4xl mx-auto flex flex-col p-4 space-y-4">
-          {questionIndex === null ? (
+          {questionIndex === null && !showRestartModal ? (
             <div className="p-4 text-center text-lg">טוען שאלה...</div>
           ) : (
             <>
@@ -361,6 +321,7 @@ function Questions() {
                   <span className="text-purple-700 dark:text-purple-400 font-bold" dir="rtl">{hePart}{punctuation}</span>
                   <span className="text-blue-900 dark:text-blue-200" dir="ltr">{enPart}</span>
                 </div>
+
 
                 <ul className="space-y-2 text-right list-none p-0 m-0">
                   {question.answers.map((ans, idx) => {
@@ -406,6 +367,20 @@ function Questions() {
             <div className="flex justify-center"><img src={getResultImage()} alt="Result" className="w-32 h-32" /></div>
             <p className="text-center">תשובות נכונות: {correctCount} מתוך {MAX_QUESTIONS}</p>
             <button onClick={() => { setShowEndModal(false); navigate('/progress'); }} className="w-full py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition">חזרה להתקדמות</button>
+          </div>
+        </div>
+      )}
+
+      {/* --------------------------- RESTART MODAL --------------------------- */}
+      {showRestartModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-20">
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg space-y-4 max-w-sm">
+            <h2 className="text-2xl font-bold text-center">האם ברצונך להתחיל מחדש?</h2>
+            <p className="text-center">כבר השלמת את כל השאלות בקטגוריה זו.</p>
+            <div className="flex justify-between space-x-4 rtl:space-x-reverse">
+              <button onClick={() => setShowRestartModal(false)} className="flex-1 py-2 bg-gray-300 text-black rounded hover:bg-gray-400 transition">לא, תודה</button>
+              <button onClick={async () => { await resetCategoryInDB(); setCorrectIndexes([]); setSeenQuestions([]); setCurrentQuestionNumber(1); storeProgressLocally([]); setShowRestartModal(false); loadNextQuestion(); }} className="flex-1 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition">כן, התחל מחדש</button>
+            </div>
           </div>
         </div>
       )}
