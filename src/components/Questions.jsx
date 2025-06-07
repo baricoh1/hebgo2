@@ -33,7 +33,7 @@ function Questions() {
   // User preferences saved locally
   const userName   = localStorage.getItem('userName');
   const lang       = localStorage.getItem('userLang');
-  const difficulty = localStorage.getItem('userDifficulty');
+  var difficulty = localStorage.getItem('userDifficulty');
 
   const hintTextMap = { en: 'Show Hint', es: 'Mostrar pista', ru: 'Показать подсказку' };
   const currentHintText = hintTextMap[lang] || 'Show Hint';
