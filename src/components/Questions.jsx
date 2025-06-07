@@ -26,7 +26,8 @@ function Questions() {
   /* ------------------------------------------------------------------
      CONSTANTS & BASIC DATA
   ------------------------------------------------------------------ */
-  const MAX_QUESTIONS = 10;
+ 
+  const MAX_QUESTIONS  = Math.min(10, questionsList.length);
   const MAX_QUESTIONS_PER_CATEGORY = 20;
   const navigate = useNavigate();
 
