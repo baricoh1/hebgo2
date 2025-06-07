@@ -159,15 +159,8 @@ function Questions() {
      INITIAL LOAD
   ------------------------------------------------------------------ */
   useEffect(() => {
-    const stored = loadStoredProgress();
-    if (stored.length >= MAX_QUESTIONS_PER_CATEGORY) {
-      const nextLevel = getNextDifficulty(difficulty);
-      if (nextLevel) {
-        localStorage.setItem('userDifficulty', nextLevel);
-        window.location.reload();
-        return;
-      }
-    }
+    
+    
     if (questionIndex === null && !showRestartModal) loadNextQuestion();
     if (!initialLoad.current) {
       fetchProgressFromDB();
