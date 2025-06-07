@@ -89,6 +89,8 @@ function Questions() {
   const [toast, setToast]                       = useState(null);
   const [showEndModal, setShowEndModal]         = useState(false);
   const [currentQuestionNumber, setCurrentQuestionNumber] = useState(1);
+  const [levelingUp, setLevelingUp] = useState(false);
+
 
   const initialLoad = useRef(false);
 
@@ -120,19 +122,19 @@ function Questions() {
       if (serverProg.length >= MAX_QUESTIONS_PER_CATEGORY){
         const next = getNextDifficulty(currentDifficulty);
         if (next) {
-          // Show level up toast
+          setLevelingUp(true); // ✅ NEW
           setToast({ 
-            message: `🎉 כל הכבוד! עלית לרמה ${getDifficultyDisplayName(next)}!`, 
-            type: 'levelup' 
-          });
-          
-          setTimeout(() => {
-            setToast(null);
-            setCurrentDifficulty(next);
-            localStorage.setItem('userDifficulty', next);
-            window.location.reload();
-          }, 3000);
-        }
+          message: `🎉 כל הכבוד! עלית לרמה ${getDifficultyDisplayName(next)}!`, 
+          type: 'levelup' 
+           }); // ✅ NEW
+
+      localStorage.setItem('userDifficulty', next); // ✅ move outside timeout
+
+      setTimeout(() => {
+        window.location.reload(); // ✅ no need to reset state
+      }, 3000);
+      }
+
       }     
         
       if (data.gender) localStorage.setItem('userGender', data.gender);
@@ -370,7 +372,7 @@ function Questions() {
       )}
 
       {/* --------------------------- END MODAL --------------------------- */}
-      {showEndModal && (
+      {showEndModal && !levelingUp && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-20">
           <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg space-y-4 max-w-sm">
             <h2 className="text-2xl font-bold text-center">סיימת את כל {MAX_QUESTIONS} השאלות!</h2>
