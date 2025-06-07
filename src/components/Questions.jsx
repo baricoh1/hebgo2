@@ -117,6 +117,7 @@ function Questions() {
         if (next) {
           setCurrentDifficulty(next);
           localStorage.setItem('userDifficulty', next);
+          window.location.reload();
         }
       }     
         
