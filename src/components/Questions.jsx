@@ -90,9 +90,7 @@ function Questions() {
       const serverProg = data.progress?.[lang]?.[currentDifficulty] || [];
       setCorrectIndexes(serverProg);
       const remaining = MAX_QUESTIONS_PER_CATEGORY - serverProg.length;
-      const paddedRemaining = remaining > 0 && remaining < MAX_QUESTIONS ? remaining + 1 : remaining;
-
-setQuestionsThisRound(Math.min(paddedRemaining, MAX_QUESTIONS));
+      setQuestionsThisRound(Math.min(remaining, MAX_QUESTIONS));
 
 
       // AUTO LEVEL-UP
@@ -342,7 +340,7 @@ setTimeout(() => {
               <div className="w-full bg-gray-300 dark:bg-gray-700 h-2 rounded-full overflow-hidden mt-2">
                 <div className="bg-blue-500 h-2 transition-all duration-300" style={{ width: `${progressPercent}%` }} />
               </div>
-              <p className="text-right text-sm text-gray-600 dark:text-gray-300">שאלה {currentQuestionNumber} מתוך {questionsThisRound}</p>
+              <p className="text-right text-sm text-gray-600 dark:text-gray-300">שאלה {Math.min(currentQuestionNumber, questionsThisRound)} מתוך {questionsThisRound}</p>
 
               {/* Question Card */}
               <main className="bg-white/90 dark:bg-gray-800 p-6 rounded-xl shadow-lg text-lg flex-grow transition-all duration-300">
