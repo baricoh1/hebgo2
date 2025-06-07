@@ -60,6 +60,9 @@ function Questions() {
   const [showEndModal, setShowEndModal]         = useState(false);
   const [currentQuestionNumber, setCurrentQuestionNumber] = useState(1);
 
+  // NEW: flag to hide quiz UI during level-up
+  const [isLevelingUp, setIsLevelingUp] = useState(false);
+
   const initialLoad = useRef(false);
 
   const getNextDifficulty = (level) => {
@@ -77,53 +80,55 @@ function Questions() {
      FIREBASE HELPERS
   ------------------------------------------------------------------ */
   const fetchProgressFromDB = async () => {
-  try {
-    const userRef = doc(db, 'users', userName);
-    const snap = await getDoc(userRef);
-    if (!snap.exists()) return;
+    try {
+      const userRef = doc(db, 'users', userName);
+      const snap = await getDoc(userRef);
+      if (!snap.exists()) return;
 
-    const data = snap.data();
-    const serverProg = data.progress?.[lang]?.[currentDifficulty] || [];
-    setCorrectIndexes(serverProg);
+      const data = snap.data();
+      const serverProg = data.progress?.[lang]?.[currentDifficulty] || [];
+      setCorrectIndexes(serverProg);
 
-    // AUTO LEVEL-UP
-    if (serverProg.length >= MAX_QUESTIONS_PER_CATEGORY) {
-      const next = getNextDifficulty(currentDifficulty);
-      if (next) {
-        // 1) show level-up toast
-        setToast({
-          message: `🎉 כל הכבוד! עלית לרמה ${getDifficultyDisplayName(next)}!`,
-          type: 'levelup'
-        });
+      // AUTO LEVEL-UP
+      if (serverProg.length >= MAX_QUESTIONS_PER_CATEGORY) {
+        const next = getNextDifficulty(currentDifficulty);
+        if (next) {
+          // 1) show level-up toast
+          setToast({
+            message: `🎉 כל הכבוד! עלית לרמה ${getDifficultyDisplayName(next)}!`,
+            type: 'levelup'
+          });
 
-        // 2) persist the new difficulty in Firestore
-        await setDoc(
-          userRef,
-          { difficulty: next },
-          { merge: true }
-        );
+          // 2) hide the quiz UI
+          setIsLevelingUp(true);
 
-        // 3) update localStorage so Questions.jsx in-memory state picks it up
-        localStorage.setItem('userDifficulty', next);
+          // 3) persist the new difficulty in Firestore
+          await setDoc(
+            userRef,
+            { difficulty: next },
+            { merge: true }
+          );
 
-        // 4) after the toast, reload to re-run fetchProgressFromDB with the new level
-        setTimeout(() => {
-          setToast(null);
-          setCurrentDifficulty(next);
-          window.location.reload();
-        }, 3000);
+          // 4) update localStorage so Questions.jsx picks it up immediately
+          localStorage.setItem('userDifficulty', next);
+
+          // 5) after the toast, reload to reflect new level everywhere
+          setTimeout(() => {
+            setToast(null);
+            setCurrentDifficulty(next);
+            window.location.reload();
+          }, 3000);
+        }
       }
-    }
 
-    // keep gender in sync too
-    if (data.gender) {
-      localStorage.setItem('userGender', data.gender);
+      // keep gender in sync
+      if (data.gender) {
+        localStorage.setItem('userGender', data.gender);
+      }
+    } catch (err) {
+      console.error('Error fetching user progress:', err);
     }
-
-  } catch (err) {
-    console.error('Error fetching user progress:', err);
-  }
-};
+  };
 
   const saveProgressToDB = async (updatedArr) => {
     try {
@@ -273,10 +278,26 @@ function Questions() {
   ------------------------------------------------------------------ */
   const formatTime = (s) => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
   const getResultImage = () => [ball0, ball1, ball2, ball3, ball4, ball5, ball6, ball7, ball8, ball9, ball10][correctCount] || ball0;
-
   const question = questionIndex !== null ? questionsList[questionIndex] : { question: '', answers: [], hint: '', authohint: '' };
   const progressPercent = ((currentQuestionNumber - 1) / MAX_QUESTIONS) * 100;
   const { enPart, hePart, punctuation } = splitQuestionText(question.question);
+
+  // EARLY RETURN DURING LEVEL-UP: only show the toast
+  if (isLevelingUp) {
+    return (
+      <>
+        {toast && (
+          <div
+            className="fixed bottom-6 left-1/2 transform -translate-x-1/2
+                       bg-gradient-to-r from-purple-600 to-pink-600 animate-pulse
+                       text-white px-6 py-3 rounded-full shadow-lg text-lg z-50"
+          >
+            {toast.message}
+          </div>
+        )}
+      </>
+    );
+  }
 
   /* ------------------------------------------------------------------
      JSX RETURN
@@ -326,13 +347,26 @@ function Questions() {
                       else if (isCorrect)                bg = 'bg-green-400';
                     }
                     return (
-                      <button key={idx} onClick={() => handleAnswerClick(idx)} disabled={selected !== null || locked} className={`w-full text-right p-3 rounded-lg border shadow hover:bg-blue-100 ${bg} ${(selected !== null || locked) ? 'cursor-not-allowed' : ''}`}>{ans}</button>
+                      <button
+                        key={idx}
+                        onClick={() => handleAnswerClick(idx)}
+                        disabled={selected !== null || locked}
+                        className={`w-full text-right p-3 rounded-lg border shadow hover:bg-blue-100 ${bg} ${(selected !== null || locked) ? 'cursor-not-allowed' : ''}`}
+                      >
+                        {ans}
+                      </button>
                     );
                   })}
                 </ul>
 
                 <div className="mt-6 flex items-center justify-between">
-                  <button className="px-4 py-2 bg-yellow-400 text-black rounded hover:bg-yellow-500" onClick={() => setShowHint(true)} disabled={locked}>{currentHintText}</button>
+                  <button
+                    className="px-4 py-2 bg-yellow-400 text-black rounded hover:bg-yellow-500"
+                    onClick={() => setShowHint(true)}
+                    disabled={locked}
+                  >
+                    {currentHintText}
+                  </button>
                 </div>
 
                 {showHint && <div className="mt-2 p-3 bg-yellow-100 dark:bg-yellow-900 rounded text-right">💡 {question.hint}</div>}
@@ -347,12 +381,18 @@ function Questions() {
       </div>
 
       {/* --------------------------- TOAST --------------------------- */}
-      {toast && (
-        <div className={`fixed bottom-6 left-1/2 transform -translate-x-1/2 px-6 py-3 rounded-full text-lg shadow-lg ${
-          toast.type === 'success' ? 'bg-green-600' : 
-          toast.type === 'levelup' ? 'bg-gradient-to-r from-purple-600 to-pink-600 animate-pulse' : 
-          'bg-red-600'
-        } text-white`}>{toast.message}</div>
+      {toast && !isLevelingUp && (
+        <div
+          className={`fixed bottom-6 left-1/2 transform -translate-x-1/2 px-6 py-3 rounded-full text-lg shadow-lg ${
+            toast.type === 'success'
+              ? 'bg-green-600'
+              : toast.type === 'levelup'
+                ? 'bg-gradient-to-r from-purple-600 to-pink-600 animate-pulse'
+                : 'bg-red-600'
+          } text-white`}
+        >
+          {toast.message}
+        </div>
       )}
 
       {/* --------------------------- END MODAL --------------------------- */}
@@ -360,9 +400,16 @@ function Questions() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-20">
           <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg space-y-4 max-w-sm">
             <h2 className="text-2xl font-bold text-center">סיימת את כל {MAX_QUESTIONS} השאלות!</h2>
-            <div className="flex justify-center"><img src={getResultImage()} alt="Result" className="w-32 h-32" /></div>
+            <div className="flex justify-center">
+              <img src={getResultImage()} alt="Result" className="w-32 h-32" />
+            </div>
             <p className="text-center">תשובות נכונות: {correctCount} מתוך {MAX_QUESTIONS}</p>
-            <button onClick={() => { setShowEndModal(false); navigate('/progress'); }} className="w-full py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition">חזרה להתקדמות</button>
+            <button
+              onClick={() => { setShowEndModal(false); navigate('/progress'); }}
+              className="w-full py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+            >
+              חזרה להתקדמות
+            </button>
           </div>
         </div>
       )}
