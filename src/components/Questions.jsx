@@ -98,6 +98,11 @@ function Questions() {
     return currentIndex < levels.length - 1 ? levels[currentIndex + 1] : null;
   };
 
+  const getDifficultyDisplayName = (level) => {
+    const names = { easy: 'קל', medium: 'בינוני', hard: 'קשה' };
+    return names[level] || level;
+  };
+
   /* ------------------------------------------------------------------
      FIREBASE HELPERS
   ------------------------------------------------------------------ */
@@ -115,9 +120,18 @@ function Questions() {
       if (serverProg.length >= MAX_QUESTIONS_PER_CATEGORY){
         const next = getNextDifficulty(currentDifficulty);
         if (next) {
-          setCurrentDifficulty(next);
-          localStorage.setItem('userDifficulty', next);
-          window.location.reload();
+          // Show level up toast
+          setToast({ 
+            message: `🎉 כל הכבוד! עלית לרמה ${getDifficultyDisplayName(next)}!`, 
+            type: 'levelup' 
+          });
+          
+          setTimeout(() => {
+            setToast(null);
+            setCurrentDifficulty(next);
+            localStorage.setItem('userDifficulty', next);
+            window.location.reload();
+          }, 3000);
         }
       }     
         
@@ -257,7 +271,7 @@ function Questions() {
   };
 
   function splitQuestionText(text) {
-    const heMatch = text.match(/['״][א-ת\s_\-.,:()]+['״]/);
+    const heMatch = text.match(/['״'][א-ת\s_\-.,:()]+['״]/);
     const hePart = heMatch ? heMatch[0] : '';
 
     const enPart = hePart ? text.replace(hePart, '').replace(/[?؟!]/g, '').trim() : text;
@@ -348,7 +362,11 @@ function Questions() {
 
       {/* --------------------------- TOAST --------------------------- */}
       {toast && (
-        <div className={`fixed bottom-6 left-1/2 transform -translate-x-1/2 px-6 py-3 rounded-full text-lg shadow-lg ${toast.type === 'success' ? 'bg-green-600' : 'bg-red-600'} text-white`}>{toast.message}</div>
+        <div className={`fixed bottom-6 left-1/2 transform -translate-x-1/2 px-6 py-3 rounded-full text-lg shadow-lg ${
+          toast.type === 'success' ? 'bg-green-600' : 
+          toast.type === 'levelup' ? 'bg-gradient-to-r from-purple-600 to-pink-600 animate-pulse' : 
+          'bg-red-600'
+        } text-white`}>{toast.message}</div>
       )}
 
       {/* --------------------------- END MODAL --------------------------- */}
