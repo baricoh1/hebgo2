@@ -243,7 +243,7 @@ function Questions() {
         saveProgressToDB(updated);
       }
       setCorrectCount(c => c + 1);
-      setToast({ message: '✅ תשובה נכונה', type: 'success' });
+      setToast({ message: '✅ תשובה נכונה!', type: 'success' });
     } else {
       wrongAudio.play();
       setToast({ message: '❌ תשובה שגויה!', type: 'error' });
