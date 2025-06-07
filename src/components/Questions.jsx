@@ -128,13 +128,16 @@ function Questions() {
           type: 'levelup' 
            }); // ✅ NEW
 
-      localStorage.setItem('userDifficulty', next); // ✅ move outside timeout
+          localStorage.setItem('userDifficulty', next); // ✅ move outside timeout
+          await setDoc(doc(db, 'users', userName), {
+          difficulty: next
+        }, { merge: true });
 
-      setTimeout(() => {
-        window.location.reload(); // ✅ no need to reset state
-      }, 3000);
-      }
+        setTimeout(() => {
+          window.location.reload(); // ✅ no need to reset state
+        }, 3000);
 
+        }
       }     
         
       if (data.gender) localStorage.setItem('userGender', data.gender);
