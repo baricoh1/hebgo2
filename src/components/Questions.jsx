@@ -33,14 +33,14 @@ function Questions() {
   // User preferences saved locally
   const userName   = localStorage.getItem('userName');
   const lang       = localStorage.getItem('userLang');
-  var difficulty = localStorage.getItem('userDifficulty');
+  const [currentDifficulty, setCurrentDifficulty] = useState(localStorage.getItem('userDifficulty'));
 
   const hintTextMap = { en: 'Show Hint', es: 'Mostrar pista', ru: 'Показать подсказку' };
   const currentHintText = hintTextMap[lang] || 'Show Hint';
 
   // Load questions from JSON bundle
-  const questionsList = questionsData?.[lang]?.[difficulty] || [];
-  if (!lang || !difficulty || questionsList.length === 0) {
+  const questionsList = questionsData?.[lang]?.[currentDifficulty] || [];
+  if (!lang || !currentDifficulty || questionsList.length === 0) {
     return <div className="p-4 text-red-600">לא ניתן לטעון את השאלות. ודא שהשפה והרמה נבחרו כראוי.</div>;
   }
 
@@ -52,7 +52,7 @@ function Questions() {
       const raw = localStorage.getItem('userProgress');
       if (!raw) return [];
       const parsed = JSON.parse(raw);
-      return parsed?.[lang]?.[difficulty] || [];
+      return parsed?.[lang]?.[currentDifficulty] || [];
     } catch {
       return [];
     }
@@ -65,7 +65,7 @@ function Questions() {
         ...prev,
         [lang]: {
           ...(prev[lang] || {}),
-          [difficulty]: array,
+          [currentDifficulty]: array,
         },
       };
       localStorage.setItem('userProgress', JSON.stringify(upd));
@@ -93,12 +93,10 @@ function Questions() {
   const initialLoad = useRef(false);
 
   const getNextDifficulty = (level) => {
-  const levels = ['easy', 'medium', 'hard'];
-  const currentIndex = levels.indexOf(level);
-  return currentIndex < levels.length - 1 ? levels[currentIndex + 1] : null;
-};
-
-
+    const levels = ['easy', 'medium', 'hard'];
+    const currentIndex = levels.indexOf(level);
+    return currentIndex < levels.length - 1 ? levels[currentIndex + 1] : null;
+  };
 
   /* ------------------------------------------------------------------
      FIREBASE HELPERS
@@ -109,21 +107,20 @@ function Questions() {
       if (!snap.exists()) return;
       const data = snap.data();
 
-      const serverProg = data?.progress?.[lang]?.[difficulty] || [];
+      const serverProg = data?.progress?.[lang]?.[currentDifficulty] || [];
       if (serverProg.length !== correctIndexes.length) {
         setCorrectIndexes(serverProg);
         storeProgressLocally(serverProg);
       }
       if (serverProg.length >= MAX_QUESTIONS_PER_CATEGORY){
-        const next = getNextDifficulty(difficulty);
+        const next = getNextDifficulty(currentDifficulty);
         if (next) {
-          difficulty = next; 
-          localStorage.setItem('userDifficulty', difficulty);
+          setCurrentDifficulty(next);
+          localStorage.setItem('userDifficulty', next);
         }
-      }
+      }     
         
-
-      if (data.gender)      localStorage.setItem('userGender', data.gender);
+      if (data.gender) localStorage.setItem('userGender', data.gender);
     } catch (err) {
       console.error('Error fetching user progress:', err);
     }
@@ -140,7 +137,7 @@ function Questions() {
           ...(base.progress || {}),
           [lang]: {
             ...(base.progress?.[lang] || {}),
-            [difficulty]: updatedArr,
+            [currentDifficulty]: updatedArr,
           },
         },
       }, { merge: true });
@@ -159,6 +156,13 @@ function Questions() {
       initialLoad.current = true;
     }
   }, [questionIndex]);
+
+  /* ------------------------------------------------------------------
+     UPDATE PROGRESS WHEN DIFFICULTY CHANGES
+  ------------------------------------------------------------------ */
+  useEffect(() => {
+    setCorrectIndexes(loadStoredProgress());
+  }, [currentDifficulty]);
 
   /* ------------------------------------------------------------------
      TIMER HOOK
@@ -261,10 +265,7 @@ function Questions() {
     const punctuation = punctuationMatch ? punctuationMatch[0] : '';
 
     return { enPart, hePart, punctuation };
- }
-
-
-
+  }
 
   /* ------------------------------------------------------------------
      RENDER HELPERS
@@ -275,8 +276,6 @@ function Questions() {
   const question = questionIndex !== null ? questionsList[questionIndex] : { question: '', answers: [], hint: '', authohint: '' };
   const progressPercent = ((currentQuestionNumber - 1) / MAX_QUESTIONS) * 100;
   const { enPart, hePart, punctuation } = splitQuestionText(question.question);
-
-
 
   /* ------------------------------------------------------------------
      JSX RETURN
@@ -314,7 +313,6 @@ function Questions() {
                   <span className="text-purple-700 dark:text-purple-400 font-bold" dir="rtl">{hePart}{punctuation}</span>
                   <span className="text-blue-900 dark:text-blue-200" dir="ltr">{enPart}</span>
                 </div>
-
 
                 <ul className="space-y-2 text-right list-none p-0 m-0">
                   {question.answers.map((ans, idx) => {
