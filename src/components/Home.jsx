@@ -3,7 +3,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import logo from '../logo.png';
 
-import { getFirestore, doc, getDoc, collection, getCountFromServer } from 'firebase/firestore';
+import { getFirestore, doc, getDoc } from 'firebase/firestore';
 import { app } from '../firebase'; // assuming firebase is initialized in firebase.js
 
 const db = getFirestore(app);
@@ -15,7 +15,6 @@ function Home() {
 
   const [userName, setUserName] = useState(() => localStorage.getItem('userName'));
   const [gender, setGender] = useState(() => localStorage.getItem('userGender') || null);
-  const [questionsLeft, setQuestionsLeft] = useState(null);
 
   useEffect(() => {
     if (userName && !gender) {
@@ -41,20 +40,6 @@ function Home() {
       fetchUser();
     }
   }, [userName, gender]);
-
-  useEffect(() => {
-    // Fetch questions count only once at mount
-    const fetchQuestionsCount = async () => {
-      try {
-        const coll = collection(db, 'questions');
-        const snapshot = await getCountFromServer(coll);
-        setQuestionsLeft(snapshot.data().count);
-      } catch (e) {
-        setQuestionsLeft(null);
-      }
-    };
-    fetchQuestionsCount();
-  }, []);
 
   useEffect(() => {
     if (document.activeElement) {
@@ -100,19 +85,13 @@ function Home() {
     return (
       <>
         {gender === 'female' ? 'ברוכה הבאה' : 'ברוך הבא'}{' '}
-        <span className="text-blue-700 font-bold">{userName} 🎓</span>
+        <span className="text-blue-700">{userName} 🎓</span>
       </>
     );
   };
 
   return (
     <div className="min-h-screen w-full bg-blue-100 flex items-center justify-center p-6">
-      {/* Toolbar/banner for low questions left */}
-      {questionsLeft !== null && questionsLeft < 10 && (
-        <div className="fixed top-0 left-0 w-full bg-red-500 text-white text-center py-2 z-50 font-bold shadow-md">
-          נותרו רק {questionsLeft} שאלות במאגר!
-        </div>
-      )}
       <div dir="rtl" className="w-full max-w-4xl px-6 py-6 flex flex-col items-center text-center space-y-6">
         <img
           src={logo}
