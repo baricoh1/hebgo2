@@ -114,7 +114,7 @@ function Questions() {
         localStorage.setItem('userGender', data.gender);
       }
 
-      // חישוב כמה שאלות נשארו לסבב הנוכחי
+      
       const remaining = MAX_QUESTIONS_PER_CATEGORY - serverProg.length;
       setQuestionsThisRound(Math.min(MAX_QUESTIONS, remaining));
     } catch (err) {
@@ -191,7 +191,7 @@ function Questions() {
     return () => clearInterval(id);
   }, [locked]);
 
-  // איפוס seenQuestions בתחילת כל משחק חדש (כלומר, כשמתחלף רמת קושי או ב-mount)
+ 
   useEffect(() => {
     seenQuestions.current = [];
   }, [currentDifficulty]);
@@ -223,7 +223,7 @@ function Questions() {
       seenQuestions.current = [];
       setShowEndModal(true);
     } else {
-      // ודא שלא מוסיפים שאלה שכבר קיימת ב-correctIndexes
+      
       if (!correctIndexes.current.includes(nxt)) {
         seenQuestions.current = [...seenQuestions.current, nxt];
       }
