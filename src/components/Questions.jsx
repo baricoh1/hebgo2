@@ -50,7 +50,8 @@ function Questions() {
   const [questionIndex, setQuestionIndex] = useState(null);
   const [seenQuestions, setSeenQuestions] = useState([]);
   const [selected, setSelected]           = useState(null);
-  const [correctIndexes, setCorrectIndexes] = useState([]);
+  //const [correctIndexes, setCorrectIndexes] = useState([]);
+  const correctIndexes = useRef([]) ;
   const [correctCount, setCorrectCount]   = useState(0);
   const [locked, setLocked]               = useState(false);
   const [showHint, setShowHint]           = useState(false);
@@ -75,6 +76,7 @@ function Questions() {
     return names[level] || level;
   };
 
+
   /* ------------------------------------------------------------------
      FIREBASE HELPERS
   ------------------------------------------------------------------ */
@@ -86,7 +88,8 @@ function Questions() {
       const data = snap.data();
 
       const serverProg = data.progress?.[lang]?.[currentDifficulty] || [];
-      setCorrectIndexes(serverProg);
+      //setCorrectIndexes(serverProg);
+      correctIndexes.current = serverProg;
 
       // AUTO LEVEL-UP
       if (serverProg.length >= MAX_QUESTIONS_PER_CATEGORY) {
@@ -114,8 +117,6 @@ function Questions() {
       // חישוב כמה שאלות נשארו לסבב הנוכחי
       const remaining = MAX_QUESTIONS_PER_CATEGORY - serverProg.length;
       setQuestionsThisRound(Math.min(MAX_QUESTIONS, remaining));
-      // איפוס seenQuestions אם נגמרו השאלות
-      if (remaining <= 0) setSeenQuestions([]);
     } catch (err) {
       console.error('Error fetching user progress:', err);
     }
@@ -155,7 +156,7 @@ function Questions() {
 
   // 2) Re-fetch (and clear) when difficulty changes
   useEffect(() => {
-    setCorrectIndexes([]);
+    correctIndexes. current = [];
     fetchProgressFromDB();
   }, [currentDifficulty]);
 
@@ -196,7 +197,7 @@ function Questions() {
   const getNextQuestionIndex = () => {
     const candidates = questionsList
       .map((_, i) => i)
-      .filter((i) => !seenQuestions.includes(i) && !correctIndexes.includes(i));
+      .filter((i) => !seenQuestions.includes(i) && !correctIndexes.current.includes(i));
     if (candidates.length === 0) return null;
     return candidates[Math.floor(Math.random() * candidates.length)];
   };
@@ -218,14 +219,10 @@ function Questions() {
   };
 
   const nextQuestionAfterTimeout = () => {
-    // תיקון: בדיקה אם זו השאלה האחרונה לפני שמעלים את המספר
-    const isLast = currentQuestionNumber === questionsThisRound;
-    if (isLast) {
-      setShowEndModal(true);
-    } else {
-      setCurrentQuestionNumber((n) => n + 1);
-      loadNextQuestion();
-    }
+    const last = currentQuestionNumber >= questionsThisRound;
+    setCurrentQuestionNumber((n) => n + 1);
+    if (last) setShowEndModal(true);
+    else loadNextQuestion();
   };
 
   const handleAnswerClick = (idx) => {
@@ -238,9 +235,10 @@ function Questions() {
 
     if (idx === question.correct) {
       correctAudio.play();
-      if (!correctIndexes.includes(questionIndex)) {
-        const updated = [...correctIndexes, questionIndex];
-        setCorrectIndexes(updated);
+      if (!correctIndexes.current.includes(questionIndex)) {
+        const updated = [...correctIndexes.current, questionIndex];
+        //setCorrectIndexes(updated);
+        correctIndexes.current = updated;
         saveProgressToDB(updated);
       }
       setCorrectCount((c) => c + 1);
@@ -252,18 +250,10 @@ function Questions() {
 
     setTimeout(() => {
       setToast(null);
-      // בדיקה אם צריך לעלות רמה (auto level-up)
-      const isLast = currentQuestionNumber === questionsThisRound;
-      const shouldLevelUp = correctIndexes.length + (idx === question.correct ? 1 : 0) >= MAX_QUESTIONS_PER_CATEGORY;
-      if (isLast && shouldLevelUp) {
-        // תהליך העלאת רמה כבר קיים ב-fetchProgressFromDB, אז רק פותחים את המודאל
-        setShowEndModal(true);
-      } else if (isLast) {
-        setShowEndModal(true);
-      } else {
-        setCurrentQuestionNumber((n) => n + 1);
-        loadNextQuestion();
-      }
+      const isLast = currentQuestionNumber >= questionsThisRound;
+      setCurrentQuestionNumber((n) => n + 1);
+      if (isLast) setShowEndModal(true);
+      else loadNextQuestion();
       setLocked(false);
     }, 1500);
   };
