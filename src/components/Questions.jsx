@@ -59,6 +59,7 @@ function Questions() {
   const [toast, setToast]                 = useState(null);
   const [showEndModal, setShowEndModal]   = useState(false);
   const [currentQuestionNumber, setCurrentQuestionNumber] = useState(1);
+  const [sessionTotalQuestions, setSessionTotalQuestions] = useState(null);
 
   // hide quiz UI during level-up
   const [isLevelingUp, setIsLevelingUp] = useState(false);
@@ -152,6 +153,11 @@ function Questions() {
     fetchProgressFromDB();
   }, [currentDifficulty]);
 
+  useEffect(() => {
+   const unanswered = questionsList.filter((_, i) => !correctIndexes.includes(i)).length;
+   setSessionTotalQuestions(Math.min(MAX_QUESTIONS, unanswered));
+ }, [questionsList, correctIndexes]);
+
   // 3) Only load next question when questionIndex is null
   useEffect(() => {
     if (questionIndex === null) {
@@ -195,7 +201,7 @@ function Questions() {
   };
 
   const loadNextQuestion = () => {
-    if (currentQuestionNumber > MAX_QUESTIONS) return setShowEndModal(true);
+    if (currentQuestionNumber > sessionTotalQuestions) return setShowEndModal(true);
     const nxt = getNextQuestionIndex();
     if (nxt === null) {
       setSeenQuestions([]);
@@ -211,7 +217,7 @@ function Questions() {
   };
 
   const nextQuestionAfterTimeout = () => {
-    const last = currentQuestionNumber >= MAX_QUESTIONS;
+    const last = currentQuestionNumber >= sessionTotalQuestions;
     setCurrentQuestionNumber((n) => n + 1);
     if (last) setShowEndModal(true);
     else loadNextQuestion();
@@ -241,7 +247,7 @@ function Questions() {
 
     setTimeout(() => {
       setToast(null);
-      const isLast = currentQuestionNumber >= MAX_QUESTIONS;
+      const isLast = currentQuestionNumber >= sessionTotalQuestions;
       setCurrentQuestionNumber((n) => n + 1);
       if (isLast) setShowEndModal(true);
       else loadNextQuestion();
@@ -273,7 +279,7 @@ function Questions() {
       ? questionsList[questionIndex]
       : { question: '', answers: [], hint: '', authohint: '' };
 
-  const progressPercent = ((currentQuestionNumber - 1) / MAX_QUESTIONS) * 100;
+  const progressPercent = ((currentQuestionNumber - 1) / sessionTotalQuestions) * 100;
   const { enPart, hePart, punctuation } = splitQuestionText(question.question);
 
   // EARLY RETURN DURING LEVEL-UP
@@ -342,7 +348,7 @@ function Questions() {
                 />
               </div>
               <p className="text-right text-sm text-gray-600 dark:text-gray-300">
-                שאלה {currentQuestionNumber} מתוך {MAX_QUESTIONS}
+                שאלה {currentQuestionNumber} מתוך {sessionTotalQuestions}
               </p>
 
               {/* Question Card */}
@@ -433,13 +439,13 @@ function Questions() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-20">
           <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg space-y-4 max-w-sm">
             <h2 className="text-2xl font-bold text-center">
-              סיימת את כל {MAX_QUESTIONS} השאלות!
+              סיימת את כל {sessionTotalQuestions} השאלות!
             </h2>
             <div className="flex justify-center">
               <img src={getResultImage()} alt="Result" className="w-32 h-32" />
             </div>
             <p className="text-center">
-              תשובות נכונות: {correctCount} מתוך {MAX_QUESTIONS}
+              תשובות נכונות: {correctCount} מתוך {sessionTotalQuestions}
             </p>
             <button
               onClick={() => {
