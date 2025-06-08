@@ -55,8 +55,9 @@ function Questions() {
   const [toast, setToast]                 = useState(null);
   const [showEndModal, setShowEndModal]   = useState(false);
   const [currentQuestionNumber, setCurrentQuestionNumber] = useState(1);
-  const [initialTotalQuestions, setInitialTotalQuestions] = useState(null);
   const questionsList = questionsData?.[lang]?.[currentDifficulty] || [];
+  const totalQuestions = Math.min(MAX_QUESTIONS, questionsList.length);
+
 
 
   // hide quiz UI during level-up
@@ -182,12 +183,6 @@ function Questions() {
     }, 1000);
     return () => clearInterval(id);
   }, [locked]);
-  useEffect(() => {
-  if (initialTotalQuestions === null) {
-    const unanswered = questionsList.filter((_, i) => !correctIndexes.includes(i)).length;
-    setInitialTotalQuestions(Math.min(MAX_QUESTIONS, unanswered));
-  }
-}, [questionsList, correctIndexes, initialTotalQuestions]);
 
   /* ------------------------------------------------------------------
      QUESTION FLOW HELPERS
@@ -196,14 +191,14 @@ function Questions() {
   if (!lang || !currentDifficulty || questionsList.length === 0) {
   return <div>…</div>;
 }
-  const getNextQuestionIndex = () => {
-    const candidates = questionsList
-      .map((_, i) => i)
-      .filter((i) => !seenQuestions.includes(i) && !correctIndexes.includes(i));
-    if (candidates.length === 0) return null;
-    return candidates[Math.floor(Math.random() * candidates.length)];
-  };
-  const totalQuestions  = initialTotalQuestions ?? 0;
+ const getNextQuestionIndex = () => {
+   const candidates = questionsList
+     .map((_, i) => i)
+     .filter((i) => !seenQuestions.includes(i));
+   if (candidates.length === 0) return null;
+   return candidates[Math.floor(Math.random() * candidates.length)];
+ };
+  
 
   const loadNextQuestion = () => {
     if (currentQuestionNumber > totalQuestions) return setShowEndModal(true);
