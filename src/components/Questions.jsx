@@ -196,7 +196,7 @@ function Questions() {
   };
 
   const loadNextQuestion = () => {
-    if (currentQuestionNumber > MAX_QUESTIONS) return setShowEndModal(true);
+    if (currentQuestionNumber > totalQuestions) return setShowEndModal(true);
     const nxt = getNextQuestionIndex();
     if (nxt === null) {
       setSeenQuestions([]);
@@ -212,7 +212,7 @@ function Questions() {
   };
 
   const nextQuestionAfterTimeout = () => {
-    const last = currentQuestionNumber >= MAX_QUESTIONS;
+    const last = currentQuestionNumber >= totalQuestions;
     setCurrentQuestionNumber((n) => n + 1);
     if (last) setShowEndModal(true);
     else loadNextQuestion();
@@ -242,7 +242,7 @@ function Questions() {
 
     setTimeout(() => {
       setToast(null);
-      const isLast = currentQuestionNumber >= MAX_QUESTIONS;
+      const isLast = currentQuestionNumber >= totalQuestions;
       setCurrentQuestionNumber((n) => n + 1);
       if (isLast) setShowEndModal(true);
       else loadNextQuestion();
