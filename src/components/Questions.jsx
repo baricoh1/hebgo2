@@ -252,9 +252,13 @@ function Questions() {
 
     setTimeout(() => {
       setToast(null);
-      // תיקון: בדיקה אם זו השאלה האחרונה לפני שמעלים את המספר
+      // בדיקה אם צריך לעלות רמה (auto level-up)
       const isLast = currentQuestionNumber === questionsThisRound;
-      if (isLast) {
+      const shouldLevelUp = correctIndexes.length + (idx === question.correct ? 1 : 0) >= MAX_QUESTIONS_PER_CATEGORY;
+      if (isLast && shouldLevelUp) {
+        // תהליך העלאת רמה כבר קיים ב-fetchProgressFromDB, אז רק פותחים את המודאל
+        setShowEndModal(true);
+      } else if (isLast) {
         setShowEndModal(true);
       } else {
         setCurrentQuestionNumber((n) => n + 1);
