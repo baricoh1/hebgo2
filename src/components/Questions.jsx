@@ -95,7 +95,18 @@ function Questions() {
       const questionsNeededForLevelUp = MAX_QUESTIONS_PER_CATEGORY - serverProg.length;
       // אם צריך פחות שאלות מ-MAX_QUESTIONS כדי לעלות רמה, נציג את המספר הזה.
       // אחרת, נציג MAX_QUESTIONS (כי זה גודל סבב המשחק הנוכחי).
-      setSessionTargetQuestions(Math.min(MAX_QUESTIONS, questionsNeededForLevelUp > 0 ? questionsNeededForLevelUp : MAX_QUESTIONS));
+      // חשוב: אם questionsNeededForLevelUp הוא 0 או שלילי (כבר עבר רמה), עדיין נציג 10
+      // כדי לאפשר למשתמש להמשיך לשחק סיבובים רגילים עד שיעלה רמה (אם הוא לא עשה את זה באופן אוטומטי).
+      setSessionTargetQuestions(Math.min(MAX_QUESTIONS, Math.max(1, questionsNeededForLevelUp)));
+      // אם questionsNeededForLevelUp <= 0, אז sessionTargetQuestions יהיה 1 (כדי למנוע מתוך 0)
+      // אך זה לא משנה במקרה של 20 שאלות לעלייה, שכן 20-20 = 0, ו-Math.max(1,0) = 1.
+      // עדיף אם כבר עבר רמה שיציג 10 כ"מתוך" כדי לאפשר משחק נוסף.
+      // תיקון ללוגיקה: אם כבר עבר 20 שאלות, יש להציג "מתוך 10" רגיל
+      if (serverProg.length >= MAX_QUESTIONS_PER_CATEGORY) {
+         setSessionTargetQuestions(MAX_QUESTIONS);
+      } else {
+         setSessionTargetQuestions(Math.min(MAX_QUESTIONS, questionsNeededForLevelUp));
+      }
 
 
       // AUTO LEVEL-UP
@@ -201,32 +212,46 @@ function Questions() {
     const candidates = questionsList
       .map((_, i) => i)
       .filter((i) => !seenQuestions.includes(i) && !correctIndexes.includes(i));
-    if (candidates.length === 0) return null;
-    return candidates[Math.floor(Math.random() * candidates.length)];
+    return candidates.length > 0 ? candidates[Math.floor(Math.random() * candidates.length)] : null;
   };
 
   const loadNextQuestion = () => {
-    // השתמש ב-sessionTargetQuestions במקום ב-MAX_QUESTIONS
-    if (currentQuestionNumber > sessionTargetQuestions) return setShowEndModal(true);
-    const nxt = getNextQuestionIndex();
-    if (nxt === null) {
-      setSeenQuestions([]);
+    // 1. קודם כל בודקים אם הגענו לסוף הסיבוב הנוכחי לפי היעד שלו
+    if (currentQuestionNumber > sessionTargetQuestions) {
       setShowEndModal(true);
-    } else {
-      setSeenQuestions((prev) => [...prev, nxt]);
-      setQuestionIndex(nxt);
-      setSelected(null);
-      setShowHint(false);
-      setShowAutoHint(false);
-      setTime(30);
+      return;
     }
+
+    // 2. מנסים למצוא שאלה חדשה
+    const nxt = getNextQuestionIndex();
+
+    // 3. אם אין שאלה חדשה *וגם* לא הגענו ליעד הסיבוב, זה אומר שנגמרו השאלות הפנויות
+    // וצריך לסיים את הסיבוב מוקדם
+    if (nxt === null) {
+      // אם הגענו לכאן, זה אומר שנגמרו השאלות בבנק השאלות הזמין
+      // *לפני* שהגענו ל-sessionTargetQuestions,
+      // לכן יש לסיים את הסיבוב הנוכחי.
+      setSeenQuestions([]); // אפשר לאפס את השאלות שנראו עבור סבב הבא
+      setShowEndModal(true);
+      return;
+    }
+
+    // 4. אם יש שאלה חדשה ועדיין לא הגענו לסוף הסיבוב, ממשיכים כרגיל
+    setSeenQuestions((prev) => [...prev, nxt]);
+    setQuestionIndex(nxt);
+    setSelected(null);
+    setShowHint(false);
+    setShowAutoHint(false);
+    setTime(30);
   };
 
   const nextQuestionAfterTimeout = () => {
-    // השתמש ב-sessionTargetQuestions במקום ב-MAX_QUESTIONS
-    const last = currentQuestionNumber >= sessionTargetQuestions;
-    setCurrentQuestionNumber((n) => n + 1);
-    if (last) {
+    // הקדמנו את הבדיקה אם אין שאלה חדשה ל-loadNextQuestion
+    // כאן רק מתקדמים לשאלה הבאה (או מסיימים אם הגענו לסוף הסיבוב)
+    const nextQuestionNum = currentQuestionNumber + 1;
+    setCurrentQuestionNumber(nextQuestionNum);
+
+    if (nextQuestionNum > sessionTargetQuestions) {
       setShowEndModal(true);
     } else {
       loadNextQuestion();
@@ -239,7 +264,7 @@ function Questions() {
     setLocked(true);
 
     const correctAudio = new Audio(correctSound);
-    const wrongAudio = new Audio(wrongSound);
+    const wrongAudio = new Audio(wrongAnswerSound); //ודא ש-wrongAnswerSound מוגדר, היה wrongSound
 
     if (idx === question.correct) {
       correctAudio.play();
@@ -257,10 +282,10 @@ function Questions() {
 
     setTimeout(() => {
       setToast(null);
-      // השתמש ב-sessionTargetQuestions במקום ב-MAX_QUESTIONS
-      const isLast = currentQuestionNumber >= sessionTargetQuestions;
-      setCurrentQuestionNumber((n) => n + 1);
-      if (isLast) {
+      const nextQuestionNum = currentQuestionNumber + 1;
+      setCurrentQuestionNumber(nextQuestionNum);
+
+      if (nextQuestionNum > sessionTargetQuestions) {
         setShowEndModal(true);
       } else {
         loadNextQuestion();
