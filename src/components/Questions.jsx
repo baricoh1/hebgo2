@@ -26,8 +26,9 @@ function Questions() {
   /* ------------------------------------------------------------------
    * CONSTANTS & BASIC DATA
    ------------------------------------------------------------------ */
-  const MAX_QUESTIONS = 10;
-  const MAX_QUESTIONS_PER_CATEGORY = 20;
+  const MAX_QUESTIONS = 10; // מספר השאלות המקסימלי במשחק בודד
+  const MAX_QUESTIONS_PER_CATEGORY = 20; // מספר השאלות הכולל לעלייה לרמה
+
   const navigate = useNavigate();
 
   const userName = localStorage.getItem('userName');
@@ -59,8 +60,9 @@ function Questions() {
   const [toast, setToast] = useState(null);
   const [showEndModal, setShowEndModal] = useState(false);
   const [currentQuestionNumber, setCurrentQuestionNumber] = useState(1);
-  // New state for total questions in the current game session
-  const [totalQuestionsInSession, setTotalQuestionsInSession] = useState(MAX_QUESTIONS);
+
+  // המצב החדש שישמור את "יעד" השאלות עבור המשחק הנוכחי (ה"מתוך")
+  const [sessionTargetQuestions, setSessionTargetQuestions] = useState(MAX_QUESTIONS);
 
   // hide quiz UI during level-up
   const [isLevelingUp, setIsLevelingUp] = useState(false);
@@ -88,6 +90,13 @@ function Questions() {
 
       const serverProg = data.progress?.[lang]?.[currentDifficulty] || [];
       setCorrectIndexes(serverProg);
+
+      // לוגיקה לקביעת sessionTargetQuestions
+      const questionsNeededForLevelUp = MAX_QUESTIONS_PER_CATEGORY - serverProg.length;
+      // אם צריך פחות שאלות מ-MAX_QUESTIONS כדי לעלות רמה, נציג את המספר הזה.
+      // אחרת, נציג MAX_QUESTIONS (כי זה גודל סבב המשחק הנוכחי).
+      setSessionTargetQuestions(Math.min(MAX_QUESTIONS, questionsNeededForLevelUp > 0 ? questionsNeededForLevelUp : MAX_QUESTIONS));
+
 
       // AUTO LEVEL-UP
       if (serverProg.length >= MAX_QUESTIONS_PER_CATEGORY) {
@@ -143,7 +152,7 @@ function Questions() {
   /* ------------------------------------------------------------------
    * EFFECTS
    ------------------------------------------------------------------ */
-  // 1) Fetch progress once on mount
+  // 1) Fetch progress once on mount and set session target
   useEffect(() => {
     fetchProgressFromDB();
   }, []);
@@ -151,7 +160,7 @@ function Questions() {
   // 2) Re-fetch (and clear) when difficulty changes
   useEffect(() => {
     setCorrectIndexes([]);
-    fetchProgressFromDB();
+    fetchProgressFromDB(); // Fetch progress again to update sessionTargetQuestions
   }, [currentDifficulty]);
 
   // 3) Only load next question when questionIndex is null
@@ -197,18 +206,13 @@ function Questions() {
   };
 
   const loadNextQuestion = () => {
-    if (currentQuestionNumber > MAX_QUESTIONS) return setShowEndModal(true);
+    // השתמש ב-sessionTargetQuestions במקום ב-MAX_QUESTIONS
+    if (currentQuestionNumber > sessionTargetQuestions) return setShowEndModal(true);
     const nxt = getNextQuestionIndex();
     if (nxt === null) {
       setSeenQuestions([]);
       setShowEndModal(true);
     } else {
-      // Set the totalQuestionsInSession when a new game session starts
-      if (currentQuestionNumber === 1 && totalQuestionsInSession === MAX_QUESTIONS) {
-        // This ensures it's set only once at the beginning of a new game.
-        // You might want to adjust this logic if MAX_QUESTIONS itself can change dynamically.
-        setTotalQuestionsInSession(MAX_QUESTIONS); 
-      }
       setSeenQuestions((prev) => [...prev, nxt]);
       setQuestionIndex(nxt);
       setSelected(null);
@@ -219,10 +223,14 @@ function Questions() {
   };
 
   const nextQuestionAfterTimeout = () => {
-    const last = currentQuestionNumber >= MAX_QUESTIONS;
+    // השתמש ב-sessionTargetQuestions במקום ב-MAX_QUESTIONS
+    const last = currentQuestionNumber >= sessionTargetQuestions;
     setCurrentQuestionNumber((n) => n + 1);
-    if (last) setShowEndModal(true);
-    else loadNextQuestion();
+    if (last) {
+      setShowEndModal(true);
+    } else {
+      loadNextQuestion();
+    }
   };
 
   const handleAnswerClick = (idx) => {
@@ -249,10 +257,14 @@ function Questions() {
 
     setTimeout(() => {
       setToast(null);
-      const isLast = currentQuestionNumber >= MAX_QUESTIONS;
+      // השתמש ב-sessionTargetQuestions במקום ב-MAX_QUESTIONS
+      const isLast = currentQuestionNumber >= sessionTargetQuestions;
       setCurrentQuestionNumber((n) => n + 1);
-      if (isLast) setShowEndModal(true);
-      else loadNextQuestion();
+      if (isLast) {
+        setShowEndModal(true);
+      } else {
+        loadNextQuestion();
+      }
       setLocked(false);
     }, 1500);
   };
@@ -281,12 +293,9 @@ function Questions() {
       ? questionsList[questionIndex]
       : { question: '', answers: [], hint: '', authohint: '' };
 
-  const progressPercent = ((currentQuestionNumber - 1) / MAX_QUESTIONS) * 100;
+  // עכשיו progressPercent מחושב מתוך sessionTargetQuestions
+  const progressPercent = ((currentQuestionNumber - 1) / sessionTargetQuestions) * 100;
   const { enPart, hePart, punctuation } = splitQuestionText(question.question);
-
-  // Calculate remaining questions based on totalQuestionsInSession
-  const remainingQuestions = totalQuestionsInSession - (currentQuestionNumber - 1);
-
 
   // EARLY RETURN DURING LEVEL-UP
   if (isLevelingUp) {
@@ -334,8 +343,8 @@ function Questions() {
                     שאלה
                   </span>
                   <span className="bg-blue-500 text-white rounded-full px-3 py-1 shadow-md">
-                    {/* Display remaining questions if less than 10, otherwise current/max */}
-                    {remainingQuestions <= 9 ? `${remainingQuestions} מתוך ${totalQuestionsInSession}` : `${currentQuestionNumber} מתוך ${MAX_QUESTIONS}`}
+                    {/* הצגת השאלות: "הנוכחית מתוך היעד לסיבוב" */}
+                    {currentQuestionNumber} מתוך {sessionTargetQuestions}
                   </span>
                 </div>
                 <div className="bg-white py-1 px-3 rounded shadow dark:bg-gray-100">
@@ -355,7 +364,8 @@ function Questions() {
                 />
               </div>
               <p className="text-right text-sm text-gray-600 dark:text-gray-300">
-                שאלה {currentQuestionNumber} מתוך {MAX_QUESTIONS}
+                {/* גם כאן נציג את היעד לסיבוב במקום MAX_QUESTIONS הקבוע */}
+                שאלה {currentQuestionNumber} מתוך {sessionTargetQuestions}
               </p>
 
               {/* Question Card */}
@@ -446,13 +456,13 @@ function Questions() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-20">
           <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg space-y-4 max-w-sm">
             <h2 className="text-2xl font-bold text-center">
-              סיימת את כל {MAX_QUESTIONS} השאלות!
+              סיימת את כל {sessionTargetQuestions} השאלות בסיבוב הזה!
             </h2>
             <div className="flex justify-center">
               <img src={getResultImage()} alt="Result" className="w-32 h-32" />
             </div>
             <p className="text-center">
-              תשובות נכונות: {correctCount} מתוך {MAX_QUESTIONS}
+              תשובות נכונות: {correctCount} מתוך {sessionTargetQuestions}
             </p>
             <button
               onClick={() => {
