@@ -59,6 +59,8 @@ function Questions() {
   const [toast, setToast]                 = useState(null);
   const [showEndModal, setShowEndModal]   = useState(false);
   const [currentQuestionNumber, setCurrentQuestionNumber] = useState(1);
+  const [questionsThisRound, setQuestionsThisRound] = useState(MAX_QUESTIONS); 
+
 
   // hide quiz UI during level-up
   const [isLevelingUp, setIsLevelingUp] = useState(false);
@@ -86,6 +88,11 @@ function Questions() {
 
       const serverProg = data.progress?.[lang]?.[currentDifficulty] || [];
       setCorrectIndexes(serverProg);
+       setCorrectAtStart(serverProg.length);
+
+       const remaining = MAX_QUESTIONS_PER_CATEGORY - serverProg.length;
+        setQuestionsThisRound(Math.min(MAX_QUESTIONS, remaining)); 
+
 
       // AUTO LEVEL-UP
       if (serverProg.length >= MAX_QUESTIONS_PER_CATEGORY) {
@@ -195,7 +202,7 @@ function Questions() {
   };
 
   const loadNextQuestion = () => {
-    if (currentQuestionNumber > MAX_QUESTIONS) return setShowEndModal(true);
+    if (currentQuestionNumber > questionsThisRound) return setShowEndModal(true);
     const nxt = getNextQuestionIndex();
     if (nxt === null) {
       setSeenQuestions([]);
@@ -211,7 +218,7 @@ function Questions() {
   };
 
   const nextQuestionAfterTimeout = () => {
-    const last = currentQuestionNumber >= MAX_QUESTIONS;
+    const last = currentQuestionNumber >= questionsThisRound;
     setCurrentQuestionNumber((n) => n + 1);
     if (last) setShowEndModal(true);
     else loadNextQuestion();
@@ -241,7 +248,7 @@ function Questions() {
 
     setTimeout(() => {
       setToast(null);
-      const isLast = currentQuestionNumber >= MAX_QUESTIONS;
+      const isLast = currentQuestionNumber >= questionsThisRound;
       setCurrentQuestionNumber((n) => n + 1);
       if (isLast) setShowEndModal(true);
       else loadNextQuestion();
@@ -342,7 +349,7 @@ function Questions() {
                 />
               </div>
               <p className="text-right text-sm text-gray-600 dark:text-gray-300">
-                שאלה {currentQuestionNumber} מתוך {MAX_QUESTIONS}
+                שאלה {currentQuestionNumber} מתוך {questionsThisRound}
               </p>
 
               {/* Question Card */}
@@ -433,13 +440,13 @@ function Questions() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-20">
           <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg space-y-4 max-w-sm">
             <h2 className="text-2xl font-bold text-center">
-              סיימת את כל {MAX_QUESTIONS} השאלות!
+              סיימת את כל {questionsThisRound} השאלות!
             </h2>
             <div className="flex justify-center">
               <img src={getResultImage()} alt="Result" className="w-32 h-32" />
             </div>
             <p className="text-center">
-              תשובות נכונות: {correctCount} מתוך {MAX_QUESTIONS}
+              תשובות נכונות: {correctCount} מתוך {questionsThisRound}
             </p>
             <button
               onClick={() => {
