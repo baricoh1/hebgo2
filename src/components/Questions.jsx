@@ -283,7 +283,10 @@ function Questions() {
       ? questionsList[questionIndex]
       : { question: '', answers: [], hint: '', authohint: '' };
 
-  const progressPercent = ((currentQuestionNumber - 1) / MAX_QUESTIONS) * 100;
+  const progressPercent = displayTotal
+  ? ((currentQuestionNumber - 1) / displayTotal) * 100
+  : 0;
+
   const { enPart, hePart, punctuation } = splitQuestionText(question.question);
 
   // EARLY RETURN DURING LEVEL-UP
