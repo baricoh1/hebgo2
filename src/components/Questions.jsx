@@ -218,10 +218,14 @@ function Questions() {
   };
 
   const nextQuestionAfterTimeout = () => {
-    const last = currentQuestionNumber >= questionsThisRound;
-    setCurrentQuestionNumber((n) => n + 1);
-    if (last) setShowEndModal(true);
-    else loadNextQuestion();
+    // תיקון: בדיקה אם זו השאלה האחרונה לפני שמעלים את המספר
+    const isLast = currentQuestionNumber === questionsThisRound;
+    if (isLast) {
+      setShowEndModal(true);
+    } else {
+      setCurrentQuestionNumber((n) => n + 1);
+      loadNextQuestion();
+    }
   };
 
   const handleAnswerClick = (idx) => {
@@ -248,10 +252,14 @@ function Questions() {
 
     setTimeout(() => {
       setToast(null);
-      const isLast = currentQuestionNumber >= questionsThisRound;
-      setCurrentQuestionNumber((n) => n + 1);
-      if (isLast) setShowEndModal(true);
-      else loadNextQuestion();
+      // תיקון: בדיקה אם זו השאלה האחרונה לפני שמעלים את המספר
+      const isLast = currentQuestionNumber === questionsThisRound;
+      if (isLast) {
+        setShowEndModal(true);
+      } else {
+        setCurrentQuestionNumber((n) => n + 1);
+        loadNextQuestion();
+      }
       setLocked(false);
     }, 1500);
   };
