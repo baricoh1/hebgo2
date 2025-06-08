@@ -55,6 +55,9 @@ function Questions() {
   const [toast, setToast]                 = useState(null);
   const [showEndModal, setShowEndModal]   = useState(false);
   const [currentQuestionNumber, setCurrentQuestionNumber] = useState(1);
+  const [initialTotalQuestions, setInitialTotalQuestions] = useState(null);
+  const questionsList = questionsData?.[lang]?.[currentDifficulty] || [];
+
 
   // hide quiz UI during level-up
   const [isLevelingUp, setIsLevelingUp] = useState(false);
@@ -69,13 +72,6 @@ function Questions() {
     const names = { easy: 'קל', medium: 'בינוני', hard: 'קשה' };
     return names[level] || level;
   };
-  const questionsList = questionsData?.[lang]?.[currentDifficulty] || [];
-  const remainingCount = questionsList.filter((_, i) => !correctIndexes.includes(i)).length;
-  const totalQuestions = Math.min(MAX_QUESTIONS, remainingCount);
-
-    if (!lang || !currentDifficulty || questionsList.length === 0) {
-    return <div className="p-4 text-red-600">לא ניתן לטעון את השאלות. ודא שהשפה והרמה נבחרו כראוי.</div>;
-  }
 
   /* ------------------------------------------------------------------
      FIREBASE HELPERS
@@ -140,6 +136,7 @@ function Questions() {
       console.error('Error writing progress:', err);
     }
   };
+ 
 
   /* ------------------------------------------------------------------
      EFFECTS
@@ -185,10 +182,20 @@ function Questions() {
     }, 1000);
     return () => clearInterval(id);
   }, [locked]);
+  useEffect(() => {
+  if (initialTotalQuestions === null) {
+    const unanswered = questionsList.filter((_, i) => !correctIndexes.includes(i)).length;
+    setInitialTotalQuestions(Math.min(MAX_QUESTIONS, unanswered));
+  }
+}, [questionsList, correctIndexes, initialTotalQuestions]);
 
   /* ------------------------------------------------------------------
      QUESTION FLOW HELPERS
   ------------------------------------------------------------------ */
+
+  if (!lang || !currentDifficulty || questionsList.length === 0) {
+  return <div>…</div>;
+}
   const getNextQuestionIndex = () => {
     const candidates = questionsList
       .map((_, i) => i)
@@ -196,6 +203,7 @@ function Questions() {
     if (candidates.length === 0) return null;
     return candidates[Math.floor(Math.random() * candidates.length)];
   };
+  const totalQuestions  = initialTotalQuestions ?? 0;
 
   const loadNextQuestion = () => {
     if (currentQuestionNumber > totalQuestions) return setShowEndModal(true);
