@@ -1,10 +1,9 @@
 // src/components/Questions.jsx
-import React, { useEffect, useState, useRef,useMemo } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import questionsData from './questions.json';
-
 
 // Images
 import ball0 from '../images/ball0.png';
@@ -25,14 +24,14 @@ import wrongSound from '../sounds/wrong_answer.mp3';
 
 function Questions() {
   /* ------------------------------------------------------------------
-     CONSTANTS & BASIC DATA
-  ------------------------------------------------------------------ */
+   * CONSTANTS & BASIC DATA
+   ------------------------------------------------------------------ */
   const MAX_QUESTIONS = 10;
   const MAX_QUESTIONS_PER_CATEGORY = 20;
   const navigate = useNavigate();
 
   const userName = localStorage.getItem('userName');
-  const lang     = localStorage.getItem('userLang');
+  const lang = localStorage.getItem('userLang');
   const [currentDifficulty, setCurrentDifficulty] = useState(
     localStorage.getItem('userDifficulty')
   );
@@ -44,23 +43,24 @@ function Questions() {
   if (!lang || !currentDifficulty || questionsList.length === 0) {
     return <div className="p-4 text-red-600">לא ניתן לטעון את השאלות. ודא שהשפה והרמה נבחרו כראוי.</div>;
   }
-  
 
   /* ------------------------------------------------------------------
-     REACT STATE
-  ------------------------------------------------------------------ */
+   * REACT STATE
+   ------------------------------------------------------------------ */
   const [questionIndex, setQuestionIndex] = useState(null);
   const [seenQuestions, setSeenQuestions] = useState([]);
-  const [selected, setSelected]           = useState(null);
+  const [selected, setSelected] = useState(null);
   const [correctIndexes, setCorrectIndexes] = useState([]);
-  const [correctCount, setCorrectCount]   = useState(0);
-  const [locked, setLocked]               = useState(false);
-  const [showHint, setShowHint]           = useState(false);
-  const [showAutoHint, setShowAutoHint]   = useState(false);
-  const [time, setTime]                   = useState(30);
-  const [toast, setToast]                 = useState(null);
-  const [showEndModal, setShowEndModal]   = useState(false);
+  const [correctCount, setCorrectCount] = useState(0);
+  const [locked, setLocked] = useState(false);
+  const [showHint, setShowHint] = useState(false);
+  const [showAutoHint, setShowAutoHint] = useState(false);
+  const [time, setTime] = useState(30);
+  const [toast, setToast] = useState(null);
+  const [showEndModal, setShowEndModal] = useState(false);
   const [currentQuestionNumber, setCurrentQuestionNumber] = useState(1);
+  // New state for total questions in the current game session
+  const [totalQuestionsInSession, setTotalQuestionsInSession] = useState(MAX_QUESTIONS);
 
   // hide quiz UI during level-up
   const [isLevelingUp, setIsLevelingUp] = useState(false);
@@ -77,8 +77,8 @@ function Questions() {
   };
 
   /* ------------------------------------------------------------------
-     FIREBASE HELPERS
-  ------------------------------------------------------------------ */
+   * FIREBASE HELPERS
+   ------------------------------------------------------------------ */
   const fetchProgressFromDB = async () => {
     try {
       const userRef = doc(db, 'users', userName);
@@ -141,8 +141,8 @@ function Questions() {
   };
 
   /* ------------------------------------------------------------------
-     EFFECTS
-  ------------------------------------------------------------------ */
+   * EFFECTS
+   ------------------------------------------------------------------ */
   // 1) Fetch progress once on mount
   useEffect(() => {
     fetchProgressFromDB();
@@ -184,17 +184,10 @@ function Questions() {
     }, 1000);
     return () => clearInterval(id);
   }, [locked]);
- 
 
   /* ------------------------------------------------------------------
-     QUESTION FLOW HELPERS
-  ------------------------------------------------------------------ */
-  const unansweredCount = useMemo(
-  () => questionsList.filter((_, i) => !correctIndexes.includes(i)).length,
-  [questionsList, correctIndexes]
-);
-const totalQuestions = Math.min(MAX_QUESTIONS, unansweredCount);
-
+   * QUESTION FLOW HELPERS
+   ------------------------------------------------------------------ */
   const getNextQuestionIndex = () => {
     const candidates = questionsList
       .map((_, i) => i)
@@ -204,12 +197,18 @@ const totalQuestions = Math.min(MAX_QUESTIONS, unansweredCount);
   };
 
   const loadNextQuestion = () => {
-    if (currentQuestionNumber > totalQuestions) return setShowEndModal(true);
+    if (currentQuestionNumber > MAX_QUESTIONS) return setShowEndModal(true);
     const nxt = getNextQuestionIndex();
     if (nxt === null) {
       setSeenQuestions([]);
       setShowEndModal(true);
     } else {
+      // Set the totalQuestionsInSession when a new game session starts
+      if (currentQuestionNumber === 1 && totalQuestionsInSession === MAX_QUESTIONS) {
+        // This ensures it's set only once at the beginning of a new game.
+        // You might want to adjust this logic if MAX_QUESTIONS itself can change dynamically.
+        setTotalQuestionsInSession(MAX_QUESTIONS); 
+      }
       setSeenQuestions((prev) => [...prev, nxt]);
       setQuestionIndex(nxt);
       setSelected(null);
@@ -220,7 +219,7 @@ const totalQuestions = Math.min(MAX_QUESTIONS, unansweredCount);
   };
 
   const nextQuestionAfterTimeout = () => {
-    const last = currentQuestionNumber >= totalQuestions;
+    const last = currentQuestionNumber >= MAX_QUESTIONS;
     setCurrentQuestionNumber((n) => n + 1);
     if (last) setShowEndModal(true);
     else loadNextQuestion();
@@ -232,7 +231,7 @@ const totalQuestions = Math.min(MAX_QUESTIONS, unansweredCount);
     setLocked(true);
 
     const correctAudio = new Audio(correctSound);
-    const wrongAudio   = new Audio(wrongSound);
+    const wrongAudio = new Audio(wrongSound);
 
     if (idx === question.correct) {
       correctAudio.play();
@@ -250,7 +249,7 @@ const totalQuestions = Math.min(MAX_QUESTIONS, unansweredCount);
 
     setTimeout(() => {
       setToast(null);
-      const isLast = currentQuestionNumber >= totalQuestions;
+      const isLast = currentQuestionNumber >= MAX_QUESTIONS;
       setCurrentQuestionNumber((n) => n + 1);
       if (isLast) setShowEndModal(true);
       else loadNextQuestion();
@@ -260,16 +259,16 @@ const totalQuestions = Math.min(MAX_QUESTIONS, unansweredCount);
 
   function splitQuestionText(text) {
     const heMatch = text.match(/['״'][א-ת\s_\-.,:()]+['״]/);
-    const hePart  = heMatch ? heMatch[0] : '';
-    const enPart  = hePart ? text.replace(hePart, '').replace(/[?؟!]/g, '').trim() : text;
+    const hePart = heMatch ? heMatch[0] : '';
+    const enPart = hePart ? text.replace(hePart, '').replace(/[?؟!]/g, '').trim() : text;
     const punctuationMatch = text.trim().match(/[?؟!]+$/);
     const punctuation = punctuationMatch ? punctuationMatch[0] : '';
     return { enPart, hePart, punctuation };
   }
 
   /* ------------------------------------------------------------------
-     RENDER HELPERS
-  ------------------------------------------------------------------ */
+   * RENDER HELPERS
+   ------------------------------------------------------------------ */
   const formatTime = (s) =>
     `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
   const getResultImage = () =>
@@ -282,8 +281,12 @@ const totalQuestions = Math.min(MAX_QUESTIONS, unansweredCount);
       ? questionsList[questionIndex]
       : { question: '', answers: [], hint: '', authohint: '' };
 
-  const progressPercent = ((currentQuestionNumber - 1) / totalQuestions) * 100;
+  const progressPercent = ((currentQuestionNumber - 1) / MAX_QUESTIONS) * 100;
   const { enPart, hePart, punctuation } = splitQuestionText(question.question);
+
+  // Calculate remaining questions based on totalQuestionsInSession
+  const remainingQuestions = totalQuestionsInSession - (currentQuestionNumber - 1);
+
 
   // EARLY RETURN DURING LEVEL-UP
   if (isLevelingUp) {
@@ -331,7 +334,8 @@ const totalQuestions = Math.min(MAX_QUESTIONS, unansweredCount);
                     שאלה
                   </span>
                   <span className="bg-blue-500 text-white rounded-full px-3 py-1 shadow-md">
-                    {currentQuestionNumber}
+                    {/* Display remaining questions if less than 10, otherwise current/max */}
+                    {remainingQuestions <= 9 ? `${remainingQuestions} מתוך ${totalQuestionsInSession}` : `${currentQuestionNumber} מתוך ${MAX_QUESTIONS}`}
                   </span>
                 </div>
                 <div className="bg-white py-1 px-3 rounded shadow dark:bg-gray-100">
@@ -351,7 +355,7 @@ const totalQuestions = Math.min(MAX_QUESTIONS, unansweredCount);
                 />
               </div>
               <p className="text-right text-sm text-gray-600 dark:text-gray-300">
-                שאלה {currentQuestionNumber} מתוך {totalQuestions}
+                שאלה {currentQuestionNumber} מתוך {MAX_QUESTIONS}
               </p>
 
               {/* Question Card */}
