@@ -24,15 +24,14 @@ import wrongSound from '../sounds/wrong_answer.mp3';
 
 function Questions() {
   /* ------------------------------------------------------------------
-   * CONSTANTS & BASIC DATA
-   ------------------------------------------------------------------ */
-  const MAX_QUESTIONS = 10; // מספר השאלות המקסימלי במשחק בודד
-  const MAX_QUESTIONS_PER_CATEGORY = 20; // מספר השאלות הכולל לעלייה לרמה
-
+     CONSTANTS & BASIC DATA
+  ------------------------------------------------------------------ */
+  const MAX_QUESTIONS = 10;
+  const MAX_QUESTIONS_PER_CATEGORY = 20;
   const navigate = useNavigate();
 
   const userName = localStorage.getItem('userName');
-  const lang = localStorage.getItem('userLang');
+  const lang     = localStorage.getItem('userLang');
   const [currentDifficulty, setCurrentDifficulty] = useState(
     localStorage.getItem('userDifficulty')
   );
@@ -46,23 +45,20 @@ function Questions() {
   }
 
   /* ------------------------------------------------------------------
-   * REACT STATE
-   ------------------------------------------------------------------ */
+     REACT STATE
+  ------------------------------------------------------------------ */
   const [questionIndex, setQuestionIndex] = useState(null);
   const [seenQuestions, setSeenQuestions] = useState([]);
-  const [selected, setSelected] = useState(null);
+  const [selected, setSelected]           = useState(null);
   const [correctIndexes, setCorrectIndexes] = useState([]);
-  const [correctCount, setCorrectCount] = useState(0);
-  const [locked, setLocked] = useState(false);
-  const [showHint, setShowHint] = useState(false);
-  const [showAutoHint, setShowAutoHint] = useState(false);
-  const [time, setTime] = useState(30);
-  const [toast, setToast] = useState(null);
-  const [showEndModal, setShowEndModal] = useState(false);
+  const [correctCount, setCorrectCount]   = useState(0);
+  const [locked, setLocked]               = useState(false);
+  const [showHint, setShowHint]           = useState(false);
+  const [showAutoHint, setShowAutoHint]   = useState(false);
+  const [time, setTime]                   = useState(30);
+  const [toast, setToast]                 = useState(null);
+  const [showEndModal, setShowEndModal]   = useState(false);
   const [currentQuestionNumber, setCurrentQuestionNumber] = useState(1);
-
-  // המצב החדש שישמור את "יעד" השאלות עבור המשחק הנוכחי (ה"מתוך")
-  const [sessionTargetQuestions, setSessionTargetQuestions] = useState(MAX_QUESTIONS);
 
   // hide quiz UI during level-up
   const [isLevelingUp, setIsLevelingUp] = useState(false);
@@ -79,8 +75,8 @@ function Questions() {
   };
 
   /* ------------------------------------------------------------------
-   * FIREBASE HELPERS
-   ------------------------------------------------------------------ */
+     FIREBASE HELPERS
+  ------------------------------------------------------------------ */
   const fetchProgressFromDB = async () => {
     try {
       const userRef = doc(db, 'users', userName);
@@ -90,24 +86,6 @@ function Questions() {
 
       const serverProg = data.progress?.[lang]?.[currentDifficulty] || [];
       setCorrectIndexes(serverProg);
-
-      // לוגיקה לקביעת sessionTargetQuestions
-      const questionsNeededForLevelUp = MAX_QUESTIONS_PER_CATEGORY - serverProg.length;
-      // אם צריך פחות שאלות מ-MAX_QUESTIONS כדי לעלות רמה, נציג את המספר הזה.
-      // אחרת, נציג MAX_QUESTIONS (כי זה גודל סבב המשחק הנוכחי).
-      // חשוב: אם questionsNeededForLevelUp הוא 0 או שלילי (כבר עבר רמה), עדיין נציג 10
-      // כדי לאפשר למשתמש להמשיך לשחק סיבובים רגילים עד שיעלה רמה (אם הוא לא עשה את זה באופן אוטומטי).
-      setSessionTargetQuestions(Math.min(MAX_QUESTIONS, Math.max(1, questionsNeededForLevelUp)));
-      // אם questionsNeededForLevelUp <= 0, אז sessionTargetQuestions יהיה 1 (כדי למנוע מתוך 0)
-      // אך זה לא משנה במקרה של 20 שאלות לעלייה, שכן 20-20 = 0, ו-Math.max(1,0) = 1.
-      // עדיף אם כבר עבר רמה שיציג 10 כ"מתוך" כדי לאפשר משחק נוסף.
-      // תיקון ללוגיקה: אם כבר עבר 20 שאלות, יש להציג "מתוך 10" רגיל
-      if (serverProg.length >= MAX_QUESTIONS_PER_CATEGORY) {
-         setSessionTargetQuestions(MAX_QUESTIONS);
-      } else {
-         setSessionTargetQuestions(Math.min(MAX_QUESTIONS, questionsNeededForLevelUp));
-      }
-
 
       // AUTO LEVEL-UP
       if (serverProg.length >= MAX_QUESTIONS_PER_CATEGORY) {
@@ -161,9 +139,9 @@ function Questions() {
   };
 
   /* ------------------------------------------------------------------
-   * EFFECTS
-   ------------------------------------------------------------------ */
-  // 1) Fetch progress once on mount and set session target
+     EFFECTS
+  ------------------------------------------------------------------ */
+  // 1) Fetch progress once on mount
   useEffect(() => {
     fetchProgressFromDB();
   }, []);
@@ -171,7 +149,7 @@ function Questions() {
   // 2) Re-fetch (and clear) when difficulty changes
   useEffect(() => {
     setCorrectIndexes([]);
-    fetchProgressFromDB(); // Fetch progress again to update sessionTargetQuestions
+    fetchProgressFromDB();
   }, [currentDifficulty]);
 
   // 3) Only load next question when questionIndex is null
@@ -206,56 +184,37 @@ function Questions() {
   }, [locked]);
 
   /* ------------------------------------------------------------------
-   * QUESTION FLOW HELPERS
-   ------------------------------------------------------------------ */
+     QUESTION FLOW HELPERS
+  ------------------------------------------------------------------ */
   const getNextQuestionIndex = () => {
     const candidates = questionsList
       .map((_, i) => i)
       .filter((i) => !seenQuestions.includes(i) && !correctIndexes.includes(i));
-    return candidates.length > 0 ? candidates[Math.floor(Math.random() * candidates.length)] : null;
+    if (candidates.length === 0) return null;
+    return candidates[Math.floor(Math.random() * candidates.length)];
   };
 
   const loadNextQuestion = () => {
-    // 1. קודם כל בודקים אם הגענו לסוף הסיבוב הנוכחי לפי היעד שלו
-    if (currentQuestionNumber > sessionTargetQuestions) {
-      setShowEndModal(true);
-      return;
-    }
-
-    // 2. מנסים למצוא שאלה חדשה
+    if (currentQuestionNumber > MAX_QUESTIONS) return setShowEndModal(true);
     const nxt = getNextQuestionIndex();
-
-    // 3. אם אין שאלה חדשה *וגם* לא הגענו ליעד הסיבוב, זה אומר שנגמרו השאלות הפנויות
-    // וצריך לסיים את הסיבוב מוקדם
     if (nxt === null) {
-      // אם הגענו לכאן, זה אומר שנגמרו השאלות בבנק השאלות הזמין
-      // *לפני* שהגענו ל-sessionTargetQuestions,
-      // לכן יש לסיים את הסיבוב הנוכחי.
-      setSeenQuestions([]); // אפשר לאפס את השאלות שנראו עבור סבב הבא
+      setSeenQuestions([]);
       setShowEndModal(true);
-      return;
+    } else {
+      setSeenQuestions((prev) => [...prev, nxt]);
+      setQuestionIndex(nxt);
+      setSelected(null);
+      setShowHint(false);
+      setShowAutoHint(false);
+      setTime(30);
     }
-
-    // 4. אם יש שאלה חדשה ועדיין לא הגענו לסוף הסיבוב, ממשיכים כרגיל
-    setSeenQuestions((prev) => [...prev, nxt]);
-    setQuestionIndex(nxt);
-    setSelected(null);
-    setShowHint(false);
-    setShowAutoHint(false);
-    setTime(30);
   };
 
   const nextQuestionAfterTimeout = () => {
-    // הקדמנו את הבדיקה אם אין שאלה חדשה ל-loadNextQuestion
-    // כאן רק מתקדמים לשאלה הבאה (או מסיימים אם הגענו לסוף הסיבוב)
-    const nextQuestionNum = currentQuestionNumber + 1;
-    setCurrentQuestionNumber(nextQuestionNum);
-
-    if (nextQuestionNum > sessionTargetQuestions) {
-      setShowEndModal(true);
-    } else {
-      loadNextQuestion();
-    }
+    const last = currentQuestionNumber >= MAX_QUESTIONS;
+    setCurrentQuestionNumber((n) => n + 1);
+    if (last) setShowEndModal(true);
+    else loadNextQuestion();
   };
 
   const handleAnswerClick = (idx) => {
@@ -264,7 +223,7 @@ function Questions() {
     setLocked(true);
 
     const correctAudio = new Audio(correctSound);
-    const wrongAudio = new Audio(wrongAnswerSound); //ודא ש-wrongAnswerSound מוגדר, היה wrongSound
+    const wrongAudio   = new Audio(wrongSound);
 
     if (idx === question.correct) {
       correctAudio.play();
@@ -282,30 +241,26 @@ function Questions() {
 
     setTimeout(() => {
       setToast(null);
-      const nextQuestionNum = currentQuestionNumber + 1;
-      setCurrentQuestionNumber(nextQuestionNum);
-
-      if (nextQuestionNum > sessionTargetQuestions) {
-        setShowEndModal(true);
-      } else {
-        loadNextQuestion();
-      }
+      const isLast = currentQuestionNumber >= MAX_QUESTIONS;
+      setCurrentQuestionNumber((n) => n + 1);
+      if (isLast) setShowEndModal(true);
+      else loadNextQuestion();
       setLocked(false);
     }, 1500);
   };
 
   function splitQuestionText(text) {
     const heMatch = text.match(/['״'][א-ת\s_\-.,:()]+['״]/);
-    const hePart = heMatch ? heMatch[0] : '';
-    const enPart = hePart ? text.replace(hePart, '').replace(/[?؟!]/g, '').trim() : text;
+    const hePart  = heMatch ? heMatch[0] : '';
+    const enPart  = hePart ? text.replace(hePart, '').replace(/[?؟!]/g, '').trim() : text;
     const punctuationMatch = text.trim().match(/[?؟!]+$/);
     const punctuation = punctuationMatch ? punctuationMatch[0] : '';
     return { enPart, hePart, punctuation };
   }
 
   /* ------------------------------------------------------------------
-   * RENDER HELPERS
-   ------------------------------------------------------------------ */
+     RENDER HELPERS
+  ------------------------------------------------------------------ */
   const formatTime = (s) =>
     `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
   const getResultImage = () =>
@@ -318,8 +273,7 @@ function Questions() {
       ? questionsList[questionIndex]
       : { question: '', answers: [], hint: '', authohint: '' };
 
-  // עכשיו progressPercent מחושב מתוך sessionTargetQuestions
-  const progressPercent = ((currentQuestionNumber - 1) / sessionTargetQuestions) * 100;
+  const progressPercent = ((currentQuestionNumber - 1) / MAX_QUESTIONS) * 100;
   const { enPart, hePart, punctuation } = splitQuestionText(question.question);
 
   // EARLY RETURN DURING LEVEL-UP
@@ -368,8 +322,7 @@ function Questions() {
                     שאלה
                   </span>
                   <span className="bg-blue-500 text-white rounded-full px-3 py-1 shadow-md">
-                    {/* הצגת השאלות: "הנוכחית מתוך היעד לסיבוב" */}
-                    {currentQuestionNumber} מתוך {sessionTargetQuestions}
+                    {currentQuestionNumber}
                   </span>
                 </div>
                 <div className="bg-white py-1 px-3 rounded shadow dark:bg-gray-100">
@@ -389,8 +342,7 @@ function Questions() {
                 />
               </div>
               <p className="text-right text-sm text-gray-600 dark:text-gray-300">
-                {/* גם כאן נציג את היעד לסיבוב במקום MAX_QUESTIONS הקבוע */}
-                שאלה {currentQuestionNumber} מתוך {sessionTargetQuestions}
+                שאלה {currentQuestionNumber} מתוך {MAX_QUESTIONS}
               </p>
 
               {/* Question Card */}
@@ -481,13 +433,13 @@ function Questions() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-20">
           <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg space-y-4 max-w-sm">
             <h2 className="text-2xl font-bold text-center">
-              סיימת את כל {sessionTargetQuestions} השאלות בסיבוב הזה!
+              סיימת את כל {MAX_QUESTIONS} השאלות!
             </h2>
             <div className="flex justify-center">
               <img src={getResultImage()} alt="Result" className="w-32 h-32" />
             </div>
             <p className="text-center">
-              תשובות נכונות: {correctCount} מתוך {sessionTargetQuestions}
+              תשובות נכונות: {correctCount} מתוך {MAX_QUESTIONS}
             </p>
             <button
               onClick={() => {
