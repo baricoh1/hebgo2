@@ -59,6 +59,7 @@ function Questions() {
   const [toast, setToast]                 = useState(null);
   const [showEndModal, setShowEndModal]   = useState(false);
   const [currentQuestionNumber, setCurrentQuestionNumber] = useState(1);
+  const [displayTotal, setDisplayTotal] = useState(null);
 
   // hide quiz UI during level-up
   const [isLevelingUp, setIsLevelingUp] = useState(false);
@@ -73,8 +74,7 @@ function Questions() {
     const names = { easy: 'קל', medium: 'בינוני', hard: 'קשה' };
     return names[level] || level;
   };
-  const unansweredCount = questionsList.filter((_, i) => !correctIndexes.includes(i)).length;
-  const displayTotal = Math.min(MAX_QUESTIONS, unansweredCount);
+
 
   /* ------------------------------------------------------------------
      FIREBASE HELPERS
@@ -154,12 +154,19 @@ function Questions() {
     fetchProgressFromDB();
   }, [currentDifficulty]);
 
+  useEffect(() => {
+    if (displayTotal === null) {
+      const unanswered = questionsList.filter((_, i) => !correctIndexes.includes(i)).length;
+      setDisplayTotal(Math.min(MAX_QUESTIONS, unanswered));
+    }
+  }, [questionsList, correctIndexes, displayTotal]);
+
   // 3) Only load next question when questionIndex is null
   useEffect(() => {
-    if (questionIndex === null) {
+    if (questionIndex === null && displayTotal !== null) {
       loadNextQuestion();
     }
-  }, [questionIndex]);
+  }, [questionIndex,, displayTotal]);
 
   // Timer
   useEffect(() => {
@@ -184,6 +191,7 @@ function Questions() {
     }, 1000);
     return () => clearInterval(id);
   }, [locked]);
+
 
   /* ------------------------------------------------------------------
      QUESTION FLOW HELPERS
