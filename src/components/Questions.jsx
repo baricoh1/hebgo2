@@ -40,6 +40,9 @@ function Questions() {
   const currentHintText = hintTextMap[lang] || 'Show Hint';
 
   const questionsList = questionsData?.[lang]?.[currentDifficulty] || [];
+  const remainingCount = questionsList.filter((_, i) => !correctIndexes.includes(i)).length;
+  const totalQuestions = Math.min(MAX_QUESTIONS, remainingCount);
+
   if (!lang || !currentDifficulty || questionsList.length === 0) {
     return <div className="p-4 text-red-600">לא ניתן לטעון את השאלות. ודא שהשפה והרמה נבחרו כראוי.</div>;
   }
@@ -195,7 +198,7 @@ function Questions() {
   };
 
   const loadNextQuestion = () => {
-    if (currentQuestionNumber > MAX_QUESTIONS) return setShowEndModal(true);
+    if (currentQuestionNumber > totalQuestions) return setShowEndModal(true);
     const nxt = getNextQuestionIndex();
     if (nxt === null) {
       setSeenQuestions([]);
@@ -211,7 +214,7 @@ function Questions() {
   };
 
   const nextQuestionAfterTimeout = () => {
-    const last = currentQuestionNumber >= MAX_QUESTIONS;
+    const last = currentQuestionNumber >= totalQuestions;
     setCurrentQuestionNumber((n) => n + 1);
     if (last) setShowEndModal(true);
     else loadNextQuestion();
@@ -241,7 +244,7 @@ function Questions() {
 
     setTimeout(() => {
       setToast(null);
-      const isLast = currentQuestionNumber >= MAX_QUESTIONS;
+      const isLast = currentQuestionNumber >= totalQuestions;
       setCurrentQuestionNumber((n) => n + 1);
       if (isLast) setShowEndModal(true);
       else loadNextQuestion();
@@ -342,7 +345,7 @@ function Questions() {
                 />
               </div>
               <p className="text-right text-sm text-gray-600 dark:text-gray-300">
-                שאלה {currentQuestionNumber} מתוך {MAX_QUESTIONS}
+                שאלה {currentQuestionNumber} מתוך {totalQuestions}
               </p>
 
               {/* Question Card */}
@@ -433,13 +436,13 @@ function Questions() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-20">
           <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg space-y-4 max-w-sm">
             <h2 className="text-2xl font-bold text-center">
-              סיימת את כל {MAX_QUESTIONS} השאלות!
+              סיימת את כל {totalQuestions} השאלות!
             </h2>
             <div className="flex justify-center">
               <img src={getResultImage()} alt="Result" className="w-32 h-32" />
             </div>
             <p className="text-center">
-              תשובות נכונות: {correctCount} מתוך {MAX_QUESTIONS}
+              תשובות נכונות: {correctCount} מתוך {totalQuestions}
             </p>
             <button
               onClick={() => {
