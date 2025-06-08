@@ -166,7 +166,7 @@ function Questions() {
     if (questionIndex === null && displayTotal !== null) {
       loadNextQuestion();
     }
-  }, [questionIndex,, displayTotal]);
+  }, [questionIndex, displayTotal]);
 
   // Timer
   useEffect(() => {
