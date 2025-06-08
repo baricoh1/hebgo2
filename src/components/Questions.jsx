@@ -39,13 +39,6 @@ function Questions() {
   const hintTextMap = { en: 'Show Hint', es: 'Mostrar pista', ru: 'Показать подсказку' };
   const currentHintText = hintTextMap[lang] || 'Show Hint';
 
-  const questionsList = questionsData?.[lang]?.[currentDifficulty] || [];
-  const remainingCount = questionsList.filter((_, i) => !correctIndexes.includes(i)).length;
-  const totalQuestions = Math.min(MAX_QUESTIONS, remainingCount);
-
-  if (!lang || !currentDifficulty || questionsList.length === 0) {
-    return <div className="p-4 text-red-600">לא ניתן לטעון את השאלות. ודא שהשפה והרמה נבחרו כראוי.</div>;
-  }
 
   /* ------------------------------------------------------------------
      REACT STATE
@@ -76,6 +69,13 @@ function Questions() {
     const names = { easy: 'קל', medium: 'בינוני', hard: 'קשה' };
     return names[level] || level;
   };
+  const questionsList = questionsData?.[lang]?.[currentDifficulty] || [];
+  const remainingCount = questionsList.filter((_, i) => !correctIndexes.includes(i)).length;
+  const totalQuestions = Math.min(MAX_QUESTIONS, remainingCount);
+
+    if (!lang || !currentDifficulty || questionsList.length === 0) {
+    return <div className="p-4 text-red-600">לא ניתן לטעון את השאלות. ודא שהשפה והרמה נבחרו כראוי.</div>;
+  }
 
   /* ------------------------------------------------------------------
      FIREBASE HELPERS
@@ -276,7 +276,7 @@ function Questions() {
       ? questionsList[questionIndex]
       : { question: '', answers: [], hint: '', authohint: '' };
 
-  const progressPercent = ((currentQuestionNumber - 1) / MAX_QUESTIONS) * 100;
+  const progressPercent = ((currentQuestionNumber - 1) / totalQuestions) * 100;
   const { enPart, hePart, punctuation } = splitQuestionText(question.question);
 
   // EARLY RETURN DURING LEVEL-UP
