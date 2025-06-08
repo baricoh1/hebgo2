@@ -43,6 +43,7 @@ function Questions() {
   if (!lang || !currentDifficulty || questionsList.length === 0) {
     return <div className="p-4 text-red-600">לא ניתן לטעון את השאלות. ודא שהשפה והרמה נבחרו כראוי.</div>;
   }
+  const totalQuestions = Math.min(MAX_QUESTIONS, questionsList.length);
 
   /* ------------------------------------------------------------------
      REACT STATE
@@ -59,7 +60,6 @@ function Questions() {
   const [toast, setToast]                 = useState(null);
   const [showEndModal, setShowEndModal]   = useState(false);
   const [currentQuestionNumber, setCurrentQuestionNumber] = useState(1);
-  const [displayTotal, setDisplayTotal] = useState(null);
 
   // hide quiz UI during level-up
   const [isLevelingUp, setIsLevelingUp] = useState(false);
@@ -74,7 +74,6 @@ function Questions() {
     const names = { easy: 'קל', medium: 'בינוני', hard: 'קשה' };
     return names[level] || level;
   };
-
 
   /* ------------------------------------------------------------------
      FIREBASE HELPERS
@@ -154,19 +153,12 @@ function Questions() {
     fetchProgressFromDB();
   }, [currentDifficulty]);
 
-  useEffect(() => {
-    if (displayTotal === null) {
-      const unanswered = questionsList.filter((_, i) => !correctIndexes.includes(i)).length;
-      setDisplayTotal(Math.min(MAX_QUESTIONS, unanswered));
-    }
-  }, [questionsList, correctIndexes, displayTotal]);
-
   // 3) Only load next question when questionIndex is null
   useEffect(() => {
-    if (questionIndex === null && displayTotal !== null) {
+    if (questionIndex === null) {
       loadNextQuestion();
     }
-  }, [questionIndex, displayTotal]);
+  }, [questionIndex]);
 
   // Timer
   useEffect(() => {
@@ -191,7 +183,6 @@ function Questions() {
     }, 1000);
     return () => clearInterval(id);
   }, [locked]);
-
 
   /* ------------------------------------------------------------------
      QUESTION FLOW HELPERS
@@ -283,10 +274,7 @@ function Questions() {
       ? questionsList[questionIndex]
       : { question: '', answers: [], hint: '', authohint: '' };
 
-  const progressPercent = displayTotal
-  ? ((currentQuestionNumber - 1) / displayTotal) * 100
-  : 0;
-
+  const progressPercent = ((currentQuestionNumber - 1) / totalQuestions) * 100;
   const { enPart, hePart, punctuation } = splitQuestionText(question.question);
 
   // EARLY RETURN DURING LEVEL-UP
@@ -355,7 +343,7 @@ function Questions() {
                 />
               </div>
               <p className="text-right text-sm text-gray-600 dark:text-gray-300">
-                שאלה {currentQuestionNumber} מתוך {displayTotal}
+                שאלה {currentQuestionNumber} מתוך {totalQuestions}
               </p>
 
               {/* Question Card */}
