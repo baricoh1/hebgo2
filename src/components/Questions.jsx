@@ -40,8 +40,6 @@ function Questions() {
   const currentHintText = hintTextMap[lang] || 'Show Hint';
 
   const questionsList = questionsData?.[lang]?.[currentDifficulty] || [];
-  const unansweredCount = questionsList.filter((_, i) => !correctIndexes.includes(i)).length;
-  const displayTotal = Math.min(MAX_QUESTIONS, unansweredCount);
   if (!lang || !currentDifficulty || questionsList.length === 0) {
     return <div className="p-4 text-red-600">לא ניתן לטעון את השאלות. ודא שהשפה והרמה נבחרו כראוי.</div>;
   }
@@ -75,6 +73,8 @@ function Questions() {
     const names = { easy: 'קל', medium: 'בינוני', hard: 'קשה' };
     return names[level] || level;
   };
+  const unansweredCount = questionsList.filter((_, i) => !correctIndexes.includes(i)).length;
+  const displayTotal = Math.min(MAX_QUESTIONS, unansweredCount);
 
   /* ------------------------------------------------------------------
      FIREBASE HELPERS
