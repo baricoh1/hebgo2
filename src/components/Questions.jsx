@@ -114,6 +114,8 @@ function Questions() {
       // חישוב כמה שאלות נשארו לסבב הנוכחי
       const remaining = MAX_QUESTIONS_PER_CATEGORY - serverProg.length;
       setQuestionsThisRound(Math.min(MAX_QUESTIONS, remaining));
+      // איפוס seenQuestions אם נגמרו השאלות
+      if (remaining <= 0) setSeenQuestions([]);
     } catch (err) {
       console.error('Error fetching user progress:', err);
     }
@@ -298,6 +300,24 @@ function Questions() {
             {toast.message}
           </div>
         )}
+      </div>
+    );
+  }
+
+  // לפני ה־return הראשי:
+  if (questionsThisRound === 0) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-blue-100 dark:bg-gray-900">
+        <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg text-center">
+          <h2 className="text-2xl font-bold mb-4 text-red-600">אין שאלות זמינות לסבב זה!</h2>
+          <p className="mb-4">סיימת את כל השאלות ברמה ובשפה הנוכחית.</p>
+          <button
+            onClick={() => navigate('/')}
+            className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+          >
+            חזרה לעמוד הראשי
+          </button>
+        </div>
       </div>
     );
   }
