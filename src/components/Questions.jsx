@@ -1,9 +1,10 @@
 // src/components/Questions.jsx
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef,useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import questionsData from './questions.json';
+
 
 // Images
 import ball0 from '../images/ball0.png';
@@ -43,7 +44,7 @@ function Questions() {
   if (!lang || !currentDifficulty || questionsList.length === 0) {
     return <div className="p-4 text-red-600">לא ניתן לטעון את השאלות. ודא שהשפה והרמה נבחרו כראוי.</div>;
   }
-  const totalQuestions = Math.min(MAX_QUESTIONS, questionsList.length);
+  
 
   /* ------------------------------------------------------------------
      REACT STATE
@@ -183,10 +184,17 @@ function Questions() {
     }, 1000);
     return () => clearInterval(id);
   }, [locked]);
+ 
 
   /* ------------------------------------------------------------------
      QUESTION FLOW HELPERS
   ------------------------------------------------------------------ */
+  const unansweredCount = useMemo(
+  () => questionsList.filter((_, i) => !correctIndexes.includes(i)).length,
+  [questionsList, correctIndexes]
+);
+const totalQuestions = Math.min(MAX_QUESTIONS, unansweredCount);
+
   const getNextQuestionIndex = () => {
     const candidates = questionsList
       .map((_, i) => i)
