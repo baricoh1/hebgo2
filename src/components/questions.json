@@ -240,7 +240,67 @@
         "correct": 3,
         "hint": "Imagine your laundry, your playlist, and your lunch... all in one bowly",
         "authohint": "This word means things are jumbled up and not in order"
-      }
+      },
+      {
+  "question": "'חֲבָל עַל הַזְּמַן' What is the best translation of the Hebrew slang?",
+  "answers": [
+    "Time is precious",
+    "A waste of time",
+    "So cool / Amazing",
+    "Don't waste your time"
+  ],
+  "correct": 2,
+  "hint": "It sounds negative, but in slang it actually means something is awesome!",
+  "authohint": "This expression means something is really great or impressive"
+},
+{
+  "question": "'סַבַּבָּה' What is the best translation of the Hebrew slang?",
+  "answers": [
+    "Terrible",
+    "Okay / Cool",
+    "Boring",
+    "Expensive"
+  ],
+  "correct": 1,
+  "hint": "You hear this word *a lot* when everything’s chill and fine.",
+  "authohint": "This word is used to express agreement, approval, or that things are okay"
+},
+{
+  "question": "'תַּפְרָן' What is the best translation of the Hebrew slang?",
+  "answers": [
+    "Bank manager",
+    "Thief",
+    "Person with no money",
+    "Student"
+  ],
+  "correct": 2,
+  "hint": "This person might say, 'I can't, I’m broke this month!'",
+  "authohint": "This is slang for someone who is out of money or broke"
+},
+{
+  "question": "'דָּפוק' What is the best translation of the Hebrew slang?",
+  "answers": [
+    "Genius",
+    "Broken / messed up",
+    "Hammered",
+    "Lucky"
+  ],
+  "correct": 1,
+  "hint": "This can describe either a machine or a person acting very strangely.",
+  "authohint": "It means something is not functioning right, or someone is acting weird"
+},
+{
+  "question": "'חַי בְּסֶרֶט' What is the best translation of the Hebrew slang?",
+  "answers": [
+    "Movie critic",
+    "Dreaming / Detached from reality",
+    "Filmmaker",
+    "Loves movies"
+  ],
+  "correct": 1,
+  "hint": "This person is imagining things — like their life is a drama or fantasy film.",
+  "authohint": "Used for someone who's out of touch with reality or daydreaming"
+}
     ],
     "medium": [
       {

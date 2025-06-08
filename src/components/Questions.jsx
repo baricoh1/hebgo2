@@ -48,7 +48,7 @@ function Questions() {
      REACT STATE
   ------------------------------------------------------------------ */
   const [questionIndex, setQuestionIndex] = useState(null);
-  const [seenQuestions, setSeenQuestions] = useState([]);
+  const seenQuestions = useRef([]);
   const [selected, setSelected]           = useState(null);
   //const [correctIndexes, setCorrectIndexes] = useState([]);
   const correctIndexes = useRef([]) ;
@@ -191,13 +191,27 @@ function Questions() {
     return () => clearInterval(id);
   }, [locked]);
 
+  // איפוס seenQuestions בתחילת כל משחק חדש (כלומר, כשמתחלף רמת קושי או ב-mount)
+  useEffect(() => {
+    seenQuestions.current = [];
+  }, [currentDifficulty]);
+
+  useEffect(() => {
+    seenQuestions.current = [];
+  }, []);
+
   /* ------------------------------------------------------------------
      QUESTION FLOW HELPERS
   ------------------------------------------------------------------ */
   const getNextQuestionIndex = () => {
+    // filter only questions that are NOT in seenQuestions AND NOT in correctIndexes
     const candidates = questionsList
       .map((_, i) => i)
-      .filter((i) => !seenQuestions.includes(i) && !correctIndexes.current.includes(i));
+      .filter(
+        (i) =>
+          !seenQuestions.current.includes(i) &&
+          !correctIndexes.current.includes(i)
+      );
     if (candidates.length === 0) return null;
     return candidates[Math.floor(Math.random() * candidates.length)];
   };
@@ -206,10 +220,13 @@ function Questions() {
     if (currentQuestionNumber > questionsThisRound) return setShowEndModal(true);
     const nxt = getNextQuestionIndex();
     if (nxt === null) {
-      setSeenQuestions([]);
+      seenQuestions.current = [];
       setShowEndModal(true);
     } else {
-      setSeenQuestions((prev) => [...prev, nxt]);
+      // ודא שלא מוסיפים שאלה שכבר קיימת ב-correctIndexes
+      if (!correctIndexes.current.includes(nxt)) {
+        seenQuestions.current = [...seenQuestions.current, nxt];
+      }
       setQuestionIndex(nxt);
       setSelected(null);
       setShowHint(false);
