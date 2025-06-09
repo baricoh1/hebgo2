@@ -50,7 +50,6 @@ function Questions() {
   const [questionIndex, setQuestionIndex] = useState(null);
   const seenQuestions = useRef([]);
   const [selected, setSelected]           = useState(null);
-  //const [correctIndexes, setCorrectIndexes] = useState([]);
   const correctIndexes = useRef([]) ;
   const [correctCount, setCorrectCount]   = useState(0);
   const [locked, setLocked]               = useState(false);
@@ -76,7 +75,6 @@ function Questions() {
     return names[level] || level;
   };
 
-
   /* ------------------------------------------------------------------
      FIREBASE HELPERS
   ------------------------------------------------------------------ */
@@ -88,8 +86,14 @@ function Questions() {
       const data = snap.data();
 
       const serverProg = data.progress?.[lang]?.[currentDifficulty] || [];
-      //setCorrectIndexes(serverProg);
-      correctIndexes.current = serverProg;
+      
+      // MERGE instead of overwrite - keep any local progress that might not be saved yet
+      const mergedProgress = [...new Set([...correctIndexes.current, ...serverProg])];
+      correctIndexes.current = mergedProgress;
+      
+      console.log('🔄 Server progress:', serverProg);
+      console.log('🔄 Local progress before merge:', correctIndexes.current);
+      console.log('🔄 Merged progress:', mergedProgress);
 
       // AUTO LEVEL-UP
       if (serverProg.length >= MAX_QUESTIONS_PER_CATEGORY) {
@@ -114,7 +118,6 @@ function Questions() {
         localStorage.setItem('userGender', data.gender);
       }
 
-      
       const remaining = MAX_QUESTIONS_PER_CATEGORY - serverProg.length;
       setQuestionsThisRound(Math.min(MAX_QUESTIONS, remaining));
     } catch (err) {
@@ -141,6 +144,7 @@ function Questions() {
         },
         { merge: true }
       );
+      console.log('💾 Saved to database:', updatedArr);
     } catch (err) {
       console.error('Error writing progress:', err);
     }
@@ -156,7 +160,7 @@ function Questions() {
 
   // 2) Re-fetch (and clear) when difficulty changes
   useEffect(() => {
-    correctIndexes. current = [];
+    correctIndexes.current = [];
     fetchProgressFromDB();
   }, [currentDifficulty]);
 
@@ -191,7 +195,6 @@ function Questions() {
     return () => clearInterval(id);
   }, [locked]);
 
- 
   useEffect(() => {
     seenQuestions.current = [];
   }, [currentDifficulty]);
@@ -220,10 +223,8 @@ function Questions() {
     if (currentQuestionNumber > questionsThisRound) return setShowEndModal(true);
     const nxt = getNextQuestionIndex();
     if (nxt === null) {
-      seenQuestions.current = [];
       setShowEndModal(true);
     } else {
-      
       if (!correctIndexes.current.includes(nxt)) {
         seenQuestions.current = [...seenQuestions.current, nxt];
       }
@@ -243,47 +244,46 @@ function Questions() {
   };
 
   const handleAnswerClick = async (idx) => {
-  if (selected !== null || locked) return;
-  setSelected(idx);
-  setLocked(true);
+    if (selected !== null || locked) return;
+    setSelected(idx);
+    setLocked(true);
 
-  const correctAudio = new Audio(correctSound);
-  const wrongAudio   = new Audio(wrongSound);
+    const correctAudio = new Audio(correctSound);
+    const wrongAudio   = new Audio(wrongSound);
 
-  if (idx === question.correct) {
-    correctAudio.play();
-    if (!correctIndexes.current.includes(questionIndex)) {
-      const updated = [...correctIndexes.current, questionIndex];
-      correctIndexes.current = updated;
-      
-      // ADD THESE CONSOLE LOGS
-      console.log('✅ Correct answer! Question index:', questionIndex, 'added to array');
-      console.log('📊 Current correctIndexes array:', updated);
-      console.log('📈 Array length:', updated.length);
-      
-      await saveProgressToDB(updated);
+    if (idx === question.correct) {
+      correctAudio.play();
+      if (!correctIndexes.current.includes(questionIndex)) {
+        const updated = [...correctIndexes.current, questionIndex];
+        correctIndexes.current = updated;
+        
+        // CONSOLE LOGS
+        console.log('✅ Correct answer! Question index:', questionIndex, 'added to array');
+        console.log('📊 Current correctIndexes array:', updated);
+        console.log('📈 Array length:', updated.length);
+        
+        await saveProgressToDB(updated);
+      } else {
+        console.log('ℹ️ Question', questionIndex, 'was already in correctIndexes array');
+        console.log('📊 Current correctIndexes array:', correctIndexes.current);
+      }
+      setCorrectCount((c) => c + 1);
+      setToast({ message: '✅ תשובה נכונה!', type: 'success' });
     } else {
-      // ADD THIS LOG TOO
-      console.log('ℹ️ Question', questionIndex, 'was already in correctIndexes array');
-      console.log('📊 Current correctIndexes array:', correctIndexes.current);
+      wrongAudio.play();
+      console.log('❌ Wrong answer for question index:', questionIndex);
+      setToast({ message: '❌ תשובה שגויה!', type: 'error' });
     }
-    setCorrectCount((c) => c + 1);
-    setToast({ message: '✅ תשובה נכונה!', type: 'success' });
-  } else {
-    wrongAudio.play();
-    console.log('❌ Wrong answer for question index:', questionIndex);
-    setToast({ message: '❌ תשובה שגויה!', type: 'error' });
-  }
 
-  setTimeout(() => {
-    setToast(null);
-    const isLast = currentQuestionNumber >= questionsThisRound;
-    setCurrentQuestionNumber((n) => n + 1);
-    if (isLast) setShowEndModal(true);
-    else loadNextQuestion();
-    setLocked(false);
-  }, 1500);
-};
+    setTimeout(() => {
+      setToast(null);
+      const isLast = currentQuestionNumber >= questionsThisRound;
+      setCurrentQuestionNumber((n) => n + 1);
+      if (isLast) setShowEndModal(true);
+      else loadNextQuestion();
+      setLocked(false);
+    }, 1500);
+  };
 
   function splitQuestionText(text) {
     const heMatch = text.match(/['״'][א-ת\s_\-.,:()]+['״]/);
