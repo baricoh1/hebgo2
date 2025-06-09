@@ -48,6 +48,7 @@ function Questions() {
      REACT STATE
   ------------------------------------------------------------------ */
   const [questionIndex, setQuestionIndex] = useState(null);
+   const [progressReady, setProgressReady] = useState(false);
   const seenQuestions = useRef([]);
   const [selected, setSelected]           = useState(null);
   const correctIndexes = useRef([]) ;
@@ -120,6 +121,7 @@ function Questions() {
 
       const remaining = MAX_QUESTIONS_PER_CATEGORY - serverProg.length;
       setQuestionsThisRound(Math.min(MAX_QUESTIONS, remaining));
+      setProgressReady(true);
     } catch (err) {
       console.error('Error fetching user progress:', err);
     }
@@ -161,15 +163,16 @@ function Questions() {
   // 2) Re-fetch (and clear) when difficulty changes
   useEffect(() => {
     correctIndexes.current = [];
+    setProgressReady(false);
     fetchProgressFromDB();
   }, [currentDifficulty]);
 
   // 3) Only load next question when questionIndex is null
   useEffect(() => {
-    if (questionIndex === null) {
+    if (progressReady && questionIndex === null) {
       loadNextQuestion();
     }
-  }, [questionIndex]);
+  }, [progressReady, questionIndex]);
 
   // Timer
   useEffect(() => {
@@ -199,9 +202,6 @@ function Questions() {
     seenQuestions.current = [];
   }, [currentDifficulty]);
 
-  useEffect(() => {
-    seenQuestions.current = [];
-  }, []);
 
   /* ------------------------------------------------------------------
      QUESTION FLOW HELPERS
