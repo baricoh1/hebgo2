@@ -243,37 +243,47 @@ function Questions() {
   };
 
   const handleAnswerClick = async (idx) => {
-    if (selected !== null || locked) return;
-    setSelected(idx);
-    setLocked(true);
+  if (selected !== null || locked) return;
+  setSelected(idx);
+  setLocked(true);
 
-    const correctAudio = new Audio(correctSound);
-    const wrongAudio   = new Audio(wrongSound);
+  const correctAudio = new Audio(correctSound);
+  const wrongAudio   = new Audio(wrongSound);
 
-    if (idx === question.correct) {
-      correctAudio.play();
-      if (!correctIndexes.current.includes(questionIndex)) {
-        const updated = [...correctIndexes.current, questionIndex];
-        //setCorrectIndexes(updated);
-        correctIndexes.current = updated;
-        await saveProgressToDB(updated);
-      }
-      setCorrectCount((c) => c + 1);
-      setToast({ message: '✅ תשובה נכונה!', type: 'success' });
+  if (idx === question.correct) {
+    correctAudio.play();
+    if (!correctIndexes.current.includes(questionIndex)) {
+      const updated = [...correctIndexes.current, questionIndex];
+      correctIndexes.current = updated;
+      
+      // ADD THESE CONSOLE LOGS
+      console.log('✅ Correct answer! Question index:', questionIndex, 'added to array');
+      console.log('📊 Current correctIndexes array:', updated);
+      console.log('📈 Array length:', updated.length);
+      
+      await saveProgressToDB(updated);
     } else {
-      wrongAudio.play();
-      setToast({ message: '❌ תשובה שגויה!', type: 'error' });
+      // ADD THIS LOG TOO
+      console.log('ℹ️ Question', questionIndex, 'was already in correctIndexes array');
+      console.log('📊 Current correctIndexes array:', correctIndexes.current);
     }
+    setCorrectCount((c) => c + 1);
+    setToast({ message: '✅ תשובה נכונה!', type: 'success' });
+  } else {
+    wrongAudio.play();
+    console.log('❌ Wrong answer for question index:', questionIndex);
+    setToast({ message: '❌ תשובה שגויה!', type: 'error' });
+  }
 
-    setTimeout(() => {
-      setToast(null);
-      const isLast = currentQuestionNumber >= questionsThisRound;
-      setCurrentQuestionNumber((n) => n + 1);
-      if (isLast) setShowEndModal(true);
-      else loadNextQuestion();
-      setLocked(false);
-    }, 1500);
-  };
+  setTimeout(() => {
+    setToast(null);
+    const isLast = currentQuestionNumber >= questionsThisRound;
+    setCurrentQuestionNumber((n) => n + 1);
+    if (isLast) setShowEndModal(true);
+    else loadNextQuestion();
+    setLocked(false);
+  }, 1500);
+};
 
   function splitQuestionText(text) {
     const heMatch = text.match(/['״'][א-ת\s_\-.,:()]+['״]/);
