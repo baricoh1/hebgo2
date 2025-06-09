@@ -117,7 +117,6 @@ function Questions() {
       
       const remaining = MAX_QUESTIONS_PER_CATEGORY - serverProg.length;
       setQuestionsThisRound(Math.min(MAX_QUESTIONS, remaining));
-      loadNextQuestion();
     } catch (err) {
       console.error('Error fetching user progress:', err);
     }
@@ -161,6 +160,12 @@ function Questions() {
     fetchProgressFromDB();
   }, [currentDifficulty]);
 
+  // 3) Only load next question when questionIndex is null
+  useEffect(() => {
+    if (questionIndex === null) {
+      loadNextQuestion();
+    }
+  }, [questionIndex]);
 
   // Timer
   useEffect(() => {
