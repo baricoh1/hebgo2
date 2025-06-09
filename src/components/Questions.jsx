@@ -242,7 +242,7 @@ function Questions() {
     else loadNextQuestion();
   };
 
-  const handleAnswerClick = (idx) => {
+  const handleAnswerClick = async (idx) => {
     if (selected !== null || locked) return;
     setSelected(idx);
     setLocked(true);
@@ -256,7 +256,7 @@ function Questions() {
         const updated = [...correctIndexes.current, questionIndex];
         //setCorrectIndexes(updated);
         correctIndexes.current = updated;
-        saveProgressToDB(updated);
+        await saveProgressToDB(updated);
       }
       setCorrectCount((c) => c + 1);
       setToast({ message: '✅ תשובה נכונה!', type: 'success' });
