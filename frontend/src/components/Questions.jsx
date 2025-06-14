@@ -5,22 +5,9 @@ import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import questionsData from './questions.json';
 
-// Images
-import ball0 from '../images/ball0.png';
-import ball1 from '../images/ball1.png';
-import ball2 from '../images/ball2.png';
-import ball3 from '../images/ball3.png';
-import ball4 from '../images/ball4.png';
-import ball5 from '../images/ball5.png';
-import ball6 from '../images/ball6.png';
-import ball7 from '../images/ball7.png';
-import ball8 from '../images/ball8.png';
-import ball9 from '../images/ball9.png';
-import ball10 from '../images/ball10.png';
+const correctAudio = new Audio('/sounds/right_answer.mp3');
+const wrongAudio   = new Audio('/sounds/wrong_answer.mp3');
 
-// Sounds
-import correctSound from '../sounds/right_answer.mp3';
-import wrongSound from '../sounds/wrong_answer.mp3';
 
 function Questions() {
   /* ------------------------------------------------------------------
@@ -248,9 +235,6 @@ function Questions() {
     setSelected(idx);
     setLocked(true);
 
-    const correctAudio = new Audio(correctSound);
-    const wrongAudio   = new Audio(wrongSound);
-
     if (idx === question.correct) {
       correctAudio.play();
       if (!correctIndexes.current.includes(questionIndex)) {
@@ -300,9 +284,8 @@ function Questions() {
   const formatTime = (s) =>
     `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
   const getResultImage = () =>
-    [ball0, ball1, ball2, ball3, ball4, ball5, ball6, ball7, ball8, ball9, ball10][
-      correctCount
-    ] || ball0;
+  `/images/ball${Math.min(correctCount, 10)}.png`;
+
 
   const question =
     questionIndex !== null
