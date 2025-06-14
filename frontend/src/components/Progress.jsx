@@ -3,15 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 
-import lvl0 from '../images/lvl0.png';
-import lvl1 from '../images/lvl1.png';
-import lvl2 from '../images/lvl2.png';
-import lvl3 from '../images/lvl3.png';
-import lvl0girl from '../images/lvl0girl.png';
-import lvl1girl from '../images/lvl1girl.png';
-import lvl2girl from '../images/lvl2girl.png';
-import lvl3girl from '../images/lvl3girl.png';
-
 function Progress() {
   const MAX_QUESTIONS = 20;
   const navigate = useNavigate();
@@ -65,17 +56,17 @@ function Progress() {
   const mediumDone = medium >= MAX_QUESTIONS;
   const hardDone = hard >= MAX_QUESTIONS;
 
-  let levelImage;
+  let levelImage = '/images/lvl0.png';
   if (gender === 'female') {
-    if (easyDone && mediumDone && hardDone) levelImage = lvl3girl;
-    else if (easyDone && mediumDone) levelImage = lvl2girl;
-    else if (easyDone) levelImage = lvl1girl;
-    else levelImage = lvl0girl;
+    if (easyDone && mediumDone && hardDone) levelImage = '/images/lvl3girl.png';
+    else if (easyDone && mediumDone) levelImage = '/images/lvl2girl.png';
+    else if (easyDone) levelImage = '/images/lvl1girl.png';
+    else levelImage = '/images/lvl0girl.png';
   } else {
-    if (easyDone && mediumDone && hardDone) levelImage = lvl3;
-    else if (easyDone && mediumDone) levelImage = lvl2;
-    else if (easyDone) levelImage = lvl1;
-    else levelImage = lvl0;
+    if (easyDone && mediumDone && hardDone) levelImage = '/images/lvl3.png';
+    else if (easyDone && mediumDone) levelImage = '/images/lvl2.png';
+    else if (easyDone) levelImage = '/images/lvl1.png';
+    else levelImage = '/images/lvl0.png';
   }
 
   const getPercent = (val) => `${(val / MAX_QUESTIONS) * 100}%`;
