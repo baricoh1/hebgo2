@@ -1,7 +1,5 @@
-// src/components/Home.jsx
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import logo from '../logo.png';
 
 import { getFirestore, doc, getDoc } from 'firebase/firestore';
 import { app } from '../firebase'; // assuming firebase is initialized in firebase.js
@@ -94,7 +92,7 @@ function Home() {
     <div className="min-h-screen w-full bg-blue-100 flex items-center justify-center p-6">
       <div dir="rtl" className="w-full max-w-4xl px-6 py-6 flex flex-col items-center text-center space-y-6">
         <img
-          src={logo}
+          src="/logo.png"
           alt="Hebrew Go Logo"
           className="h-60 sm:h-64 md:h-72 bg-white p-4 rounded-xl shadow-lg transition-transform duration-500 hover:scale-105"
         />
