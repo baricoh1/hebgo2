@@ -35,12 +35,6 @@ function Settings() {
     navigate('/');
   };
 
-  const clearStorage = () => {
-    localStorage.clear();
-    alert('🧹 כל הנתונים נמחקו!');
-    navigate('/');
-  };
-
   return (
     <div className="min-h-screen w-full bg-blue-100 dark:bg-gray-900 text-black dark:text-white transition-colors duration-300 flex items-center justify-center">
       <div dir="rtl" className="w-full max-w-2xl px-6 py-10 flex flex-col space-y-6 bg-white dark:bg-gray-800 rounded-3xl shadow-2xl">
@@ -80,13 +74,6 @@ function Settings() {
           className="w-full h-14 bg-blue-500 hover:bg-blue-600 text-white text-lg font-semibold rounded-xl shadow-md transition-all"
         >
           שמור הגדרות 💾
-        </button>
-
-        <button
-          onClick={clearStorage}
-          className="w-full h-14 bg-red-500 hover:bg-red-600 text-white text-lg font-semibold rounded-xl shadow-md transition-all"
-        >
-          איפוס ומחיקת נתונים 🧹
         </button>
 
         <button
