@@ -22,10 +22,14 @@ function Settings() {
     const userName = localStorage.getItem('userName');
     if (userName) {
       try {
-        await setDoc(doc(db, 'users', userName), {
-          difficulty: difficulty,
-          language: lang,
-        }, { merge: true });
+        await setDoc(
+          doc(db, 'users', userName),
+          {
+            difficulty: difficulty,
+            language: lang,
+          },
+          { merge: true }
+        );
       } catch (err) {
         console.error('Failed to update user settings in DB:', err);
       }
@@ -37,8 +41,10 @@ function Settings() {
 
   return (
     <div className="min-h-screen w-full bg-blue-100 dark:bg-gray-900 text-black dark:text-white transition-colors duration-300 flex items-center justify-center">
-      <div dir="rtl" className="w-full max-w-2xl px-6 py-10 flex flex-col space-y-6 bg-white dark:bg-gray-800 rounded-3xl shadow-2xl">
-
+      <div
+        dir="rtl"
+        className="w-full max-w-2xl px-6 py-10 flex flex-col space-y-6 bg-white dark:bg-gray-800 rounded-3xl shadow-2xl"
+      >
         <h1 className="text-3xl sm:text-4xl font-bold text-center text-blue-700 dark:text-blue-400">
           הגדרות משתמש ⚙️
         </h1>
@@ -80,7 +86,7 @@ function Settings() {
           onClick={() => navigate('/')}
           className="w-full h-12 bg-gray-300 hover:bg-gray-400 dark:bg-gray-600 dark:hover:bg-gray-700 text-black dark:text-white rounded-lg shadow transition"
         >
-          חזרה לדף הבית⬅️
+          חזרה לדף הבית ⬅️
         </button>
       </div>
     </div>
