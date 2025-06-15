@@ -43,7 +43,6 @@ function Questions() {
   if (!lang || !currentDifficulty || questionsList.length === 0) {
     return <div className="p-4 text-red-600">לא ניתן לטעון את השאלות. ודא שהשפה והרמה נבחרו כראוי.</div>;
   }
-  
 
   /* ------------------------------------------------------------------
      REACT STATE
@@ -76,9 +75,6 @@ function Questions() {
     const names = { easy: 'קל', medium: 'בינוני', hard: 'קשה' };
     return names[level] || level;
   };
-  const toastPosition = 'top-20';
-
-
 
   /* ------------------------------------------------------------------
      FIREBASE HELPERS
@@ -223,33 +219,28 @@ function Questions() {
     return candidates[Math.floor(Math.random() * candidates.length)];
   };
 
-const loadNextQuestion = () => {
-  if (currentQuestionNumber > questionsThisRound) return setShowEndModal(true);
-  const nxt = getNextQuestionIndex();
-  if (nxt === null) {
-    setShowEndModal(true);
-  } else {
-    if (!correctIndexes.current.includes(nxt)) {
-      seenQuestions.current = [...seenQuestions.current, nxt];
-    }
-    setQuestionIndex(nxt);
-    setTimeout(() => {
+  const loadNextQuestion = () => {
+    if (currentQuestionNumber > questionsThisRound) return setShowEndModal(true);
+    const nxt = getNextQuestionIndex();
+    if (nxt === null) {
+      setShowEndModal(true);
+    } else {
+      if (!correctIndexes.current.includes(nxt)) {
+        seenQuestions.current = [...seenQuestions.current, nxt];
+      }
+      setQuestionIndex(nxt);
       setSelected(null);
-    }, 0);
-    setShowHint(false);
-    setShowAutoHint(false);
-    setTime(30);
-  }
-};
-
+      setShowHint(false);
+      setShowAutoHint(false);
+      setTime(30);
+    }
+  };
 
   const nextQuestionAfterTimeout = () => {
     const last = currentQuestionNumber >= questionsThisRound;
     setCurrentQuestionNumber((n) => n + 1);
     if (last) setShowEndModal(true);
-    else
-      setLocked(false);;
-      loadNextQuestion();
+    else loadNextQuestion();
   };
 
   const handleAnswerClick = async (idx) => {
@@ -435,7 +426,7 @@ const loadNextQuestion = () => {
                         key={idx}
                         onClick={() => handleAnswerClick(idx)}
                         disabled={selected !== null || locked}
-                        className={`w-full text-right p-3 rounded-lg border shadow hover:bg-blue-100 focus:outline-none active:outline-none ${bg} ${
+                        className={`w-full text-right p-3 rounded-lg border shadow hover:bg-blue-100 ${bg} ${
                           selected !== null || locked ? 'cursor-not-allowed' : ''
                         }`}
                       >
@@ -476,19 +467,20 @@ const loadNextQuestion = () => {
         </div>
       </div>
 
-{toast && !isLevelingUp && (
-  <div
-    className={`fixed ${toastPosition} left-1/2 transform -translate-x-1/2 px-6 py-3 rounded-full text-lg shadow-lg z-50
-      ${toast.type === 'success'
-        ? 'bg-green-600'
-        : toast.type === 'levelup'
-        ? 'bg-gradient-to-r from-purple-600 to-pink-600 animate-pulse'
-        : 'bg-red-600'} text-white transition-all duration-300`}
-  >
-    {toast.message}
-  </div>
-)}
-
+      {/* TOAST */}
+      {toast && !isLevelingUp && (
+        <div
+          className={`fixed bottom-6 left-1/2 transform -translate-x-1/2 px-6 py-3 rounded-full text-lg shadow-lg ${
+            toast.type === 'success'
+              ? 'bg-green-600'
+              : toast.type === 'levelup'
+              ? 'bg-gradient-to-r from-purple-600 to-pink-600 animate-pulse'
+              : 'bg-red-600'
+          } text-white`}
+        >
+          {toast.message}
+        </div>
+      )}
 
       {/* END MODAL */}
       {showEndModal && (
