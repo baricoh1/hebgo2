@@ -435,7 +435,7 @@ const loadNextQuestion = () => {
                         key={idx}
                         onClick={() => handleAnswerClick(idx)}
                         disabled={selected !== null || locked}
-                        className={`w-full text-right p-3 rounded-lg border shadow hover:bg-blue-100 ${bg} ${
+                        className={`w-full text-right p-3 rounded-lg border shadow hover:bg-blue-100 focus:outline-none active:outline-none ${bg} ${
                           selected !== null || locked ? 'cursor-not-allowed' : ''
                         }`}
                       >
