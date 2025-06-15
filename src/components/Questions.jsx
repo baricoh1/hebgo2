@@ -30,39 +30,50 @@ function Questions() {
   const navigate = useNavigate();
 
   const userName = localStorage.getItem('userName');
-  const lang     = localStorage.getItem('userLang');
-  const [progressReady, setProgressReady] = useState(false);
+  const lang = localStorage.getItem('userLang');
   const [currentDifficulty, setCurrentDifficulty] = useState(
     localStorage.getItem('userDifficulty')
   );
 
+  // Fix language mapping consistency
+  const langMap = { 
+    "en": "0", "us": "0", // Support both en and us
+    "es": "1", 
+    "ru": "2" 
+  };
+  
   const hintTextMap = { en: 'Show Hint', es: 'Mostrar pista', ru: 'Показать подсказку' };
   const currentHintText = hintTextMap[lang] || 'Show Hint';
 
-  const [questionsList, setQuestionsList] = useState([]);
-  if (!lang || !currentDifficulty || (questionsList.length === 0 && progressReady)) {
-    return <div className="p-4 text-red-600">לא ניתן לטעון את השאלות. ודא שהשפה והרמה נבחרו כראוי.</div>;
-  }
-
   /* ------------------------------------------------------------------
-     REACT STATE
+     REACT STATE - MOVED BEFORE EARLY RETURNS
   ------------------------------------------------------------------ */
+  const [questionsList, setQuestionsList] = useState([]);
+  const [dataLoaded, setDataLoaded] = useState(false);
+  const [progressReady, setProgressReady] = useState(false);
   const [questionIndex, setQuestionIndex] = useState(null);
   const seenQuestions = useRef([]);
-  const [selected, setSelected]           = useState(null);
-  const correctIndexes = useRef([]) ;
-  const [correctCount, setCorrectCount]   = useState(0);
-  const [locked, setLocked]               = useState(false);
-  const [showHint, setShowHint]           = useState(false);
-  const [showAutoHint, setShowAutoHint]   = useState(false);
-  const [time, setTime]                   = useState(30);
-  const [toast, setToast]                 = useState(null);
-  const [showEndModal, setShowEndModal]   = useState(false);
+  const [selected, setSelected] = useState(null);
+  const correctIndexes = useRef([]);
+  const [correctCount, setCorrectCount] = useState(0);
+  const [locked, setLocked] = useState(false);
+  const [showHint, setShowHint] = useState(false);
+  const [showAutoHint, setShowAutoHint] = useState(false);
+  const [time, setTime] = useState(30);
+  const [toast, setToast] = useState(null);
+  const [showEndModal, setShowEndModal] = useState(false);
   const [currentQuestionNumber, setCurrentQuestionNumber] = useState(1);
   const [questionsThisRound, setQuestionsThisRound] = useState(MAX_QUESTIONS);
-
-  // hide quiz UI during level-up
   const [isLevelingUp, setIsLevelingUp] = useState(false);
+
+  // Early return checks AFTER state declarations
+  if (!lang || !currentDifficulty) {
+    return (
+      <div className="p-4 text-red-600">
+        לא ניתן לטעון את השאלות. ודא שהשפה והרמה נבחרו כראוי.
+      </div>
+    );
+  }
 
   const getNextDifficulty = (level) => {
     const levels = ['easy', 'medium', 'hard'];
@@ -76,23 +87,50 @@ function Questions() {
   };
 
   /* ------------------------------------------------------------------
-     FIREBASE HELPERS
+     FIREBASE HELPERS - IMPROVED ERROR HANDLING
   ------------------------------------------------------------------ */
+  const fetchQuestionsFromDB = async () => {
+    try {
+      console.log("🌍 Fetching questions for lang:", lang, "→ doc:", langMap[lang]);
+      const docRef = doc(db, "questions", langMap[lang]);
+      const snap = await getDoc(docRef);
+      
+      if (!snap.exists()) {
+        console.error("❌ No document found for language:", lang);
+        setToast({ message: 'שגיאה בטעינת השאלות', type: 'error' });
+        return;
+      }
+      
+      const data = snap.data();
+      const selected = data?.[currentDifficulty] || [];
+      console.log("📥 Loaded questions for difficulty:", currentDifficulty, "→", selected.length, "questions");
+      
+      setQuestionsList(selected);
+      setDataLoaded(true);
+    } catch (err) {
+      console.error("❌ Error fetching questions from DB:", err);
+      setToast({ message: 'שגיאה בטעינת השאלות', type: 'error' });
+    }
+  };
+
   const fetchProgressFromDB = async () => {
     try {
       const userRef = doc(db, 'users', userName);
       const snap = await getDoc(userRef);
-      if (!snap.exists()) return;
+      
+      if (!snap.exists()) {
+        setProgressReady(true);
+        return;
+      }
+      
       const data = snap.data();
-
       const serverProg = data.progress?.[lang]?.[currentDifficulty] || [];
       
-      // MERGE instead of overwrite - keep any local progress that might not be saved yet
+      // MERGE instead of overwrite
       const mergedProgress = [...new Set([...correctIndexes.current, ...serverProg])];
       correctIndexes.current = mergedProgress;
       
       console.log('🔄 Server progress:', serverProg);
-      console.log('🔄 Local progress before merge:', correctIndexes.current);
       console.log('🔄 Merged progress:', mergedProgress);
 
       // AUTO LEVEL-UP
@@ -111,6 +149,7 @@ function Questions() {
             setCurrentDifficulty(next);
             window.location.reload();
           }, 3000);
+          return;
         }
       }
 
@@ -123,6 +162,7 @@ function Questions() {
       setProgressReady(true);
     } catch (err) {
       console.error('Error fetching user progress:', err);
+      setProgressReady(true); // Continue even if progress fetch fails
     }
   };
 
@@ -131,6 +171,7 @@ function Questions() {
       const ref = doc(db, 'users', userName);
       const snap = await getDoc(ref);
       const base = snap.exists() ? snap.data() : {};
+      
       await setDoc(
         ref,
         {
@@ -148,54 +189,45 @@ function Questions() {
       console.log('💾 Saved to database:', updatedArr);
     } catch (err) {
       console.error('Error writing progress:', err);
+      // Don't show error to user for save failures, just log it
     }
   };
 
-  const fetchQuestionsFromDB = async () => {
-  try {
-    const langMap = { "us": "0", "es": "1", "ru": "2" };
-    console.log("🌍 Fetching questions for lang:", lang, "→ doc:", langMap[lang]);
-    const docRef = doc(db, "questions", langMap[lang]);
-    const snap = await getDoc(docRef);
-    if (!snap.exists()) {
-      console.error("❌ No document found for language:", lang);
-      return;
-    }
-    const data = snap.data();
-    console.log("📥 Raw questions document:", data);
-    const selected = data?.[currentDifficulty] || [];
-    console.log("📥 Loaded questions for difficulty:", currentDifficulty, "→", selected);
-    setQuestionsList(selected);
-  } catch (err) {
-    console.error("❌ Error fetching questions from DB:", err);
-  }
-};
-
-
-
   /* ------------------------------------------------------------------
-     EFFECTS
+     EFFECTS - IMPROVED LOADING SEQUENCE
   ------------------------------------------------------------------ */
-  // 1) Fetch progress once on mount
+  // 1) Load questions first
   useEffect(() => {
-    fetchProgressFromDB();
-  }, []);
+    if (lang && currentDifficulty) {
+      fetchQuestionsFromDB();
+    }
+  }, [lang, currentDifficulty]);
 
-  // 2) Re-fetch (and clear) when difficulty changes
+  // 2) Load progress after questions are loaded
+  useEffect(() => {
+    if (dataLoaded && !progressReady) {
+      fetchProgressFromDB();
+    }
+  }, [dataLoaded]);
+
+  // 3) Reset progress when difficulty changes
   useEffect(() => {
     correctIndexes.current = [];
+    seenQuestions.current = [];
     setProgressReady(false);
-    fetchProgressFromDB();
+    setDataLoaded(false);
+    setQuestionIndex(null);
+    setCurrentQuestionNumber(1);
   }, [currentDifficulty]);
 
-  // 3) Only load next question when questionIndex is null
+  // 4) Load first question when both data and progress are ready
   useEffect(() => {
-    if (progressReady && questionIndex === null) {
+    if (dataLoaded && progressReady && questionIndex === null && questionsList.length > 0) {
       loadNextQuestion();
     }
-  }, [progressReady, questionIndex]);
+  }, [dataLoaded, progressReady, questionIndex, questionsList.length]);
 
-  // Timer
+  // Timer effect
   useEffect(() => {
     const id = setInterval(() => {
       setTime((t) => {
@@ -219,21 +251,16 @@ function Questions() {
     return () => clearInterval(id);
   }, [locked]);
 
-  useEffect(() => {
-    seenQuestions.current = [];
-  }, [currentDifficulty]);
-
-  useEffect(() => {
-  if (lang && currentDifficulty) fetchQuestionsFromDB();
-}, [lang, currentDifficulty]);
-
-
-
   /* ------------------------------------------------------------------
-     QUESTION FLOW HELPERS
+     QUESTION FLOW HELPERS - IMPROVED VALIDATION
   ------------------------------------------------------------------ */
   const getNextQuestionIndex = () => {
-    // filter only questions that are NOT in seenQuestions AND NOT in correctIndexes
+    if (!questionsList || questionsList.length === 0) {
+      console.warn('No questions available');
+      return null;
+    }
+    
+    // Filter questions that haven't been seen AND haven't been answered correctly
     const candidates = questionsList
       .map((_, i) => i)
       .filter(
@@ -241,62 +268,81 @@ function Questions() {
           !seenQuestions.current.includes(i) &&
           !correctIndexes.current.includes(i)
       );
+      
+    console.log('Available question candidates:', candidates.length);
+    
     if (candidates.length === 0) return null;
     return candidates[Math.floor(Math.random() * candidates.length)];
   };
 
   const loadNextQuestion = () => {
-    if (currentQuestionNumber > questionsThisRound) return setShowEndModal(true);
+    if (currentQuestionNumber > questionsThisRound) {
+      setShowEndModal(true);
+      return;
+    }
+    
     const nxt = getNextQuestionIndex();
     if (nxt === null) {
+      console.log('No more questions available, ending quiz');
       setShowEndModal(true);
     } else {
+      // Add to seen questions (but don't add already correct ones)
       if (!correctIndexes.current.includes(nxt)) {
         seenQuestions.current = [...seenQuestions.current, nxt];
       }
+      
       setQuestionIndex(nxt);
       setSelected(null);
       setShowHint(false);
       setShowAutoHint(false);
       setTime(30);
+      
+      console.log('Loaded question index:', nxt, 'Question number:', currentQuestionNumber);
     }
   };
 
   const nextQuestionAfterTimeout = () => {
     const last = currentQuestionNumber >= questionsThisRound;
     setCurrentQuestionNumber((n) => n + 1);
-    if (last) setShowEndModal(true);
-    else loadNextQuestion();
+    if (last) {
+      setShowEndModal(true);
+    } else {
+      loadNextQuestion();
+    }
   };
 
   const handleAnswerClick = async (idx) => {
     if (selected !== null || locked) return;
+    
     setSelected(idx);
     setLocked(true);
 
     const correctAudio = new Audio(correctSound);
-    const wrongAudio   = new Audio(wrongSound);
+    const wrongAudio = new Audio(wrongSound);
+    const question = questionsList[questionIndex];
 
     if (idx === question.correct) {
-      correctAudio.play();
+      correctAudio.play().catch(e => console.log('Audio play failed:', e));
+      
+      // Only add if not already in the array
       if (!correctIndexes.current.includes(questionIndex)) {
         const updated = [...correctIndexes.current, questionIndex];
         correctIndexes.current = updated;
         
-        // CONSOLE LOGS
-        console.log('✅ Correct answer! Question index:', questionIndex, 'added to array');
-        console.log('📊 Current correctIndexes array:', updated);
-        console.log('📈 Array length:', updated.length);
+        console.log('✅ Correct answer! Question index:', questionIndex);
+        console.log('📊 Updated correctIndexes:', updated);
+        console.log('📈 Total correct:', updated.length);
         
-        await saveProgressToDB(updated);
+        // Save to database asynchronously
+        saveProgressToDB(updated);
       } else {
-        console.log('ℹ️ Question', questionIndex, 'was already in correctIndexes array');
-        console.log('📊 Current correctIndexes array:', correctIndexes.current);
+        console.log('ℹ️ Question', questionIndex, 'already answered correctly');
       }
+      
       setCorrectCount((c) => c + 1);
       setToast({ message: '✅ תשובה נכונה!', type: 'success' });
     } else {
-      wrongAudio.play();
+      wrongAudio.play().catch(e => console.log('Audio play failed:', e));
       console.log('❌ Wrong answer for question index:', questionIndex);
       setToast({ message: '❌ תשובה שגויה!', type: 'error' });
     }
@@ -305,16 +351,19 @@ function Questions() {
       setToast(null);
       const isLast = currentQuestionNumber >= questionsThisRound;
       setCurrentQuestionNumber((n) => n + 1);
-      if (isLast) setShowEndModal(true);
-      else loadNextQuestion();
+      if (isLast) {
+        setShowEndModal(true);
+      } else {
+        loadNextQuestion();
+      }
       setLocked(false);
     }, 1500);
   };
 
   function splitQuestionText(text) {
     const heMatch = text.match(/['״'][א-ת\s_\-.,:()]+['״]/);
-    const hePart  = heMatch ? heMatch[0] : '';
-    const enPart  = hePart ? text.replace(hePart, '').replace(/[?؟!]/g, '').trim() : text;
+    const hePart = heMatch ? heMatch[0] : '';
+    const enPart = hePart ? text.replace(hePart, '').replace(/[?؟!]/g, '').trim() : text;
     const punctuationMatch = text.trim().match(/[?؟!]+$/);
     const punctuation = punctuationMatch ? punctuationMatch[0] : '';
     return { enPart, hePart, punctuation };
@@ -325,17 +374,50 @@ function Questions() {
   ------------------------------------------------------------------ */
   const formatTime = (s) =>
     `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+    
   const getResultImage = () =>
     [ball0, ball1, ball2, ball3, ball4, ball5, ball6, ball7, ball8, ball9, ball10][
       correctCount
     ] || ball0;
 
-  const question =
-    questionIndex !== null
-      ? questionsList[questionIndex]
-      : { question: '', answers: [], hint: '', authohint: '' };
+  // Loading state
+  if (!dataLoaded || !progressReady) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-blue-100 dark:bg-gray-900">
+        <div className="text-xl">טוען נתונים...</div>
+      </div>
+    );
+  }
 
-  const progressPercent = ((currentQuestionNumber - 1) / MAX_QUESTIONS) * 100;
+  // No questions available
+  if (questionsList.length === 0) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-blue-100 dark:bg-gray-900">
+        <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg text-center">
+          <h2 className="text-2xl font-bold mb-4 text-red-600">אין שאלות זמינות!</h2>
+          <p className="mb-4">לא נמצאו שאלות לשפה ורמה שנבחרו.</p>
+          <button
+            onClick={() => navigate('/')}
+            className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+          >
+            חזרה לעמוד הראשי
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const question = questionIndex !== null ? questionsList[questionIndex] : null;
+  
+  if (!question) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-blue-100 dark:bg-gray-900">
+        <div className="text-xl">טוען שאלה...</div>
+      </div>
+    );
+  }
+
+  const progressPercent = ((currentQuestionNumber - 1) / questionsThisRound) * 100;
   const { enPart, hePart, punctuation } = splitQuestionText(question.question);
 
   // EARLY RETURN DURING LEVEL-UP
@@ -359,7 +441,7 @@ function Questions() {
     );
   }
 
-  // לפני ה־return הראשי:
+  // No questions left for this round
   if (questionsThisRound === 0) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-blue-100 dark:bg-gray-900">
@@ -385,111 +467,105 @@ function Questions() {
       {/* QUIZ AREA */}
       <div className={`relative z-10 ${showEndModal ? 'pointer-events-none blur-sm' : ''}`}>
         <div className="max-w-4xl mx-auto flex flex-col p-4 space-y-4">
-          {questionIndex === null ? (
-            <div className="p-4 text-center text-lg">טוען שאלה...</div>
-          ) : (
-            <>
-              {/* Header */}
-              <header className="flex flex-row-reverse justify-between items-center bg-blue-200 dark:bg-blue-950 p-4 rounded-lg shadow">
-                <button
-                  onClick={() => navigate('/')}
-                  className="text-xl font-semibold hover:underline"
-                >
-                  ← חזרה לעמוד ראשי
-                </button>
-                <div className="flex items-center mx-3 gap-2">
-                  <span className="text-base font-semibold text-gray-700 dark:text-gray-300">
-                    שאלה
-                  </span>
-                  <span className="bg-blue-500 text-white rounded-full px-3 py-1 shadow-md">
-                    {currentQuestionNumber}
-                  </span>
-                </div>
-                <div className="bg-white py-1 px-3 rounded shadow dark:bg-gray-100">
-                  <span
-                    className={time <= 5 ? 'text-red-600 font-bold' : 'text-blue-600'}
-                  >
-                    {formatTime(time)}
-                  </span>
-                </div>
-              </header>
+          {/* Header */}
+          <header className="flex flex-row-reverse justify-between items-center bg-blue-200 dark:bg-blue-950 p-4 rounded-lg shadow">
+            <button
+              onClick={() => navigate('/')}
+              className="text-xl font-semibold hover:underline"
+            >
+              ← חזרה לעמוד ראשי
+            </button>
+            <div className="flex items-center mx-3 gap-2">
+              <span className="text-base font-semibold text-gray-700 dark:text-gray-300">
+                שאלה
+              </span>
+              <span className="bg-blue-500 text-white rounded-full px-3 py-1 shadow-md">
+                {currentQuestionNumber}
+              </span>
+            </div>
+            <div className="bg-white py-1 px-3 rounded shadow dark:bg-gray-100">
+              <span
+                className={time <= 5 ? 'text-red-600 font-bold' : 'text-blue-600'}
+              >
+                {formatTime(time)}
+              </span>
+            </div>
+          </header>
 
-              {/* Progress Bar */}
-              <div className="w-full bg-gray-300 dark:bg-gray-700 h-2 rounded-full overflow-hidden mt-2">
-                <div
-                  className="bg-blue-500 h-2 transition-all duration-300"
-                  style={{ width: `${progressPercent}%` }}
-                />
-              </div>
-              <p className="text-right text-sm text-gray-600 dark:text-gray-300">
-                שאלה {currentQuestionNumber} מתוך {questionsThisRound}
-              </p>
+          {/* Progress Bar */}
+          <div className="w-full bg-gray-300 dark:bg-gray-700 h-2 rounded-full overflow-hidden mt-2">
+            <div
+              className="bg-blue-500 h-2 transition-all duration-300"
+              style={{ width: `${progressPercent}%` }}
+            />
+          </div>
+          <p className="text-right text-sm text-gray-600 dark:text-gray-300">
+            שאלה {currentQuestionNumber} מתוך {questionsThisRound}
+          </p>
 
-              {/* Question Card */}
-              <main className="bg-white/90 dark:bg-gray-800 p-6 rounded-xl shadow-lg text-lg flex-grow transition-all duration-300">
-                <div className="flex flex-row justify-center items-center flex-wrap gap-2 text-xl font-bold text-blue-900 dark:text-blue-200">
-                  <span className="text-purple-700 dark:text-purple-400 font-bold" dir="rtl">
-                    {hePart}
-                    {punctuation}
-                  </span>
-                  <span className="text-blue-900 dark:text-blue-200" dir="ltr">
-                    {enPart}
-                  </span>
-                </div>
+          {/* Question Card */}
+          <main className="bg-white/90 dark:bg-gray-800 p-6 rounded-xl shadow-lg text-lg flex-grow transition-all duration-300">
+            <div className="flex flex-row justify-center items-center flex-wrap gap-2 text-xl font-bold text-blue-900 dark:text-blue-200">
+              <span className="text-purple-700 dark:text-purple-400 font-bold" dir="rtl">
+                {hePart}
+                {punctuation}
+              </span>
+              <span className="text-blue-900 dark:text-blue-200" dir="ltr">
+                {enPart}
+              </span>
+            </div>
 
-                <ul className="space-y-2 text-right list-none p-0 m-0">
-                  {question.answers.map((ans, idx) => {
-                    const isCorrect = idx === question.correct;
-                    const isSelected = idx === selected;
-                    let bg = 'bg-white dark:bg-gray-600';
-                    if (selected !== null) {
-                      if (isSelected && isCorrect) bg = 'bg-green-400';
-                      else if (isSelected && !isCorrect) bg = 'bg-red-400';
-                      else if (isCorrect) bg = 'bg-green-400';
-                    }
-                    return (
-                      <button
-                        key={idx}
-                        onClick={() => handleAnswerClick(idx)}
-                        disabled={selected !== null || locked}
-                        className={`w-full text-right p-3 rounded-lg border shadow hover:bg-blue-100 ${bg} ${
-                          selected !== null || locked ? 'cursor-not-allowed' : ''
-                        }`}
-                      >
-                        {ans}
-                      </button>
-                    );
-                  })}
-                </ul>
-
-                <div className="mt-6 flex items-center justify-between">
+            <ul className="space-y-2 text-right list-none p-0 m-0">
+              {question.answers.map((ans, idx) => {
+                const isCorrect = idx === question.correct;
+                const isSelected = idx === selected;
+                let bg = 'bg-white dark:bg-gray-600';
+                if (selected !== null) {
+                  if (isSelected && isCorrect) bg = 'bg-green-400';
+                  else if (isSelected && !isCorrect) bg = 'bg-red-400';
+                  else if (isCorrect) bg = 'bg-green-400';
+                }
+                return (
                   <button
-                    className="px-4 py-2 bg-yellow-400 text-black rounded hover:bg-yellow-500"
-                    onClick={() => setShowHint(true)}
-                    disabled={locked}
+                    key={idx}
+                    onClick={() => handleAnswerClick(idx)}
+                    disabled={selected !== null || locked}
+                    className={`w-full text-right p-3 rounded-lg border shadow hover:bg-blue-100 ${bg} ${
+                      selected !== null || locked ? 'cursor-not-allowed' : ''
+                    }`}
                   >
-                    {currentHintText}
+                    {ans}
                   </button>
-                </div>
+                );
+              })}
+            </ul>
 
-                {showHint && (
-                  <div className="mt-2 p-3 bg-yellow-100 dark:bg-yellow-900 rounded text-right">
-                    💡 {question.hint}
-                  </div>
-                )}
-                {showAutoHint && question.authohint && (
-                  <div className="mt-2 p-3 bg-blue-100 dark:bg-blue-900 rounded text-right animate-pulse">
-                    🤖 {question.authohint}
-                  </div>
-                )}
-              </main>
+            <div className="mt-6 flex items-center justify-between">
+              <button
+                className="px-4 py-2 bg-yellow-400 text-black rounded hover:bg-yellow-500"
+                onClick={() => setShowHint(true)}
+                disabled={locked}
+              >
+                {currentHintText}
+              </button>
+            </div>
 
-              {/* Footer */}
-              <footer className="text-right text-lg mt-4">
-                סה״כ פלאפלים שנאספו: {correctCount} 🧆
-              </footer>
-            </>
-          )}
+            {showHint && (
+              <div className="mt-2 p-3 bg-yellow-100 dark:bg-yellow-900 rounded text-right">
+                💡 {question.hint}
+              </div>
+            )}
+            {showAutoHint && question.authohint && (
+              <div className="mt-2 p-3 bg-blue-100 dark:bg-blue-900 rounded text-right animate-pulse">
+                🤖 {question.authohint}
+              </div>
+            )}
+          </main>
+
+          {/* Footer */}
+          <footer className="text-right text-lg mt-4">
+            סה״כ פלאפלים שנאספו: {correctCount} 🧆
+          </footer>
         </div>
       </div>
 
