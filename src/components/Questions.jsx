@@ -424,11 +424,13 @@ function Questions() {
                     return (
 <button
   key={idx}
-  onClick={(e) => {
-    handleAnswerClick(idx);
-    
-    e.currentTarget.blur();
-  }}
+   onClick={(e) => {
+   handleAnswerClick(idx);
+ }}
+onTouchEnd={(e) => {
+   // מיד מבטל את הפוקוס אחרי נגיעה
+   e.currentTarget.blur();
+ }}
   disabled={selected !== null || locked}
   className={`w-full text-right p-3 rounded-lg border shadow hover:bg-blue-100 focus:outline-none active:outline-none ${bg} ${
     selected !== null || locked ? 'cursor-not-allowed' : ''
