@@ -403,15 +403,6 @@ function Questions() {
     );
   }
 
-  // Loading state
-  if (!dataLoaded || !progressReady) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-blue-100 dark:bg-gray-900">
-        <div className="text-xl">טוען נתונים...</div>
-      </div>
-    );
-  }
-
   // No questions available
   if (questionsList.length === 0) {
     return (
