@@ -3,7 +3,6 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../firebase';
-import questionsData from './questions.json';
 
 // Images
 import ball0 from '../images/ball0.png';
@@ -39,8 +38,8 @@ function Questions() {
   const hintTextMap = { en: 'Show Hint', es: 'Mostrar pista', ru: 'Показать подсказку' };
   const currentHintText = hintTextMap[lang] || 'Show Hint';
 
-  const questionsList = questionsData?.[lang]?.[currentDifficulty] || [];
-  if (!lang || !currentDifficulty || questionsList.length === 0) {
+  const [questionsList, setQuestionsList] = useState([]);
+  if (!lang || !currentDifficulty || (questionsList.length === 0 && progressReady)) {
     return <div className="p-4 text-red-600">לא ניתן לטעון את השאלות. ודא שהשפה והרמה נבחרו כראוי.</div>;
   }
 
@@ -152,6 +151,23 @@ function Questions() {
     }
   };
 
+  const fetchQuestionsFromDB = async () => {
+  try {
+    const langMap = { "0": "us", "1": "es", "2": "ru" };
+    const docRef = doc(db, "questions", langMap[lang]);
+    const snap = await getDoc(docRef);
+    if (!snap.exists()) {
+      console.error("❌ No document found for language:", lang);
+      return;
+    }
+    const data = snap.data();
+    setQuestionsList(data?.[currentDifficulty] || []);
+  } catch (err) {
+    console.error("❌ Error fetching questions from DB:", err);
+  }
+};
+
+
   /* ------------------------------------------------------------------
      EFFECTS
   ------------------------------------------------------------------ */
@@ -201,6 +217,11 @@ function Questions() {
   useEffect(() => {
     seenQuestions.current = [];
   }, [currentDifficulty]);
+
+  useEffect(() => {
+  if (lang && currentDifficulty) fetchQuestionsFromDB();
+}, [lang, currentDifficulty]);
+
 
 
   /* ------------------------------------------------------------------
