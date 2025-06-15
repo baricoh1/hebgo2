@@ -51,28 +51,43 @@ function Questions() {
 
 const fetchQuestionsFromDB = async () => {
   try {
-    console.warn('🔥 Querying with:', { lang, difficulty: currentDifficulty });
-
-    const q = query(
-      collection(db, 'questions'),
-    );
-
-    const snapshot = await getDocs(q);
-    console.log('📦 Raw snapshot:', snapshot);
-    console.log('📦 Documents:', snapshot.docs);
-
-    const questions = snapshot.docs.map((doc) => {
-      console.log('✅ Document data:', doc.data());
-      return doc.data();
+    console.log('🔍 Testing basic collection access...');
+    
+    // Just try to get ALL documents first
+    const snapshot = await getDocs(collection(db, 'questions'));
+    
+    console.log('📦 Snapshot exists:', !!snapshot);
+    console.log('📦 Snapshot size:', snapshot.size);
+    console.log('📦 Snapshot empty:', snapshot.empty);
+    
+    if (snapshot.empty) {
+      console.log('❌ Collection is empty or doesn\'t exist!');
+      return;
+    }
+    
+    const allQuestions = [];
+    snapshot.forEach((doc) => {
+      console.log('📄 Document ID:', doc.id);
+      console.log('📄 Document data:', doc.data());
+      allQuestions.push(doc.data());
     });
-
-    console.log('📥 Final question array:', questions);
-    setQuestionsList(questions);
+    
+    console.log('📥 All questions loaded:', allQuestions.length);
+    
+    // Filter manually for now
+    const filtered = allQuestions.filter(q => {
+      console.log(`🔍 Checking question: lang=${q.lang}, difficulty=${q.difficulty}`);
+      console.log(`🔍 Looking for: lang=${lang}, difficulty=${currentDifficulty}`);
+      return q.lang === lang && q.difficulty === currentDifficulty;
+    });
+    
+    console.log('📥 Filtered questions:', filtered);
+    setQuestionsList(filtered);
+    
   } catch (err) {
-    console.error('❌ Error loading questions from DB:', err);
+    console.error('❌ Error:', err);
   }
 };
-
 
 
   const fetchProgressFromDB = async () => {
