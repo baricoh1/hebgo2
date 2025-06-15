@@ -216,77 +216,11 @@ function Questions() {
       );
       console.log('💾 Saved to database:', updatedArr);
       
-      // Check if we just completed the category
-      if (updatedArr.length >= MAX_QUESTIONS_PER_CATEGORY) {
-        console.log('🎯 Category completed! Progress:', updatedArr.length, '/', MAX_QUESTIONS_PER_CATEGORY);
-        handleCategoryCompletion();
-      }
     } catch (err) {
-      console.error('Error writing progress:', err);
-      // Don't show error to user for save failures, just log it
+      console.error('Error saving progress to DB:', err);
     }
   };
 
-  const handleCategoryCompletion = async () => {
-    const next = getNextDifficulty(currentDifficulty);
-    if (next) {
-      console.log('🚀 Category completed, leveling up to:', next);
-      setToast({
-        message: `🎉 כל הכבוד! עלית לרמה ${getDifficultyDisplayName(next)}! מתחיל משחק חדש...`,
-        type: 'levelup'
-      });
-      setIsLevelingUp(true);
-      
-      try {
-        const userRef = doc(db, 'users', userName);
-        await setDoc(userRef, { difficulty: next }, { merge: true });
-        localStorage.setItem('userDifficulty', next);
-        
-        // Reset game state for new difficulty
-        correctIndexes.current = [];
-        seenQuestions.current = [];
-        setCorrectCount(0);
-        setCurrentQuestionNumber(1);
-        setQuestionsThisRound(MAX_QUESTIONS);
-        setQuestionIndex(null);
-        setSelected(null);
-        setLocked(false);
-        setShowHint(false);
-        setShowAutoHint(false);
-        setTime(30);
-        setShowEndModal(false);
-        
-        // Update difficulty and restart
-        setTimeout(() => {
-          setToast(null);
-          setCurrentDifficulty(next);
-          setIsLevelingUp(false);
-          setDataLoaded(false);
-          setProgressReady(false);
-        }, 3000);
-        
-      } catch (err) {
-        console.error('Error updating difficulty:', err);
-        setToast({
-          message: 'שגיאה בעדכון הרמה. מנסה שוב...',
-          type: 'error'
-        });
-        setTimeout(() => {
-          setToast(null);
-          setIsLevelingUp(false);
-        }, 2000);
-      }
-    } else {
-      console.log('🏆 All levels completed!');
-      setToast({
-        message: '🏆 מזל טוב! סיימת את כל הרמות!',
-        type: 'levelup'
-      });
-      setTimeout(() => {
-        navigate('/progress');
-      }, 3000);
-    }
-  };
 
   /* ------------------------------------------------------------------
      EFFECTS - IMPROVED LOADING SEQUENCE
