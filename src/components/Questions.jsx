@@ -381,11 +381,6 @@ function Questions() {
     ] || ball0;
 
 
-    const question = questionIndex !== null ? questionsList[questionIndex] : null;
-  
-
-  const progressPercent = ((currentQuestionNumber - 1) / questionsThisRound) * 100;
-  const { enPart, hePart, punctuation } = splitQuestionText(question.question);
 
   // EARLY RETURN DURING LEVEL-UP
   if (isLevelingUp) {
@@ -408,6 +403,15 @@ function Questions() {
     );
   }
 
+  // Loading state
+  if (!dataLoaded || !progressReady) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-blue-100 dark:bg-gray-900">
+        <div className="text-xl">טוען נתונים...</div>
+      </div>
+    );
+  }
+
   // No questions available
   if (questionsList.length === 0) {
     return (
@@ -426,6 +430,11 @@ function Questions() {
     );
   }
 
+  const question = questionIndex !== null ? questionsList[questionIndex] : null;
+  
+
+  const progressPercent = ((currentQuestionNumber - 1) / questionsThisRound) * 100;
+  const { enPart, hePart, punctuation } = splitQuestionText(question.question);
 
 
   if (!question) {
