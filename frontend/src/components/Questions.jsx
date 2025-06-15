@@ -50,7 +50,7 @@ function Questions() {
   };
 
   const fetchQuestionsFromDB = async () => {
-    const langMap = { us: 'en' };  // fallback mapping
+    const langMap = { en: 'us' };  // fallback mapping
     const queryLang = langMap[lang] || lang;
     try {
       const q = query(
