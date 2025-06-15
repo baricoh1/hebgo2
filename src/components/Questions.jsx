@@ -133,21 +133,35 @@ function Questions() {
       console.log('🔄 Server progress:', serverProg);
       console.log('🔄 Merged progress:', mergedProgress);
 
-      // AUTO LEVEL-UP
+      // AUTO LEVEL-UP - FIXED: Check if we've completed the category
       if (serverProg.length >= MAX_QUESTIONS_PER_CATEGORY) {
         const next = getNextDifficulty(currentDifficulty);
         if (next) {
+          console.log('🚀 Triggering level up from', currentDifficulty, 'to', next);
           setToast({
             message: `🎉 כל הכבוד! עלית לרמה ${getDifficultyDisplayName(next)}!`,
             type: 'levelup'
           });
           setIsLevelingUp(true);
+          
+          // Update database first
           await setDoc(userRef, { difficulty: next }, { merge: true });
           localStorage.setItem('userDifficulty', next);
+          
+          // Navigate to progress page after delay
           setTimeout(() => {
-            setToast(null);
-            setCurrentDifficulty(next);
-            window.location.reload();
+            navigate('/progress');
+          }, 3000);
+          return;
+        } else {
+          // No next difficulty available - user completed all levels
+          console.log('🏆 User completed all difficulty levels!');
+          setToast({
+            message: '🏆 מזל טוב! סיימת את כל הרמות!',
+            type: 'levelup'
+          });
+          setTimeout(() => {
+            navigate('/progress');
           }, 3000);
           return;
         }
@@ -187,9 +201,48 @@ function Questions() {
         { merge: true }
       );
       console.log('💾 Saved to database:', updatedArr);
+      
+      // Check if we just completed the category
+      if (updatedArr.length >= MAX_QUESTIONS_PER_CATEGORY) {
+        console.log('🎯 Category completed! Progress:', updatedArr.length, '/', MAX_QUESTIONS_PER_CATEGORY);
+        handleCategoryCompletion();
+      }
     } catch (err) {
       console.error('Error writing progress:', err);
       // Don't show error to user for save failures, just log it
+    }
+  };
+
+  const handleCategoryCompletion = async () => {
+    const next = getNextDifficulty(currentDifficulty);
+    if (next) {
+      console.log('🚀 Category completed, leveling up to:', next);
+      setToast({
+        message: `🎉 כל הכבוד! עלית לרמה ${getDifficultyDisplayName(next)}!`,
+        type: 'levelup'
+      });
+      setIsLevelingUp(true);
+      
+      try {
+        const userRef = doc(db, 'users', userName);
+        await setDoc(userRef, { difficulty: next }, { merge: true });
+        localStorage.setItem('userDifficulty', next);
+      } catch (err) {
+        console.error('Error updating difficulty:', err);
+      }
+      
+      setTimeout(() => {
+        navigate('/progress');
+      }, 3000);
+    } else {
+      console.log('🏆 All levels completed!');
+      setToast({
+        message: '🏆 מזל טוב! סיימת את כל הרמות!',
+        type: 'levelup'
+      });
+      setTimeout(() => {
+        navigate('/progress');
+      }, 3000);
     }
   };
 
@@ -198,37 +251,41 @@ function Questions() {
   ------------------------------------------------------------------ */
   // 1) Load questions first
   useEffect(() => {
-    if (lang && currentDifficulty) {
+    if (lang && currentDifficulty && !isLevelingUp) {
       fetchQuestionsFromDB();
     }
-  }, [lang, currentDifficulty]);
+  }, [lang, currentDifficulty, isLevelingUp]);
 
   // 2) Load progress after questions are loaded
   useEffect(() => {
-    if (dataLoaded && !progressReady) {
+    if (dataLoaded && !progressReady && !isLevelingUp) {
       fetchProgressFromDB();
     }
-  }, [dataLoaded]);
+  }, [dataLoaded, isLevelingUp]);
 
   // 3) Reset progress when difficulty changes
   useEffect(() => {
-    correctIndexes.current = [];
-    seenQuestions.current = [];
-    setProgressReady(false);
-    setDataLoaded(false);
-    setQuestionIndex(null);
-    setCurrentQuestionNumber(1);
-  }, [currentDifficulty]);
+    if (!isLevelingUp) {
+      correctIndexes.current = [];
+      seenQuestions.current = [];
+      setProgressReady(false);
+      setDataLoaded(false);
+      setQuestionIndex(null);
+      setCurrentQuestionNumber(1);
+    }
+  }, [currentDifficulty, isLevelingUp]);
 
   // 4) Load first question when both data and progress are ready
   useEffect(() => {
-    if (dataLoaded && progressReady && questionIndex === null && questionsList.length > 0) {
+    if (dataLoaded && progressReady && questionIndex === null && questionsList.length > 0 && !isLevelingUp) {
       loadNextQuestion();
     }
-  }, [dataLoaded, progressReady, questionIndex, questionsList.length]);
+  }, [dataLoaded, progressReady, questionIndex, questionsList.length, isLevelingUp]);
 
   // Timer effect
   useEffect(() => {
+    if (isLevelingUp) return; // Don't run timer during level up
+    
     const id = setInterval(() => {
       setTime((t) => {
         if (t <= 1) {
@@ -249,7 +306,7 @@ function Questions() {
       });
     }, 1000);
     return () => clearInterval(id);
-  }, [locked]);
+  }, [locked, isLevelingUp]);
 
   /* ------------------------------------------------------------------
      QUESTION FLOW HELPERS - IMPROVED VALIDATION
@@ -276,6 +333,8 @@ function Questions() {
   };
 
   const loadNextQuestion = () => {
+    if (isLevelingUp) return; // Don't load questions during level up
+    
     if (currentQuestionNumber > questionsThisRound) {
       setShowEndModal(true);
       return;
@@ -302,6 +361,8 @@ function Questions() {
   };
 
   const nextQuestionAfterTimeout = () => {
+    if (isLevelingUp) return; // Don't proceed during level up
+    
     const last = currentQuestionNumber >= questionsThisRound;
     setCurrentQuestionNumber((n) => n + 1);
     if (last) {
@@ -312,7 +373,7 @@ function Questions() {
   };
 
   const handleAnswerClick = async (idx) => {
-    if (selected !== null || locked) return;
+    if (selected !== null || locked || isLevelingUp) return;
     
     setSelected(idx);
     setLocked(true);
@@ -348,6 +409,8 @@ function Questions() {
     }
 
     setTimeout(() => {
+      if (isLevelingUp) return; // Don't proceed if leveling up started
+      
       setToast(null);
       const isLast = currentQuestionNumber >= questionsThisRound;
       setCurrentQuestionNumber((n) => n + 1);
@@ -361,6 +424,8 @@ function Questions() {
   };
 
   function splitQuestionText(text) {
+    if (!text) return { enPart: '', hePart: '', punctuation: '' };
+    
     const heMatch = text.match(/['״'][א-ת\s_\-.,:()]+['״]/);
     const hePart = heMatch ? heMatch[0] : '';
     const enPart = hePart ? text.replace(hePart, '').replace(/[?؟!]/g, '').trim() : text;
@@ -381,13 +446,18 @@ function Questions() {
     ] || ball0;
    
   // EARLY RETURN DURING LEVEL-UP
-  if (isLevelingUp && (!dataLoaded || !progressReady) ) {
+  if (isLevelingUp) {
     return (
       <div
         dir="rtl"
         className="bg-blue-100 dark:bg-gray-900 text-black dark:text-white min-h-screen
                    flex items-center justify-center transition-colors duration-300"
       >
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-purple-600 mx-auto mb-4"></div>
+          <h2 className="text-2xl font-bold mb-2">מעלה רמה...</h2>
+          <p className="text-gray-600 dark:text-gray-300">אנא המתן בזמן שאנחנו מעדכנים את ההתקדמות שלך</p>
+        </div>
         {toast && (
           <div
             className="fixed bottom-6 left-1/2 transform -translate-x-1/2
@@ -401,20 +471,28 @@ function Questions() {
     );
   }
 
-
-  // No questions available
+  // No questions available or loading
   if (questionsList.length === 0 && (!dataLoaded || !progressReady)) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-blue-100 dark:bg-gray-900">
         <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg text-center">
-          <h2 className="text-2xl font-bold mb-4 text-red-600">אין שאלות זמינות!</h2>
-          <p className="mb-4">לא נמצאו שאלות לשפה ורמה שנבחרו.</p>
-          <button
-            onClick={() => navigate('/')}
-            className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
-          >
-            חזרה לעמוד הראשי
-          </button>
+          {dataLoaded && progressReady ? (
+            <>
+              <h2 className="text-2xl font-bold mb-4 text-red-600">אין שאלות זמינות!</h2>
+              <p className="mb-4">לא נמצאו שאלות לשפה ורמה שנבחרו.</p>
+              <button
+                onClick={() => navigate('/')}
+                className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+              >
+                חזרה לעמוד הראשי
+              </button>
+            </>
+          ) : (
+            <>
+              <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
+              <h2 className="text-xl font-bold">טוען שאלות...</h2>
+            </>
+          )}
         </div>
       </div>
     );
@@ -422,12 +500,6 @@ function Questions() {
 
   const question = questionIndex !== null ? questionsList[questionIndex] : null;
   
-
-  const progressPercent = ((currentQuestionNumber - 1) / questionsThisRound) * 100;
-  const { enPart, hePart, punctuation } = splitQuestionText(question.question);
-
-  
-
   if (!question) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-blue-100 dark:bg-gray-900">
@@ -436,6 +508,8 @@ function Questions() {
     );
   }
 
+  const progressPercent = ((currentQuestionNumber - 1) / questionsThisRound) * 100;
+  const { enPart, hePart, punctuation } = splitQuestionText(question.question);
 
   return (
     <div
@@ -450,6 +524,7 @@ function Questions() {
             <button
               onClick={() => navigate('/')}
               className="text-xl font-semibold hover:underline"
+              disabled={isLevelingUp}
             >
               ← חזרה לעמוד ראשי
             </button>
@@ -507,9 +582,9 @@ function Questions() {
                   <button
                     key={idx}
                     onClick={() => handleAnswerClick(idx)}
-                    disabled={selected !== null || locked}
+                    disabled={selected !== null || locked || isLevelingUp}
                     className={`w-full text-right p-3 rounded-lg border shadow hover:bg-blue-100 ${bg} ${
-                      selected !== null || locked ? 'cursor-not-allowed' : ''
+                      selected !== null || locked || isLevelingUp ? 'cursor-not-allowed' : ''
                     }`}
                   >
                     {ans}
@@ -522,7 +597,7 @@ function Questions() {
               <button
                 className="px-4 py-2 bg-yellow-400 text-black rounded hover:bg-yellow-500"
                 onClick={() => setShowHint(true)}
-                disabled={locked}
+                disabled={locked || isLevelingUp}
               >
                 {currentHintText}
               </button>
@@ -563,7 +638,7 @@ function Questions() {
       )}
 
       {/* END MODAL */}
-      {showEndModal && (
+      {showEndModal && !isLevelingUp && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-20">
           <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg space-y-4 max-w-sm">
             <h2 className="text-2xl font-bold text-center">
