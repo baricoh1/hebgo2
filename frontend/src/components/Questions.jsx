@@ -50,22 +50,21 @@ function Questions() {
   };
 
   const fetchQuestionsFromDB = async () => {
-    const langMap = { en: 'us' };  // fallback mapping
-    const queryLang = langMap[lang] || lang;
-    try {
-      const q = query(
-        collection(db, 'questions'),
-        where('lang', '==', queryLang),
-        where('difficulty', '==', currentDifficulty)
-      );
-      const snapshot = await getDocs(q);
-      const questions = snapshot.docs.map((doc) => doc.data());
-      setQuestionsList(questions);
-      console.log('📥 Questions loaded from DB:', questions);
-    } catch (err) {
-      console.error('Error loading questions from DB:', err);
-    }
-  };
+  try {
+    const q = query(
+      collection(db, 'questions'),
+      where('lang', '==', lang), // lang = 'us'
+      where('difficulty', '==', currentDifficulty)
+    );
+    const snapshot = await getDocs(q);
+    const questions = snapshot.docs.map((doc) => doc.data());
+    setQuestionsList(questions);
+    console.log('📥 Questions loaded from DB:', questions);
+  } catch (err) {
+    console.error('Error loading questions from DB:', err);
+  }
+};
+
 
   const fetchProgressFromDB = async () => {
     try {
