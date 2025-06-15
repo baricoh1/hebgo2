@@ -138,10 +138,6 @@ function Questions() {
         const next = getNextDifficulty(currentDifficulty);
         if (next) {
           console.log('🚀 Triggering level up from', currentDifficulty, 'to', next);
-          setToast({
-            message: `🎉 כל הכבוד! עלית לרמה ${getDifficultyDisplayName(next)}! מתחיל משחק חדש...`,
-            type: 'levelup'
-          });
           setIsLevelingUp(true);
           
           // Update database first
