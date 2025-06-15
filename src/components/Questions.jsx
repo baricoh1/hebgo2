@@ -380,34 +380,8 @@ function Questions() {
       correctCount
     ] || ball0;
 
-  // Loading state
-  if (!dataLoaded || !progressReady) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-blue-100 dark:bg-gray-900">
-        <div className="text-xl">טוען נתונים...</div>
-      </div>
-    );
-  }
 
-  // No questions available
-  if (questionsList.length === 0) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-blue-100 dark:bg-gray-900">
-        <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg text-center">
-          <h2 className="text-2xl font-bold mb-4 text-red-600">אין שאלות זמינות!</h2>
-          <p className="mb-4">לא נמצאו שאלות לשפה ורמה שנבחרו.</p>
-          <button
-            onClick={() => navigate('/')}
-            className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
-          >
-            חזרה לעמוד הראשי
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  const question = questionIndex !== null ? questionsList[questionIndex] : null;
+    const question = questionIndex !== null ? questionsList[questionIndex] : null;
   
 
   const progressPercent = ((currentQuestionNumber - 1) / questionsThisRound) * 100;
@@ -433,6 +407,26 @@ function Questions() {
       </div>
     );
   }
+
+  // No questions available
+  if (questionsList.length === 0) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-blue-100 dark:bg-gray-900">
+        <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg text-center">
+          <h2 className="text-2xl font-bold mb-4 text-red-600">אין שאלות זמינות!</h2>
+          <p className="mb-4">לא נמצאו שאלות לשפה ורמה שנבחרו.</p>
+          <button
+            onClick={() => navigate('/')}
+            className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+          >
+            חזרה לעמוד הראשי
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+
 
   if (!question) {
     return (
