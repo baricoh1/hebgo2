@@ -50,6 +50,7 @@ function Questions() {
   };
 
   const fetchQuestionsFromDB = async () => {
+  console.log('🚨 Querying with:', { lang, currentDifficulty });
   try {
     const q = query(
       collection(db, 'questions'),
