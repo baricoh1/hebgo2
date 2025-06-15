@@ -139,7 +139,7 @@ function Questions() {
         if (next) {
           console.log('🚀 Triggering level up from', currentDifficulty, 'to', next);
           setToast({
-            message: `🎉 כל הכבוד! עלית לרמה ${getDifficultyDisplayName(next)}!`,
+            message: `🎉 כל הכבוד! עלית לרמה ${getDifficultyDisplayName(next)}! מתחיל משחק חדש...`,
             type: 'levelup'
           });
           setIsLevelingUp(true);
@@ -148,9 +148,27 @@ function Questions() {
           await setDoc(userRef, { difficulty: next }, { merge: true });
           localStorage.setItem('userDifficulty', next);
           
-          // Navigate to progress page after delay
+          // Reset game state for new difficulty
+          correctIndexes.current = [];
+          seenQuestions.current = [];
+          setCorrectCount(0);
+          setCurrentQuestionNumber(1);
+          setQuestionsThisRound(MAX_QUESTIONS);
+          setQuestionIndex(null);
+          setSelected(null);
+          setLocked(false);
+          setShowHint(false);
+          setShowAutoHint(false);
+          setTime(30);
+          setShowEndModal(false);
+          
+          // Update difficulty and restart
           setTimeout(() => {
-            navigate('/progress');
+            setToast(null);
+            setCurrentDifficulty(next);
+            setIsLevelingUp(false);
+            setDataLoaded(false);
+            setProgressReady(false);
           }, 3000);
           return;
         } else {
@@ -218,7 +236,7 @@ function Questions() {
     if (next) {
       console.log('🚀 Category completed, leveling up to:', next);
       setToast({
-        message: `🎉 כל הכבוד! עלית לרמה ${getDifficultyDisplayName(next)}!`,
+        message: `🎉 כל הכבוד! עלית לרמה ${getDifficultyDisplayName(next)}! מתחיל משחק חדש...`,
         type: 'levelup'
       });
       setIsLevelingUp(true);
@@ -227,13 +245,41 @@ function Questions() {
         const userRef = doc(db, 'users', userName);
         await setDoc(userRef, { difficulty: next }, { merge: true });
         localStorage.setItem('userDifficulty', next);
+        
+        // Reset game state for new difficulty
+        correctIndexes.current = [];
+        seenQuestions.current = [];
+        setCorrectCount(0);
+        setCurrentQuestionNumber(1);
+        setQuestionsThisRound(MAX_QUESTIONS);
+        setQuestionIndex(null);
+        setSelected(null);
+        setLocked(false);
+        setShowHint(false);
+        setShowAutoHint(false);
+        setTime(30);
+        setShowEndModal(false);
+        
+        // Update difficulty and restart
+        setTimeout(() => {
+          setToast(null);
+          setCurrentDifficulty(next);
+          setIsLevelingUp(false);
+          setDataLoaded(false);
+          setProgressReady(false);
+        }, 3000);
+        
       } catch (err) {
         console.error('Error updating difficulty:', err);
+        setToast({
+          message: 'שגיאה בעדכון הרמה. מנסה שוב...',
+          type: 'error'
+        });
+        setTimeout(() => {
+          setToast(null);
+          setIsLevelingUp(false);
+        }, 2000);
       }
-      
-      setTimeout(() => {
-        navigate('/progress');
-      }, 3000);
     } else {
       console.log('🏆 All levels completed!');
       setToast({
@@ -456,7 +502,7 @@ function Questions() {
         <div className="text-center">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-purple-600 mx-auto mb-4"></div>
           <h2 className="text-2xl font-bold mb-2">מעלה רמה...</h2>
-          <p className="text-gray-600 dark:text-gray-300">אנא המתן בזמן שאנחנו מעדכנים את ההתקדמות שלך</p>
+          <p className="text-gray-600 dark:text-gray-300">מתכונן למשחק חדש ברמה הבאה!</p>
         </div>
         {toast && (
           <div
