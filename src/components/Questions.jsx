@@ -276,7 +276,6 @@ function Questions() {
   };
 
   const loadNextQuestion = () => {
-    
     if (currentQuestionNumber > questionsThisRound) {
       setShowEndModal(true);
       return;
@@ -350,7 +349,6 @@ function Questions() {
 
     setTimeout(() => {
       setToast(null);
-      setSelected(null);
       const isLast = currentQuestionNumber >= questionsThisRound;
       setCurrentQuestionNumber((n) => n + 1);
       if (isLast) {
