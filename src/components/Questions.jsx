@@ -153,7 +153,8 @@ function Questions() {
 
   const fetchQuestionsFromDB = async () => {
   try {
-    const langMap = { "0": "us", "1": "es", "2": "ru" };
+    const langMap = { "us": "0", "es": "1", "ru": "2" };
+    console.log("🌍 Fetching questions for lang:", lang, "→ doc:", langMap[lang]);
     const docRef = doc(db, "questions", langMap[lang]);
     const snap = await getDoc(docRef);
     if (!snap.exists()) {
@@ -161,11 +162,15 @@ function Questions() {
       return;
     }
     const data = snap.data();
-    setQuestionsList(data?.[currentDifficulty] || []);
+    console.log("📥 Raw questions document:", data);
+    const selected = data?.[currentDifficulty] || [];
+    console.log("📥 Loaded questions for difficulty:", currentDifficulty, "→", selected);
+    setQuestionsList(selected);
   } catch (err) {
     console.error("❌ Error fetching questions from DB:", err);
   }
 };
+
 
 
   /* ------------------------------------------------------------------
