@@ -422,23 +422,16 @@ function Questions() {
                       else if (isCorrect) bg = 'bg-green-400';
                     }
                     return (
-<button
-  key={idx}
-   onClick={(e) => {
-   handleAnswerClick(idx);
- }}
-onTouchEnd={(e) => {
-   // מיד מבטל את הפוקוס אחרי נגיעה
-   e.currentTarget.blur();
- }}
-  disabled={selected !== null || locked}
-  className={`w-full text-right p-3 rounded-lg border shadow hover:bg-blue-100 focus:outline-none active:outline-none ${bg} ${
-    selected !== null || locked ? 'cursor-not-allowed' : ''
-  }`}
->
-  {ans}
-</button>
-
+                      <button
+                        key={idx}
+                        onClick={() => handleAnswerClick(idx)}
+                        disabled={selected !== null || locked}
+                        className={`w-full text-right p-3 rounded-lg border shadow hover:bg-blue-100 ${bg} ${
+                          selected !== null || locked ? 'cursor-not-allowed' : ''
+                        }`}
+                      >
+                        {ans}
+                      </button>
                     );
                   })}
                 </ul>
