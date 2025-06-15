@@ -1,9 +1,8 @@
-// src/components/PlacementTest.jsx
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import questionsData from './placementQuestions.json';
 import { doc, setDoc } from 'firebase/firestore';
-import { db } from '../firebase'; // Make sure this path is correct
+import { db } from '../firebase';
 
 function PlacementTest() {
   const [current, setCurrent] = useState(0);
@@ -15,45 +14,52 @@ function PlacementTest() {
   const userLang = localStorage.getItem('userLang') || 'us';
   const userName = localStorage.getItem('userName');
   const testQuestions = questionsData[userLang]?.easy || [];
+  const [finalLevel, setFinalLevel] = useState(null);
 
   const handleAnswer = (index) => {
+    
+    const isCorrect = index === testQuestions[current].correct;
+    const nextScore = score + (isCorrect ? 1 : 0);
     setSelected(index);
-    if (index === testQuestions[current].correct) {
-      setScore((prev) => prev + 1);
-    }
-
     if (current + 1 === testQuestions.length) {
-      setTimeout(() => finishTest(), 1500);
+      setTimeout(() => finishTest(nextScore), 1500);
+    } else {
+      setTimeout(() => {
+        setCurrent((prev) => prev + 1);
+        setScore(nextScore);
+        setSelected(null);
+      }, 1000);
     }
   };
 
-  const nextQuestion = () => {
-    setSelected(null);
-    if (current + 1 < testQuestions.length) {
-      setCurrent(current + 1);
-    }
-  };
+const finishTest = async (finalScore) => {
+  setCompleted(true);
 
-  const finishTest = async () => {
-    setCompleted(true);
-    let difficulty = 'easy';
-    if (score === 5) difficulty = 'hard';
-    else if (score >= 3) difficulty = 'medium';
+  let difficulty = 'easy';
+  if (finalScore === 5) difficulty = 'hard';
+  else if (finalScore >= 3) difficulty = 'medium';
 
-    localStorage.setItem('userDifficulty', difficulty);
+  setFinalLevel(
+    difficulty === 'hard' ? 'קשה' :
+    difficulty === 'medium' ? 'בינוני' :
+    'קל'
+  );
 
-    try {
-      await setDoc(doc(db, 'users', userName), {
-        difficulty,
-        lang: userLang,
-        updatedAt: new Date(),
-      }, { merge: true });
-    } catch (err) {
-      console.error('Error saving difficulty to Firebase:', err);
-    }
+  localStorage.setItem('userDifficulty', difficulty);
 
-    setTimeout(() => navigate('/'), 2000);
-  };
+  try {
+    await setDoc(doc(db, 'users', userName), {
+      difficulty,
+      lang: userLang,
+      updatedAt: new Date(),
+    }, { merge: true });
+  } catch (err) {
+    console.error('Error saving difficulty to Firebase:', err);
+  }
+
+  setTimeout(() => navigate('/'), 2000);
+};
+
 
   if (!userName) {
     return (
@@ -106,23 +112,15 @@ function PlacementTest() {
                 </button>
               ))}
             </div>
-
-            {selected !== null && current + 1 < testQuestions.length && (
-              <button
-                onClick={nextQuestion}
-                className="mt-8 px-8 py-3 bg-blue-600 text-white font-semibold rounded-full shadow hover:bg-blue-700 transition"
-              >
-                לשאלה הבאה →
-              </button>
-            )}
           </>
         ) : (
           <div className="animate-bounce bg-green-100 dark:bg-green-800 p-6 rounded-xl shadow-lg max-w-md mx-auto text-green-700 dark:text-green-200 text-xl font-semibold">
-            סיימת את המבחן! רמתך הנוכחית: {score === 5 ? 'קשה' : score >= 3 ? 'בינוני' : 'קל'}
-          </div>
+            סיימת את המבחן! רמתך הנוכחית: {finalLevel}
+    </div>
         )}
       </div>
     </div>
+
   );
 }
 
