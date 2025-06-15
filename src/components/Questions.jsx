@@ -233,7 +233,9 @@ const loadNextQuestion = () => {
       seenQuestions.current = [...seenQuestions.current, nxt];
     }
     setQuestionIndex(nxt);
-    setSelected(null); 
+    setTimeout(() => {
+      setSelected(null);
+    }, 0);
     setShowHint(false);
     setShowAutoHint(false);
     setTime(30);
