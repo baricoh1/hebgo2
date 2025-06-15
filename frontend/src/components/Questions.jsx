@@ -1,18 +1,13 @@
 // src/components/Questions.jsx
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../firebase';
-import questionsData from './questions.json';
 
 const correctAudio = new Audio('/sounds/right_answer.mp3');
 const wrongAudio   = new Audio('/sounds/wrong_answer.mp3');
 
-
 function Questions() {
-  /* ------------------------------------------------------------------
-     CONSTANTS & BASIC DATA
-  ------------------------------------------------------------------ */
   const MAX_QUESTIONS = 10;
   const MAX_QUESTIONS_PER_CATEGORY = 20;
   const navigate = useNavigate();
@@ -23,33 +18,24 @@ function Questions() {
     localStorage.getItem('userDifficulty')
   );
 
+  const [questionsList, setQuestionsList] = useState([]);
   const hintTextMap = { en: 'Show Hint', es: 'Mostrar pista', ru: 'Показать подсказку' };
   const currentHintText = hintTextMap[lang] || 'Show Hint';
 
-  const questionsList = questionsData?.[lang]?.[currentDifficulty] || [];
-  if (!lang || !currentDifficulty || questionsList.length === 0) {
-    return <div className="p-4 text-red-600">לא ניתן לטעון את השאלות. ודא שהשפה והרמה נבחרו כראוי.</div>;
-  }
-
-  /* ------------------------------------------------------------------
-     REACT STATE
-  ------------------------------------------------------------------ */
   const [questionIndex, setQuestionIndex] = useState(null);
-   const [progressReady, setProgressReady] = useState(false);
+  const [progressReady, setProgressReady] = useState(false);
   const seenQuestions = useRef([]);
-  const [selected, setSelected]           = useState(null);
-  const correctIndexes = useRef([]) ;
-  const [correctCount, setCorrectCount]   = useState(0);
-  const [locked, setLocked]               = useState(false);
-  const [showHint, setShowHint]           = useState(false);
-  const [showAutoHint, setShowAutoHint]   = useState(false);
-  const [time, setTime]                   = useState(30);
-  const [toast, setToast]                 = useState(null);
-  const [showEndModal, setShowEndModal]   = useState(false);
+  const [selected, setSelected] = useState(null);
+  const correctIndexes = useRef([]);
+  const [correctCount, setCorrectCount] = useState(0);
+  const [locked, setLocked] = useState(false);
+  const [showHint, setShowHint] = useState(false);
+  const [showAutoHint, setShowAutoHint] = useState(false);
+  const [time, setTime] = useState(30);
+  const [toast, setToast] = useState(null);
+  const [showEndModal, setShowEndModal] = useState(false);
   const [currentQuestionNumber, setCurrentQuestionNumber] = useState(1);
   const [questionsThisRound, setQuestionsThisRound] = useState(MAX_QUESTIONS);
-
-  // hide quiz UI during level-up
   const [isLevelingUp, setIsLevelingUp] = useState(false);
 
   const getNextDifficulty = (level) => {
@@ -63,34 +49,39 @@ function Questions() {
     return names[level] || level;
   };
 
-  /* ------------------------------------------------------------------
-     FIREBASE HELPERS
-  ------------------------------------------------------------------ */
+  const fetchQuestionsFromDB = async () => {
+    try {
+      const q = query(
+        collection(db, 'questions'),
+        where('lang', '==', lang),
+        where('difficulty', '==', currentDifficulty)
+      );
+      const snapshot = await getDocs(q);
+      const questions = snapshot.docs.map((doc) => doc.data());
+      setQuestionsList(questions);
+      console.log('📥 Questions loaded from DB:', questions);
+    } catch (err) {
+      console.error('Error loading questions from DB:', err);
+    }
+  };
+
   const fetchProgressFromDB = async () => {
     try {
       const userRef = doc(db, 'users', userName);
       const snap = await getDoc(userRef);
       if (!snap.exists()) return;
       const data = snap.data();
-
       const serverProg = data.progress?.[lang]?.[currentDifficulty] || [];
-      
-      // MERGE instead of overwrite - keep any local progress that might not be saved yet
       const mergedProgress = [...new Set([...correctIndexes.current, ...serverProg])];
       correctIndexes.current = mergedProgress;
-      
-      console.log('🔄 Server progress:', serverProg);
-      console.log('🔄 Local progress before merge:', correctIndexes.current);
-      console.log('🔄 Merged progress:', mergedProgress);
+      const remaining = MAX_QUESTIONS_PER_CATEGORY - serverProg.length;
+      setQuestionsThisRound(Math.min(MAX_QUESTIONS, remaining));
+      setProgressReady(true);
 
-      // AUTO LEVEL-UP
       if (serverProg.length >= MAX_QUESTIONS_PER_CATEGORY) {
         const next = getNextDifficulty(currentDifficulty);
         if (next) {
-          setToast({
-            message: `🎉 כל הכבוד! עלית לרמה ${getDifficultyDisplayName(next)}!`,
-            type: 'levelup'
-          });
+          setToast({ message: `🎉 כל הכבוד! עלית לרמה ${getDifficultyDisplayName(next)}!`, type: 'levelup' });
           setIsLevelingUp(true);
           await setDoc(userRef, { difficulty: next }, { merge: true });
           localStorage.setItem('userDifficulty', next);
@@ -105,10 +96,6 @@ function Questions() {
       if (data.gender) {
         localStorage.setItem('userGender', data.gender);
       }
-
-      const remaining = MAX_QUESTIONS_PER_CATEGORY - serverProg.length;
-      setQuestionsThisRound(Math.min(MAX_QUESTIONS, remaining));
-      setProgressReady(true);
     } catch (err) {
       console.error('Error fetching user progress:', err);
     }
@@ -133,35 +120,31 @@ function Questions() {
         },
         { merge: true }
       );
-      console.log('💾 Saved to database:', updatedArr);
     } catch (err) {
       console.error('Error writing progress:', err);
     }
   };
 
-  /* ------------------------------------------------------------------
-     EFFECTS
-  ------------------------------------------------------------------ */
-  // 1) Fetch progress once on mount
+  useEffect(() => {
+    if (lang && currentDifficulty) fetchQuestionsFromDB();
+  }, [lang, currentDifficulty]);
+
   useEffect(() => {
     fetchProgressFromDB();
   }, []);
 
-  // 2) Re-fetch (and clear) when difficulty changes
   useEffect(() => {
     correctIndexes.current = [];
     setProgressReady(false);
     fetchProgressFromDB();
   }, [currentDifficulty]);
 
-  // 3) Only load next question when questionIndex is null
   useEffect(() => {
-    if (progressReady && questionIndex === null) {
+    if (progressReady && questionIndex === null && questionsList.length > 0) {
       loadNextQuestion();
     }
-  }, [progressReady, questionIndex]);
+  }, [progressReady, questionIndex, questionsList]);
 
-  // Timer
   useEffect(() => {
     const id = setInterval(() => {
       setTime((t) => {
@@ -189,19 +172,10 @@ function Questions() {
     seenQuestions.current = [];
   }, [currentDifficulty]);
 
-
-  /* ------------------------------------------------------------------
-     QUESTION FLOW HELPERS
-  ------------------------------------------------------------------ */
   const getNextQuestionIndex = () => {
-    // filter only questions that are NOT in seenQuestions AND NOT in correctIndexes
     const candidates = questionsList
       .map((_, i) => i)
-      .filter(
-        (i) =>
-          !seenQuestions.current.includes(i) &&
-          !correctIndexes.current.includes(i)
-      );
+      .filter((i) => !seenQuestions.current.includes(i) && !correctIndexes.current.includes(i));
     if (candidates.length === 0) return null;
     return candidates[Math.floor(Math.random() * candidates.length)];
   };
@@ -235,27 +209,19 @@ function Questions() {
     setSelected(idx);
     setLocked(true);
 
+    const question = questionsList[questionIndex];
+
     if (idx === question.correct) {
       correctAudio.play();
       if (!correctIndexes.current.includes(questionIndex)) {
         const updated = [...correctIndexes.current, questionIndex];
         correctIndexes.current = updated;
-        
-        // CONSOLE LOGS
-        console.log('✅ Correct answer! Question index:', questionIndex, 'added to array');
-        console.log('📊 Current correctIndexes array:', updated);
-        console.log('📈 Array length:', updated.length);
-        
         await saveProgressToDB(updated);
-      } else {
-        console.log('ℹ️ Question', questionIndex, 'was already in correctIndexes array');
-        console.log('📊 Current correctIndexes array:', correctIndexes.current);
       }
       setCorrectCount((c) => c + 1);
       setToast({ message: '✅ תשובה נכונה!', type: 'success' });
     } else {
       wrongAudio.play();
-      console.log('❌ Wrong answer for question index:', questionIndex);
       setToast({ message: '❌ תשובה שגויה!', type: 'error' });
     }
 
@@ -269,30 +235,20 @@ function Questions() {
     }, 1500);
   };
 
-  function splitQuestionText(text) {
-    const heMatch = text.match(/['״'][א-ת\s_\-.,:()]+['״]/);
-    const hePart  = heMatch ? heMatch[0] : '';
-    const enPart  = hePart ? text.replace(hePart, '').replace(/[?؟!]/g, '').trim() : text;
+  const splitQuestionText = (text) => {
+    const heMatch = text.match(/['א-ת\s_\-.,:()]+/);
+    const hePart = heMatch ? heMatch[0] : '';
+    const enPart = hePart ? text.replace(hePart, '').replace(/[?؟!]/g, '').trim() : text;
     const punctuationMatch = text.trim().match(/[?؟!]+$/);
     const punctuation = punctuationMatch ? punctuationMatch[0] : '';
     return { enPart, hePart, punctuation };
+  };
+
+  if (!lang || !currentDifficulty || !questionsList.length) {
+    return <div className="p-4 text-red-600">לא ניתן לטעון את השאלות. ודא שהשפה והרמה נבחרו כראוי.</div>;
   }
 
-  /* ------------------------------------------------------------------
-     RENDER HELPERS
-  ------------------------------------------------------------------ */
-  const formatTime = (s) =>
-    `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
-  const getResultImage = () =>
-  `/images/ball${Math.min(correctCount, 10)}.png`;
-
-
-  const question =
-    questionIndex !== null
-      ? questionsList[questionIndex]
-      : { question: '', answers: [], hint: '', authohint: '' };
-
-  const progressPercent = ((currentQuestionNumber - 1) / MAX_QUESTIONS) * 100;
+  const question = questionIndex !== null ? questionsList[questionIndex] : { question: '', answers: [], hint: '', authohint: '' };
   const { enPart, hePart, punctuation } = splitQuestionText(question.question);
 
   // EARLY RETURN DURING LEVEL-UP
