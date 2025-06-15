@@ -38,6 +38,25 @@ function Questions() {
   const [questionsThisRound, setQuestionsThisRound] = useState(MAX_QUESTIONS);
   const [isLevelingUp, setIsLevelingUp] = useState(false);
 
+  // Helper function to format time as MM:SS
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  // Helper function to calculate progress percentage
+  const progressPercent = Math.round((currentQuestionNumber / questionsThisRound) * 100);
+
+  // Helper function to get result image based on score
+  const getResultImage = () => {
+    const percentage = (correctCount / questionsThisRound) * 100;
+    if (percentage >= 80) return '/images/excellent.png';
+    if (percentage >= 60) return '/images/good.png';
+    if (percentage >= 40) return '/images/ok.png';
+    return '/images/needs_improvement.png';
+  };
+
   const getNextDifficulty = (level) => {
     const levels = ['easy', 'medium', 'hard'];
     const idx = levels.indexOf(level);
@@ -49,46 +68,39 @@ function Questions() {
     return names[level] || level;
   };
 
-const fetchQuestionsFromDB = async () => {
-  try {
-    console.log('🔍 Testing basic collection access...');
-    
-    // Just try to get ALL documents first
-    const snapshot = await getDocs(collection(db, 'questions'));
-    
-    console.log('📦 Snapshot exists:', !!snapshot);
-    console.log('📦 Snapshot size:', snapshot.size);
-    console.log('📦 Snapshot empty:', snapshot.empty);
-    
-    if (snapshot.empty) {
-      console.log('❌ Collection is empty or doesn\'t exist!');
-      return;
-    }
-    
-    const allQuestions = [];
-    snapshot.forEach((doc) => {
-      console.log('📄 Document ID:', doc.id);
-      console.log('📄 Document data:', doc.data());
-      allQuestions.push(doc.data());
-    });
-    
-    console.log('📥 All questions loaded:', allQuestions.length);
-    
-    // Filter manually for now
-    const filtered = allQuestions.filter(q => {
-      console.log(`🔍 Checking question: lang=${q.lang}, difficulty=${q.difficulty}`);
-      console.log(`🔍 Looking for: lang=${lang}, difficulty=${currentDifficulty}`);
-      return q.lang === lang && q.difficulty === currentDifficulty;
-    });
-    
-    console.log('📥 Filtered questions:', filtered);
-    setQuestionsList(filtered);
-    
-  } catch (err) {
-    console.error('❌ Error:', err);
-  }
-};
+  const fetchQuestionsFromDB = async () => {
+    try {
+      const langMap = { us: '0', es: '1', ru: '2' };
+      const langDocId = langMap[lang];
 
+      if (!langDocId) {
+        console.error('❌ Unknown language code:', lang);
+        return;
+      }
+
+      const docRef = doc(db, 'questions', langDocId);
+      const snapshot = await getDoc(docRef);
+
+      if (!snapshot.exists()) {
+        console.error('❌ Document does not exist for lang:', lang);
+        return;
+      }
+
+      const data = snapshot.data();
+      const questionsArray = data[currentDifficulty];
+
+      if (!Array.isArray(questionsArray)) {
+        console.error(`❌ No array for difficulty: ${currentDifficulty}`);
+        return;
+      }
+
+      console.log(`✅ Loaded ${questionsArray.length} questions for lang=${lang}, difficulty=${currentDifficulty}`);
+      setQuestionsList(questionsArray);
+
+    } catch (err) {
+      console.error('❌ Error loading questions:', err);
+    }
+  };
 
   const fetchProgressFromDB = async () => {
     try {
@@ -237,7 +249,7 @@ const fetchQuestionsFromDB = async () => {
     const question = questionsList[questionIndex];
 
     if (idx === question.correct) {
-      correctAudio.play();
+      correctAudio.play().catch(e => console.log('Audio play failed:', e));
       if (!correctIndexes.current.includes(questionIndex)) {
         const updated = [...correctIndexes.current, questionIndex];
         correctIndexes.current = updated;
@@ -246,7 +258,7 @@ const fetchQuestionsFromDB = async () => {
       setCorrectCount((c) => c + 1);
       setToast({ message: '✅ תשובה נכונה!', type: 'success' });
     } else {
-      wrongAudio.play();
+      wrongAudio.play().catch(e => console.log('Audio play failed:', e));
       setToast({ message: '❌ תשובה שגויה!', type: 'error' });
     }
 
@@ -297,7 +309,7 @@ const fetchQuestionsFromDB = async () => {
     );
   }
 
-  // לפני ה־return הראשי:
+  // Check if no questions available for this round
   if (questionsThisRound === 0) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-blue-100 dark:bg-gray-900">
