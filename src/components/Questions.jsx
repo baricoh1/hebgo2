@@ -137,18 +137,26 @@ function Questions() {
       if (serverProg.length >= MAX_QUESTIONS_PER_CATEGORY) {
         const next = getNextDifficulty(currentDifficulty);
         if (next) {
-          setToast({
-            message: `🎉 כל הכבוד! עלית לרמה ${getDifficultyDisplayName(next)}!`,
-            type: 'levelup'
-          });
+          // Set level-up state immediately
           setIsLevelingUp(true);
+          
+          // Show toast with a slight delay to ensure it renders
+          setTimeout(() => {
+            setToast({
+              message: `🎉 כל הכבוד! עלית לרמה ${getDifficultyDisplayName(next)}!`,
+              type: 'levelup'
+            });
+          }, 100);
+          
+          // Save new difficulty to database
           await setDoc(userRef, { difficulty: next }, { merge: true });
           localStorage.setItem('userDifficulty', next);
+          
+          // After showing toast for 3 seconds, navigate instead of reload
           setTimeout(() => {
-            setToast(null);
-            setCurrentDifficulty(next);
-            window.location.reload();
-          }, 3000);
+            navigate('/', { replace: true });
+          }, 3500);
+          
           return;
         }
       }
@@ -428,15 +436,18 @@ function Questions() {
         className="bg-blue-100 dark:bg-gray-900 text-black dark:text-white min-h-screen
                    flex items-center justify-center transition-colors duration-300"
       >
-        {toast && (
-          <div
-            className="fixed bottom-6 left-1/2 transform -translate-x-1/2
-                       bg-gradient-to-r from-purple-600 to-pink-600 animate-pulse
-                       text-white px-6 py-3 rounded-full shadow-lg text-lg z-50"
-          >
-            {toast.message}
-          </div>
-        )}
+        <div className="text-center">
+          <div className="text-4xl mb-4">🎉</div>
+          <div className="text-2xl font-bold mb-4">מעלה רמה...</div>
+          {toast && (
+            <div
+              className="bg-gradient-to-r from-purple-600 to-pink-600 animate-pulse
+                         text-white px-8 py-4 rounded-full shadow-lg text-xl mx-auto max-w-md"
+            >
+              {toast.message}
+            </div>
+          )}
+        </div>
       </div>
     );
   }
