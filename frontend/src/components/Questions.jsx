@@ -50,10 +50,12 @@ function Questions() {
   };
 
   const fetchQuestionsFromDB = async () => {
+    const langMap = { us: 'en' };  // fallback mapping
+    const queryLang = langMap[lang] || lang;
     try {
       const q = query(
         collection(db, 'questions'),
-        where('lang', '==', lang),
+        where('lang', '==', queryLang),
         where('difficulty', '==', currentDifficulty)
       );
       const snapshot = await getDocs(q);
