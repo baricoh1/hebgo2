@@ -49,22 +49,32 @@ function Questions() {
     return names[level] || level;
   };
 
-  const fetchQuestionsFromDB = async () => {
-  console.log('🚨 Querying with:', { lang, currentDifficulty });
+const fetchQuestionsFromDB = async () => {
   try {
+    console.warn('🔥 Querying with:', { lang, difficulty: currentDifficulty });
+
     const q = query(
       collection(db, 'questions'),
-      where('lang', '==', lang), // lang = 'us'
+      where('lang', '==', lang),
       where('difficulty', '==', currentDifficulty)
     );
+
     const snapshot = await getDocs(q);
-    const questions = snapshot.docs.map((doc) => doc.data());
+    console.log('📦 Raw snapshot:', snapshot);
+    console.log('📦 Documents:', snapshot.docs);
+
+    const questions = snapshot.docs.map((doc) => {
+      console.log('✅ Document data:', doc.data());
+      return doc.data();
+    });
+
+    console.log('📥 Final question array:', questions);
     setQuestionsList(questions);
-    console.log('📥 Questions loaded from DB:', questions);
   } catch (err) {
-    console.error('Error loading questions from DB:', err);
+    console.error('❌ Error loading questions from DB:', err);
   }
 };
+
 
 
   const fetchProgressFromDB = async () => {
