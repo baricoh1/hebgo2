@@ -379,18 +379,31 @@ function Questions() {
     [ball0, ball1, ball2, ball3, ball4, ball5, ball6, ball7, ball8, ball9, ball10][
       correctCount
     ] || ball0;
-
-  // Loading state
-  if (!dataLoaded || !progressReady) {
+   
+  // EARLY RETURN DURING LEVEL-UP
+  if (isLevelingUp && (!dataLoaded || !progressReady) ) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-blue-100 dark:bg-gray-900">
-        <div className="text-xl">טוען נתונים...</div>
+      <div
+        dir="rtl"
+        className="bg-blue-100 dark:bg-gray-900 text-black dark:text-white min-h-screen
+                   flex items-center justify-center transition-colors duration-300"
+      >
+        {toast && (
+          <div
+            className="fixed bottom-6 left-1/2 transform -translate-x-1/2
+                       bg-gradient-to-r from-purple-600 to-pink-600 animate-pulse
+                       text-white px-6 py-3 rounded-full shadow-lg text-lg z-50"
+          >
+            {toast.message}
+          </div>
+        )}
       </div>
     );
   }
 
+
   // No questions available
-  if (questionsList.length === 0) {
+  if (questionsList.length === 0 && (!dataLoaded || !progressReady)) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-blue-100 dark:bg-gray-900">
         <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg text-center">
@@ -413,26 +426,7 @@ function Questions() {
   const progressPercent = ((currentQuestionNumber - 1) / questionsThisRound) * 100;
   const { enPart, hePart, punctuation } = splitQuestionText(question.question);
 
-  // EARLY RETURN DURING LEVEL-UP
-  if (isLevelingUp) {
-    return (
-      <div
-        dir="rtl"
-        className="bg-blue-100 dark:bg-gray-900 text-black dark:text-white min-h-screen
-                   flex items-center justify-center transition-colors duration-300"
-      >
-        {toast && (
-          <div
-            className="fixed bottom-6 left-1/2 transform -translate-x-1/2
-                       bg-gradient-to-r from-purple-600 to-pink-600 animate-pulse
-                       text-white px-6 py-3 rounded-full shadow-lg text-lg z-50"
-          >
-            {toast.message}
-          </div>
-        )}
-      </div>
-    );
-  }
+  
 
   if (!question) {
     return (
