@@ -31,6 +31,7 @@ function Questions() {
 
   const userName = localStorage.getItem('userName');
   const lang     = localStorage.getItem('userLang');
+  const [progressReady, setProgressReady] = useState(false);
   const [currentDifficulty, setCurrentDifficulty] = useState(
     localStorage.getItem('userDifficulty')
   );
@@ -47,7 +48,6 @@ function Questions() {
      REACT STATE
   ------------------------------------------------------------------ */
   const [questionIndex, setQuestionIndex] = useState(null);
-   const [progressReady, setProgressReady] = useState(false);
   const seenQuestions = useRef([]);
   const [selected, setSelected]           = useState(null);
   const correctIndexes = useRef([]) ;
