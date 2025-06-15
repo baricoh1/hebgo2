@@ -43,6 +43,7 @@ function Questions() {
   if (!lang || !currentDifficulty || questionsList.length === 0) {
     return <div className="p-4 text-red-600">לא ניתן לטעון את השאלות. ודא שהשפה והרמה נבחרו כראוי.</div>;
   }
+  
 
   /* ------------------------------------------------------------------
      REACT STATE
@@ -75,6 +76,10 @@ function Questions() {
     const names = { easy: 'קל', medium: 'בינוני', hard: 'קשה' };
     return names[level] || level;
   };
+  const toastPosition = toast?.type === 'success' || toast?.type === 'error'
+  ? 'bottom-12'
+  : 'bottom-6';
+
 
   /* ------------------------------------------------------------------
      FIREBASE HELPERS
@@ -240,7 +245,9 @@ function Questions() {
     const last = currentQuestionNumber >= questionsThisRound;
     setCurrentQuestionNumber((n) => n + 1);
     if (last) setShowEndModal(true);
-    else loadNextQuestion();
+    else
+      setSelected(null);
+      loadNextQuestion();
   };
 
   const handleAnswerClick = async (idx) => {
@@ -282,6 +289,7 @@ function Questions() {
       if (isLast) setShowEndModal(true);
       else loadNextQuestion();
       setLocked(false);
+      setSelected(null);
     }, 1500);
   };
 
@@ -467,20 +475,19 @@ function Questions() {
         </div>
       </div>
 
-      {/* TOAST */}
-      {toast && !isLevelingUp && (
-        <div
-          className={`fixed bottom-6 left-1/2 transform -translate-x-1/2 px-6 py-3 rounded-full text-lg shadow-lg ${
-            toast.type === 'success'
-              ? 'bg-green-600'
-              : toast.type === 'levelup'
-              ? 'bg-gradient-to-r from-purple-600 to-pink-600 animate-pulse'
-              : 'bg-red-600'
-          } text-white`}
-        >
-          {toast.message}
-        </div>
-      )}
+{toast && !isLevelingUp && (
+  <div
+    className={`fixed ${toastPosition} left-1/2 transform -translate-x-1/2 px-6 py-3 rounded-full text-lg shadow-lg z-50
+      ${toast.type === 'success'
+        ? 'bg-green-600'
+        : toast.type === 'levelup'
+        ? 'bg-gradient-to-r from-purple-600 to-pink-600 animate-pulse'
+        : 'bg-red-600'} text-white`}
+  >
+    {toast.message}
+  </div>
+)}
+
 
       {/* END MODAL */}
       {showEndModal && (
