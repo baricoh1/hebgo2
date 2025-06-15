@@ -76,20 +76,20 @@ function Home() {
       return (
         <>
           {gender === 'female' ? 'ברוכה הבאה' : '!ברוך הבא'} ל־
-          <span className="text-blue-700">Hebrew Go 🎓</span>
+          <span className="text-blue-700 dark:text-blue-400">Hebrew Go 🎓</span>
         </>
       );
     }
     return (
       <>
         {gender === 'female' ? 'ברוכה הבאה' : 'ברוך הבא'}{' '}
-        <span className="text-blue-700">{userName} 🎓</span>
+        <span className="text-blue-700 dark:text-blue-400">{userName} 🎓</span>
       </>
     );
   };
 
   return (
-    <div className="min-h-screen w-full bg-blue-100 flex items-center justify-center p-6">
+    <div className="min-h-screen w-full bg-blue-100 dark:bg-gray-900 flex items-center justify-center p-6">
       <div dir="rtl" className="w-full max-w-4xl px-6 py-6 flex flex-col items-center text-center space-y-6">
         <img
           src="/images/logo.png"

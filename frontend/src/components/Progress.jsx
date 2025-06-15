@@ -72,7 +72,7 @@ function Progress() {
   const getPercent = (val) => `${(val / MAX_QUESTIONS) * 100}%`;
 
   return (
-    <div className="min-h-screen bg-blue-100 text-black dark:bg-gray-900 dark:text-white transition-colors duration-300 p-6" dir="rtl">
+    <div className="min-h-screen bg-blue-100 dark:bg-gray-900 text-black dark:text-white transition-colors duration-300 p-6"  dir="rtl">
       <div className="flex flex-col items-center mb-6">
         <img
           src={levelImage}
