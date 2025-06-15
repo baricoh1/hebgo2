@@ -76,9 +76,8 @@ function Questions() {
     const names = { easy: 'קל', medium: 'בינוני', hard: 'קשה' };
     return names[level] || level;
   };
-  const toastPosition = toast?.type === 'success' || toast?.type === 'error'
-  ? 'bottom-12'
-  : 'bottom-6';
+  const toastPosition = 'top-20';
+
 
 
   /* ------------------------------------------------------------------
@@ -224,29 +223,30 @@ function Questions() {
     return candidates[Math.floor(Math.random() * candidates.length)];
   };
 
-  const loadNextQuestion = () => {
-    if (currentQuestionNumber > questionsThisRound) return setShowEndModal(true);
-    const nxt = getNextQuestionIndex();
-    if (nxt === null) {
-      setShowEndModal(true);
-    } else {
-      if (!correctIndexes.current.includes(nxt)) {
-        seenQuestions.current = [...seenQuestions.current, nxt];
-      }
-      setQuestionIndex(nxt);
-      setSelected(null);
-      setShowHint(false);
-      setShowAutoHint(false);
-      setTime(30);
+const loadNextQuestion = () => {
+  if (currentQuestionNumber > questionsThisRound) return setShowEndModal(true);
+  const nxt = getNextQuestionIndex();
+  if (nxt === null) {
+    setShowEndModal(true);
+  } else {
+    if (!correctIndexes.current.includes(nxt)) {
+      seenQuestions.current = [...seenQuestions.current, nxt];
     }
-  };
+    setQuestionIndex(nxt);
+    setSelected(null); 
+    setShowHint(false);
+    setShowAutoHint(false);
+    setTime(30);
+  }
+};
+
 
   const nextQuestionAfterTimeout = () => {
     const last = currentQuestionNumber >= questionsThisRound;
     setCurrentQuestionNumber((n) => n + 1);
     if (last) setShowEndModal(true);
     else
-      setSelected(null);
+      setLocked(false);;
       loadNextQuestion();
   };
 
@@ -289,7 +289,6 @@ function Questions() {
       if (isLast) setShowEndModal(true);
       else loadNextQuestion();
       setLocked(false);
-      setSelected(null);
     }, 1500);
   };
 
@@ -482,7 +481,7 @@ function Questions() {
         ? 'bg-green-600'
         : toast.type === 'levelup'
         ? 'bg-gradient-to-r from-purple-600 to-pink-600 animate-pulse'
-        : 'bg-red-600'} text-white`}
+        : 'bg-red-600'} text-white transition-all duration-300`}
   >
     {toast.message}
   </div>
