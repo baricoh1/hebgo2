@@ -55,7 +55,6 @@ const fetchQuestionsFromDB = async () => {
 
     const q = query(
       collection(db, 'questions'),
-      where('lang', '==', lang),
     );
 
     const snapshot = await getDocs(q);
