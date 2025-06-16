@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaUserAlt, FaLock, FaVenusMars, FaLanguage } from 'react-icons/fa';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { db } from '../firebase';
+import { doc, setDoc } from 'firebase/firestore';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { auth, db } from '../firebase';
 
 function Register() {
-  const [userName, setUserName] = useState('');
+  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [gender, setGender] = useState('other');
   const [lang, setLang] = useState('us');
@@ -18,32 +20,31 @@ function Register() {
   };
 
   const handleRegister = async () => {
-    if (!userName || !password) {
-      alert('אנא מלא שם משתמש וסיסמה.');
+    if (!email || !password || !username) {
+      alert('אנא מלא אימייל, שם משתמש וסיסמה.');
       return;
     }
 
     try {
-      const userRef = doc(db, 'users', userName);
-      const userSnap = await getDoc(userRef);
+      // Create user with email & password
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
 
-      if (userSnap.exists()) {
-        alert('שם המשתמש כבר קיים.. אנא בחר שם אחר.');
-        return;
-      }
-
-      await setDoc(doc(db, 'users', userName), {
-        password,
+      // Store extra profile data in Firestore
+      await setDoc(doc(db, 'users', user.uid), {
+        username,
         gender,
         language: lang,
         progress: defaultProgress,
-        difficulty: 'easy'
+        difficulty: 'easy',
       });
 
       alert('✅ נרשמת בהצלחה!');
-      localStorage.setItem('userName', userName);
+      localStorage.setItem('userEmail', user.email);
+      localStorage.setItem('userName', username);
       localStorage.setItem('userLang', lang);
       localStorage.setItem('userDifficulty', 'easy');
+
       navigate('/placement');
     } catch (err) {
       console.error('Registration error:', err);
@@ -66,14 +67,29 @@ function Register() {
         </h1>
 
         <div className="space-y-5">
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">אימייל</label>
+            <div className="flex items-center bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-3">
+              <FaUserAlt className="text-gray-400 me-3" />
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="flex-1 bg-transparent focus:outline-none text-gray-800 dark:text-white"
+                placeholder="example@email.com"
+              />
+            </div>
+          </div>
+
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">שם משתמש</label>
             <div className="flex items-center bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-3">
               <FaUserAlt className="text-gray-400 me-3" />
               <input
                 type="text"
-                value={userName}
-                onChange={(e) => setUserName(e.target.value)}
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
                 className="flex-1 bg-transparent focus:outline-none text-gray-800 dark:text-white"
                 placeholder="הקלד שם משתמש"
               />

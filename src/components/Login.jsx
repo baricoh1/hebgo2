@@ -1,32 +1,35 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaUserAlt, FaLock } from 'react-icons/fa';
-import { getDoc, doc } from 'firebase/firestore';
-import { db } from '../firebase';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
+import { auth, db } from '../firebase';
 
 function Login() {
-  const [userName, setUserName] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    if (!userName || !password) {
-      alert('אנא מלא שם משתמש וסיסמה.');
+    if (!email || !password) {
+      alert('אנא מלא אימייל וסיסמה.');
       return;
     }
 
     try {
-      const userRef = doc(db, 'users', userName);
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+
+      const userRef = doc(db, 'users', user.uid);
       const userSnap = await getDoc(userRef);
 
-      if (!userSnap.exists()) throw new Error('שם משתמש לא נמצא');
+      if (!userSnap.exists()) throw new Error('לא נמצאו נתוני משתמש במסד.');
 
       const userData = userSnap.data();
-      if (userData.password !== password) throw new Error('סיסמה שגויה');
-
       alert('✅ התחברות הצליחה!');
-      localStorage.setItem('userName', userName);
+      localStorage.setItem('userEmail', user.email);
+      localStorage.setItem('userName', userData.username || 'anonymous');
       localStorage.setItem('userGender', userData.gender || 'other');
       localStorage.setItem('userLang', userData.lang || 'us');
       localStorage.setItem('userDifficulty', userData.difficulty || 'easy');
@@ -54,16 +57,16 @@ function Login() {
         <form onSubmit={handleLogin} className="space-y-5">
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              שם משתמש
+              אימייל
             </label>
             <div className="flex items-center bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-3">
               <FaUserAlt className="text-gray-400 me-3" />
               <input
-                type="text"
-                value={userName}
-                onChange={(e) => setUserName(e.target.value)}
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 className="flex-1 bg-transparent focus:outline-none text-gray-800 dark:text-white"
-                placeholder="הקלד שם משתמש"
+                placeholder="example@email.com"
                 required
               />
             </div>
