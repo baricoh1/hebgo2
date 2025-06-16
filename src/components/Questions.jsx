@@ -92,7 +92,8 @@ function Questions() {
   const fetchQuestionsFromDB = async () => {
     try {
       console.log("🌍 Fetching questions for lang:", lang, "→ doc:", langMap[lang]);
-      const docRef = doc(db, "questions", langMap[lang]);
+      const uid = localStorage.getItem('userUID');
+      const docRef = doc(db, 'users', uid);
       const snap = await getDoc(docRef);
       
       if (!snap.exists()) {
@@ -115,7 +116,8 @@ function Questions() {
 
   const fetchProgressFromDB = async () => {
     try {
-      const userRef = doc(db, 'users', userName);
+      const uid = localStorage.getItem('userUID');
+      const userRef = doc(db, 'users', uid);
       const snap = await getDoc(userRef);
       
       if (!snap.exists()) {
@@ -196,7 +198,8 @@ function Questions() {
 
   const saveProgressToDB = async (updatedArr) => {
     try {
-      const ref = doc(db, 'users', userName);
+      const uid = localStorage.getItem('userUID');
+      const ref = doc(db, 'users', uid);
       const snap = await getDoc(ref);
       const base = snap.exists() ? snap.data() : {};
       

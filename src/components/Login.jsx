@@ -33,6 +33,7 @@ function Login() {
       localStorage.setItem('userGender', userData.gender || 'other');
       localStorage.setItem('userLang', userData.lang || 'us');
       localStorage.setItem('userDifficulty', userData.difficulty || 'easy');
+      localStorage.setItem('userUID', user.uid);
 
       navigate('/');
     } catch (err) {
