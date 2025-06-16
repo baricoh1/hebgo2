@@ -48,6 +48,7 @@ function Home() {
   }, []);
 
   const handleLogout = () => {
+    localStorage.removeItem('userName');
     localStorage.removeItem('userUID');
     localStorage.removeItem('userLang');
     localStorage.removeItem('userDifficulty');
