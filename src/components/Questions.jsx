@@ -402,16 +402,6 @@ function Questions() {
     }, 1500);
   };
 
-  function splitQuestionText(text) {
-    if (!text) return { enPart: '', hePart: '', punctuation: '' };
-    
-    const heMatch = text.match(/['״'][א-ת\s_\-.,:()]+['״]/);
-    const hePart = heMatch ? heMatch[0] : '';
-    const enPart = hePart ? text.replace(hePart, '').replace(/[?؟!]/g, '').trim() : text;
-    const punctuationMatch = text.trim().match(/[?؟!]+$/);
-    const punctuation = punctuationMatch ? punctuationMatch[0] : '';
-    return { enPart, hePart, punctuation };
-  }
 
   /* ------------------------------------------------------------------
      RENDER HELPERS
@@ -485,7 +475,7 @@ function Questions() {
   }
 
   const progressPercent = ((currentQuestionNumber - 1) / questionsThisRound) * 100;
-  const { enPart, hePart, punctuation } = splitQuestionText(question.question);
+  const fullQuestionText = question.question;
 
   return (
     <div
@@ -534,15 +524,10 @@ function Questions() {
 
           {/* Question Card */}
           <main className="bg-white/90 dark:bg-gray-800 p-6 rounded-xl shadow-lg text-lg flex-grow transition-all duration-300">
-            <div className="flex flex-row justify-center items-center flex-wrap gap-2 text-xl font-bold text-blue-900 dark:text-blue-200">
-              <span className="text-purple-700 dark:text-purple-400 font-bold" dir="rtl">
-                {hePart}
-                {punctuation}
-              </span>
-              <span className="text-blue-900 dark:text-blue-200" dir="ltr">
-                {enPart}
-              </span>
+            <div className="text-center text-xl font-bold text-blue-900 dark:text-blue-200">
+              {fullQuestionText}
             </div>
+
 
             <ul className="space-y-2 text-right list-none p-0 m-0">
               {question.answers.map((ans, idx) => {
