@@ -3,14 +3,15 @@ import { useNavigate } from 'react-router-dom';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 
-import lvl0 from '../images/lvl0.png';
-import lvl1 from '../images/lvl1.png';
-import lvl2 from '../images/lvl2.png';
-import lvl3 from '../images/lvl3.png';
-import lvl0girl from '../images/lvl0girl.png';
-import lvl1girl from '../images/lvl1girl.png';
-import lvl2girl from '../images/lvl2girl.png';
-import lvl3girl from '../images/lvl3girl.png';
+const lvl0 = '/images/lvl0.png';
+const lvl1 = '/images/lvl1.png';
+const lvl2 = '/images/lvl2.png';
+const lvl3 = '/images/lvl3.png';
+const lvl0girl = '/images/lvl0girl.png';
+const lvl1girl = '/images/lvl1girl.png';
+const lvl2girl = '/images/lvl2girl.png';
+const lvl3girl = '/images/lvl3girl.png';
+
 
 function Progress() {
   const MAX_QUESTIONS = 20;

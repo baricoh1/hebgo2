@@ -79,7 +79,8 @@ function PlacementTest() {
     localStorage.setItem('userDifficulty', difficulty);
 
     try {
-      await setDoc(doc(db, 'users', userName), {
+      const uid = localStorage.getItem('userUID');
+      await setDoc(doc(db, 'users', uid), {
         difficulty,
         lang: userLang,
         updatedAt: new Date(),
