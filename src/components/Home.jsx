@@ -12,6 +12,7 @@ function Home() {
   const navigate = useNavigate();
   const [showToast, setShowToast] = useState(false);
   const timeoutRef = useRef(null);
+  const [userName, setUserName] = useState(() => localStorage.getItem('userName'));
 
   const [uid, setUid] = useState(() => localStorage.getItem('userUID'));
   const [gender, setGender] = useState(() => localStorage.getItem('userGender') || null);
@@ -85,7 +86,7 @@ function Home() {
     return (
       <>
         {gender === 'female' ? 'ברוכה הבאה' : 'ברוך הבא'}{' '}
-        <span className="text-blue-700 dark:text-blue-400">🎓</span>
+        <span className="text-blue-700 dark:text-blue-400">{userName || 'משתמש'} 🎓</span>
       </>
     );
   };
