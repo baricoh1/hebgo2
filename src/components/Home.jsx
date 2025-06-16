@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import logo from '../logo.png';
 
 import { getFirestore, doc, getDoc } from 'firebase/firestore';
-import { app } from '../firebase'; // assuming firebase is initialized in firebase.js
+import { app } from '../firebase';
 
 const db = getFirestore(app);
 
@@ -13,14 +13,14 @@ function Home() {
   const [showToast, setShowToast] = useState(false);
   const timeoutRef = useRef(null);
 
-  const [userName, setUserName] = useState(() => localStorage.getItem('userName'));
+  const [uid, setUid] = useState(() => localStorage.getItem('uid'));
   const [gender, setGender] = useState(() => localStorage.getItem('userGender') || null);
 
   useEffect(() => {
-    if (userName && !gender) {
+    if (uid && !gender) {
       const fetchUser = async () => {
         try {
-          const docRef = doc(db, 'users', userName);
+          const docRef = doc(db, 'users', uid);
           const userSnap = await getDoc(docRef);
           if (userSnap.exists()) {
             const g = userSnap.data().gender || 'other';
@@ -39,7 +39,7 @@ function Home() {
 
       fetchUser();
     }
-  }, [userName, gender]);
+  }, [uid, gender]);
 
   useEffect(() => {
     if (document.activeElement) {
@@ -48,12 +48,12 @@ function Home() {
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem('userName');
+    localStorage.removeItem('uid');
     localStorage.removeItem('userLang');
     localStorage.removeItem('userDifficulty');
     localStorage.removeItem('userGender');
 
-    setUserName(null);
+    setUid(null);
     setGender(null);
 
     setShowToast(true);
@@ -74,7 +74,7 @@ function Home() {
   };
 
   const renderWelcome = () => {
-    if (!userName) {
+    if (!uid) {
       return (
         <>
           {gender === 'female' ? 'ברוכה הבאה' : '!ברוך הבא'} ל־
@@ -85,7 +85,7 @@ function Home() {
     return (
       <>
         {gender === 'female' ? 'ברוכה הבאה' : 'ברוך הבא'}{' '}
-        <span className="text-blue-700 dark:text-blue-400">{userName} 🎓</span>
+        <span className="text-blue-700 dark:text-blue-400">🎓</span>
       </>
     );
   };
@@ -104,7 +104,7 @@ function Home() {
         </p>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
-          {userName ? (
+          {uid ? (
             <>
               <button
                 onClick={() => navigate('/progress')}
