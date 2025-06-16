@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaUserAlt, FaLock, FaVenusMars, FaLanguage } from 'react-icons/fa';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc, deleteDoc } from 'firebase/firestore';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth, db } from '../firebase';
 
@@ -20,41 +20,46 @@ function Register() {
   };
 
   const handleRegister = async () => {
-  if (!email || !password || !username) {
-    alert('אנא מלא אימייל, שם משתמש וסיסמה.');
-    return;
-  }
+    if (!email || !password || !username) {
+      alert('אנא מלא אימייל, שם משתמש וסיסמה.');
+      return;
+    }
 
-  try {
-    // 1. Create user via Firebase Authentication
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    const user = userCredential.user;
+    try {
+      // 1. Create user with Firebase Auth
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
 
-    // 2. Delete old Firestore document with username as ID (if exists)
-    await deleteDoc(doc(db, 'users', username));
+      // 2. Delete old Firestore doc with username as ID (if exists)
+      const oldUserRef = doc(db, 'users', username);
+      const oldSnap = await getDoc(oldUserRef);
+      if (oldSnap.exists()) {
+        await deleteDoc(oldUserRef);
+        console.log(`🗑️ Deleted old doc: ${username}`);
+      }
 
-    // 3. Create proper user profile in Firestore using UID
-    await setDoc(doc(db, 'users', user.uid), {
-      username,
-      gender,
-      language: lang,
-      progress: defaultProgress,
-      difficulty: 'easy',
-    });
+      // 3. Save user profile with UID as document ID
+      await setDoc(doc(db, 'users', user.uid), {
+        username,
+        gender,
+        language: lang,
+        progress: defaultProgress,
+        difficulty: 'easy',
+      });
 
-    // 4. Save locally & redirect
-    alert('✅ נרשמת בהצלחה!');
-    localStorage.setItem('userEmail', user.email);
-    localStorage.setItem('userName', username);
-    localStorage.setItem('userLang', lang);
-    localStorage.setItem('userDifficulty', 'easy');
+      // 4. Save to localStorage and navigate
+      alert('✅ נרשמת בהצלחה!');
+      localStorage.setItem('userEmail', user.email);
+      localStorage.setItem('userName', username);
+      localStorage.setItem('userLang', lang);
+      localStorage.setItem('userDifficulty', 'easy');
 
-    navigate('/placement');
-  } catch (err) {
-    console.error('Registration error:', err);
-    alert('שגיאה בהרשמה: ' + err.message);
-  }
-};
+      navigate('/placement');
+    } catch (err) {
+      console.error('Registration error:', err);
+      alert('שגיאה בהרשמה: ' + err.message);
+    }
+  };
 
   return (
     <div dir="rtl" className="min-h-screen flex items-center justify-center 
@@ -71,7 +76,6 @@ function Register() {
         </h1>
 
         <div className="space-y-5">
-
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">אימייל</label>
             <div className="flex items-center bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-3">
