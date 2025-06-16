@@ -1,7 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import questionsData from './placementQuestions.json';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 
 function PlacementTest() {
@@ -9,18 +8,50 @@ function PlacementTest() {
   const [score, setScore] = useState(0);
   const [selected, setSelected] = useState(null);
   const [completed, setCompleted] = useState(false);
+  const [testQuestions, setTestQuestions] = useState([]);
+  const [finalLevel, setFinalLevel] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   const navigate = useNavigate();
   const userLang = localStorage.getItem('userLang') || 'us';
   const userName = localStorage.getItem('userName');
-  const testQuestions = questionsData[userLang]?.easy || [];
-  const [finalLevel, setFinalLevel] = useState(null);
+
+  // Map userLang to Firestore doc name
+  const langMap = {
+    us: '0',
+    es: '1',
+    ru: '2'
+  };
+
+  useEffect(() => {
+    const fetchQuestions = async () => {
+      try {
+        const docRef = doc(db, 'placementQuestions', langMap[userLang]);
+        const snap = await getDoc(docRef);
+        if (!snap.exists()) {
+          console.error('No questions found for language:', userLang);
+          setLoading(false);
+          return;
+        }
+
+        const data = snap.data();
+        const easyQuestions = Object.values(data.easy || {});
+        setTestQuestions(easyQuestions);
+      } catch (err) {
+        console.error('Error fetching placement questions:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchQuestions();
+  }, [userLang]);
 
   const handleAnswer = (index) => {
-    
     const isCorrect = index === testQuestions[current].correct;
     const nextScore = score + (isCorrect ? 1 : 0);
     setSelected(index);
+
     if (current + 1 === testQuestions.length) {
       setTimeout(() => finishTest(nextScore), 1500);
     } else {
@@ -32,39 +63,46 @@ function PlacementTest() {
     }
   };
 
-const finishTest = async (finalScore) => {
-  setCompleted(true);
+  const finishTest = async (finalScore) => {
+    setCompleted(true);
 
-  let difficulty = 'easy';
-  if (finalScore === 5) difficulty = 'hard';
-  else if (finalScore >= 3) difficulty = 'medium';
+    let difficulty = 'easy';
+    if (finalScore === 5) difficulty = 'hard';
+    else if (finalScore >= 3) difficulty = 'medium';
 
-  setFinalLevel(
-    difficulty === 'hard' ? 'קשה' :
-    difficulty === 'medium' ? 'בינוני' :
-    'קל'
-  );
+    setFinalLevel(
+      difficulty === 'hard' ? 'קשה' :
+      difficulty === 'medium' ? 'בינוני' :
+      'קל'
+    );
 
-  localStorage.setItem('userDifficulty', difficulty);
+    localStorage.setItem('userDifficulty', difficulty);
 
-  try {
-    await setDoc(doc(db, 'users', userName), {
-      difficulty,
-      lang: userLang,
-      updatedAt: new Date(),
-    }, { merge: true });
-  } catch (err) {
-    console.error('Error saving difficulty to Firebase:', err);
-  }
+    try {
+      await setDoc(doc(db, 'users', userName), {
+        difficulty,
+        lang: userLang,
+        updatedAt: new Date(),
+      }, { merge: true });
+    } catch (err) {
+      console.error('Error saving difficulty to Firebase:', err);
+    }
 
-  setTimeout(() => navigate('/'), 2000);
-};
-
+    setTimeout(() => navigate('/'), 2000);
+  };
 
   if (!userName) {
     return (
       <div className="min-h-screen flex items-center justify-center text-center text-red-600">
         <p>אנא התחבר לפני תחילת המבחן.</p>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-xl">
+        טוען שאלות מהמבחן...
       </div>
     );
   }
@@ -116,11 +154,10 @@ const finishTest = async (finalScore) => {
         ) : (
           <div className="animate-bounce bg-green-100 dark:bg-green-800 p-6 rounded-xl shadow-lg max-w-md mx-auto text-green-700 dark:text-green-200 text-xl font-semibold">
             סיימת את המבחן! רמתך הנוכחית: {finalLevel}
-    </div>
+          </div>
         )}
       </div>
     </div>
-
   );
 }
 
