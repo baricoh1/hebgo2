@@ -357,8 +357,8 @@ function Questions() {
     setSelected(idx);
     setLocked(true);
 
-    const correctAudio = new Audio(correctSound);
-    const wrongAudio = new Audio(wrongSound);
+    const correctAudio = new Audio('/sounds/right_answer.mp3');
+    const wrongAudio = new Audio('/sounds/wrong_answer.mp3');
     const question = questionsList[questionIndex];
 
     if (idx === question.correct) {
@@ -420,9 +420,6 @@ function Questions() {
     `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
     
   const getResultImage = () => balls[correctCount] || balls[0];
-    [ball0, ball1, ball2, ball3, ball4, ball5, ball6, ball7, ball8, ball9, ball10][
-      correctCount
-    ] || ball0;
    
   // EARLY RETURN DURING LEVEL-UP
   if (isLevelingUp) {
