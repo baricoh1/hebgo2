@@ -26,19 +26,17 @@ function Register() {
     }
 
     try {
-      // 1. Create user with Firebase Auth
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
-      // 2. Delete old Firestore doc with username as ID (if exists)
-      const oldUserRef = doc(db, 'users', username);
-      const oldSnap = await getDoc(oldUserRef);
+      // Optional: Clean up old doc by username
+      const oldRef = doc(db, 'users', username);
+      const oldSnap = await getDoc(oldRef);
       if (oldSnap.exists()) {
-        await deleteDoc(oldUserRef);
-        console.log(`🗑️ Deleted old doc: ${username}`);
+        await deleteDoc(oldRef);
       }
 
-      // 3. Save user profile with UID as document ID
+      // Create new doc under UID
       await setDoc(doc(db, 'users', user.uid), {
         username,
         gender,
@@ -47,13 +45,14 @@ function Register() {
         difficulty: 'easy',
       });
 
-      // 4. Save to localStorage and navigate
-      alert('✅ נרשמת בהצלחה!');
+      // Save to localStorage
+      localStorage.setItem('userUID', user.uid);
       localStorage.setItem('userEmail', user.email);
       localStorage.setItem('userName', username);
       localStorage.setItem('userLang', lang);
       localStorage.setItem('userDifficulty', 'easy');
 
+      alert('✅ נרשמת בהצלחה!');
       navigate('/placement');
     } catch (err) {
       console.error('Registration error:', err);

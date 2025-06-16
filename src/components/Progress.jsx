@@ -28,15 +28,16 @@ function Progress() {
 
   useEffect(() => {
     const fetchUserData = async () => {
+      const uid = localStorage.getItem('userUID');
       const localName = localStorage.getItem('userName');
-      if (!localName) return;
+      if (!uid || !localName) return;
+
       setUserName(localName);
 
       try {
-        const userDoc = await getDoc(doc(db, 'users', localName));
+        const userDoc = await getDoc(doc(db, 'users', uid));
         if (userDoc.exists()) {
           const data = userDoc.data();
-
           if (data.progress) setProgress(data.progress);
           if (data.gender) setGender(data.gender);
           if (data.difficulty) setTrueLevel(data.difficulty);
