@@ -20,37 +20,41 @@ function Register() {
   };
 
   const handleRegister = async () => {
-    if (!email || !password || !username) {
-      alert('אנא מלא אימייל, שם משתמש וסיסמה.');
-      return;
-    }
+  if (!email || !password || !username) {
+    alert('אנא מלא אימייל, שם משתמש וסיסמה.');
+    return;
+  }
 
-    try {
-      // Create user with email & password
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
+  try {
+    // 1. Create user via Firebase Authentication
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const user = userCredential.user;
 
-      // Store extra profile data in Firestore
-      await setDoc(doc(db, 'users', user.uid), {
-        username,
-        gender,
-        language: lang,
-        progress: defaultProgress,
-        difficulty: 'easy',
-      });
+    // 2. Delete old Firestore document with username as ID (if exists)
+    await deleteDoc(doc(db, 'users', username));
 
-      alert('✅ נרשמת בהצלחה!');
-      localStorage.setItem('userEmail', user.email);
-      localStorage.setItem('userName', username);
-      localStorage.setItem('userLang', lang);
-      localStorage.setItem('userDifficulty', 'easy');
+    // 3. Create proper user profile in Firestore using UID
+    await setDoc(doc(db, 'users', user.uid), {
+      username,
+      gender,
+      language: lang,
+      progress: defaultProgress,
+      difficulty: 'easy',
+    });
 
-      navigate('/placement');
-    } catch (err) {
-      console.error('Registration error:', err);
-      alert('שגיאה בהרשמה: ' + err.message);
-    }
-  };
+    // 4. Save locally & redirect
+    alert('✅ נרשמת בהצלחה!');
+    localStorage.setItem('userEmail', user.email);
+    localStorage.setItem('userName', username);
+    localStorage.setItem('userLang', lang);
+    localStorage.setItem('userDifficulty', 'easy');
+
+    navigate('/placement');
+  } catch (err) {
+    console.error('Registration error:', err);
+    alert('שגיאה בהרשמה: ' + err.message);
+  }
+};
 
   return (
     <div dir="rtl" className="min-h-screen flex items-center justify-center 
