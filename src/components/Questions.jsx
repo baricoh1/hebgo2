@@ -4,22 +4,23 @@ import { useNavigate } from 'react-router-dom';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 
-// Images
-import ball0 from '../images/ball0.png';
-import ball1 from '../images/ball1.png';
-import ball2 from '../images/ball2.png';
-import ball3 from '../images/ball3.png';
-import ball4 from '../images/ball4.png';
-import ball5 from '../images/ball5.png';
-import ball6 from '../images/ball6.png';
-import ball7 from '../images/ball7.png';
-import ball8 from '../images/ball8.png';
-import ball9 from '../images/ball9.png';
-import ball10 from '../images/ball10.png';
+const balls = [
+  '/images/ball0.png',
+  '/images/ball1.png',
+  '/images/ball2.png',
+  '/images/ball3.png',
+  '/images/ball4.png',
+  '/images/ball5.png',
+  '/images/ball6.png',
+  '/images/ball7.png',
+  '/images/ball8.png',
+  '/images/ball9.png',
+  '/images/ball10.png',
+];
 
 // Sounds
-import correctSound from '../sounds/right_answer.mp3';
-import wrongSound from '../sounds/wrong_answer.mp3';
+const correctSound = new Audio('/sounds/right_answer.mp3');
+const wrongSound = new Audio('/sounds/wrong_answer.mp3');
 
 function Questions() {
   /* ------------------------------------------------------------------
@@ -418,7 +419,7 @@ function Questions() {
   const formatTime = (s) =>
     `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
     
-  const getResultImage = () =>
+  const getResultImage = () => balls[correctCount] || balls[0];
     [ball0, ball1, ball2, ball3, ball4, ball5, ball6, ball7, ball8, ball9, ball10][
       correctCount
     ] || ball0;
