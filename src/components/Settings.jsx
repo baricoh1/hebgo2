@@ -19,10 +19,10 @@ function Settings() {
     localStorage.setItem('userLang', lang);
     localStorage.setItem('userDifficulty', difficulty);
 
-    const userName = localStorage.getItem('userName');
-    if (userName) {
+    const uid = localStorage.getItem('userUID');
+    if (uid) {
       try {
-        await setDoc(doc(db, 'users', userName), {
+        await setDoc(doc(db, 'users', uid), {
           difficulty: difficulty,
           language: lang,
         }, { merge: true });

@@ -13,7 +13,7 @@ function Home() {
   const [showToast, setShowToast] = useState(false);
   const timeoutRef = useRef(null);
 
-  const [uid, setUid] = useState(() => localStorage.getItem('uid'));
+  const [uid, setUid] = useState(() => localStorage.getItem('userUID'));
   const [gender, setGender] = useState(() => localStorage.getItem('userGender') || null);
 
   useEffect(() => {
@@ -48,7 +48,7 @@ function Home() {
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem('uid');
+    localStorage.removeItem('userUID');
     localStorage.removeItem('userLang');
     localStorage.removeItem('userDifficulty');
     localStorage.removeItem('userGender');
