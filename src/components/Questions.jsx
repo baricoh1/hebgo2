@@ -489,7 +489,7 @@ function Questions() {
           <header className="flex flex-row-reverse justify-between items-center bg-blue-200 dark:bg-blue-950 p-4 rounded-lg shadow">
             <button
               onClick={() => navigate('/')}
-              className="text-xl font-semibold hover:underline"
+              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
               disabled={isLevelingUp}
             >
               ← חזרה לעמוד ראשי
