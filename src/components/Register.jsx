@@ -1,9 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaUserAlt, FaLock, FaVenusMars, FaLanguage } from 'react-icons/fa';
-import { doc, setDoc, getDoc, deleteDoc } from 'firebase/firestore';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { auth, db } from '../firebase';
+import { registerUser } from '../services/AuthService';
 
 function Register() {
   const [email, setEmail] = useState('');
@@ -13,52 +11,29 @@ function Register() {
   const [lang, setLang] = useState('us');
   const navigate = useNavigate();
 
-  const defaultProgress = {
-    us: { easy: [], medium: [], hard: [] },
-    es: { easy: [], medium: [], hard: [] },
-    ru: { easy: [], medium: [], hard: [] }
-  };
 
   const handleRegister = async () => {
-    if (!email || !password || !username) {
-      alert('אנא מלא אימייל, שם משתמש וסיסמה.');
-      return;
-    }
+  if (!email || !password || !username) {
+    alert('אנא מלא אימייל, שם משתמש וסיסמה.');
+    return;
+  }
 
-    try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
+  try {
+    const userData = await registerUser(email, password, username, gender, lang);
+    
+    localStorage.setItem('userUID', userData.uid);
+    localStorage.setItem('userEmail', userData.email);
+    localStorage.setItem('userName', userData.username);
+    localStorage.setItem('userLang', userData.lang);
+    localStorage.setItem('userDifficulty', userData.difficulty);
 
-      // Optional: Clean up old doc by username
-      const oldRef = doc(db, 'users', username);
-      const oldSnap = await getDoc(oldRef);
-      if (oldSnap.exists()) {
-        await deleteDoc(oldRef);
-      }
-
-      // Create new doc under UID
-      await setDoc(doc(db, 'users', user.uid), {
-        username,
-        gender,
-        language: lang,
-        progress: defaultProgress,
-        difficulty: 'easy',
-      });
-
-      // Save to localStorage
-      localStorage.setItem('userUID', user.uid);
-      localStorage.setItem('userEmail', user.email);
-      localStorage.setItem('userName', username);
-      localStorage.setItem('userLang', lang);
-      localStorage.setItem('userDifficulty', 'easy');
-
-      alert('✅ נרשמת בהצלחה!');
-      navigate('/placement');
-    } catch (err) {
-      console.error('Registration error:', err);
-      alert('שגיאה בהרשמה: ' + err.message);
-    }
-  };
+    alert('✅ נרשמת בהצלחה!');
+    navigate('/placement');
+  } catch (err) {
+    console.error('Registration error:', err);
+    alert('שגיאה בהרשמה: ' + err.message);
+  }
+};
 
   return (
     <div dir="rtl" className="min-h-screen flex items-center justify-center 
