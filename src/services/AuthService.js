@@ -1,7 +1,7 @@
 // src/services/authService.js
 import { auth, db } from '../firebase';
 import { doc, setDoc, getDoc, deleteDoc } from 'firebase/firestore';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { createUserWithEmailAndPassword , signInWithEmailAndPassword } from 'firebase/auth';
 
 const defaultProgress = {
   us: { easy: [], medium: [], hard: [] },
