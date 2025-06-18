@@ -16,7 +16,7 @@ function Login() {
     }
 
     try {
-      await loginUser(email, password); // ✅ use service
+      await loginUser(email, password); 
       alert('✅ התחברות הצליחה!');
       navigate('/');
     } catch (err) {
