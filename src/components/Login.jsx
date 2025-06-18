@@ -1,9 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaUserAlt, FaLock } from 'react-icons/fa';
-import { signInWithEmailAndPassword } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
-import { auth, db } from '../firebase';
+import { loginUser } from '../services/AuthService';
 
 function Login() {
   const [email, setEmail] = useState('');
@@ -18,23 +16,8 @@ function Login() {
     }
 
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
-
-      const userRef = doc(db, 'users', user.uid);
-      const userSnap = await getDoc(userRef);
-
-      if (!userSnap.exists()) throw new Error('לא נמצאו נתוני משתמש במסד.');
-
-      const userData = userSnap.data();
+      await loginUser(email, password); // ✅ use service
       alert('✅ התחברות הצליחה!');
-      localStorage.setItem('userEmail', user.email);
-      localStorage.setItem('userName', userData.username || 'anonymous');
-      localStorage.setItem('userGender', userData.gender || 'other');
-      localStorage.setItem('userLang', userData.lang || 'us');
-      localStorage.setItem('userDifficulty', userData.difficulty || 'easy');
-      localStorage.setItem('userUID', user.uid);
-
       navigate('/');
     } catch (err) {
       alert('שגיאה: ' + err.message);
