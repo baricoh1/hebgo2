@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from '../firebase';
+import { getUserProgressData } from '../services/UserProgressService';
+
+
 
 const lvl0 = '/images/lvl0.png';
 const lvl1 = '/images/lvl1.png';
@@ -29,27 +30,21 @@ function Progress() {
 
   useEffect(() => {
     const fetchUserData = async () => {
-      const uid = localStorage.getItem('userUID');
-      const localName = localStorage.getItem('userName');
-      if (!uid || !localName) return;
+    const uid = localStorage.getItem('userUID');
+    if (!uid) return;
 
-      setUserName(localName);
-
-      try {
-        const userDoc = await getDoc(doc(db, 'users', uid));
-        if (userDoc.exists()) {
-          const data = userDoc.data();
-          if (data.progress) setProgress(data.progress);
-          if (data.gender) setGender(data.gender);
-          if (data.difficulty) setTrueLevel(data.difficulty);
-          if (data.language) setSelectedLang(data.language);
-        }
-      } catch (err) {
-        console.error('Error fetching user document:', err);
-      }
-    };
-
-    fetchUserData();
+    try {
+      const data = await getUserProgressData(uid);
+      setUserName(data.userName);
+      setGender(data.gender);
+      setTrueLevel(data.difficulty);
+      setSelectedLang(data.language);
+      setProgress(data.progress);
+    } catch (err) {
+      console.error('Error fetching user progress:', err);
+    }
+};
+  fetchUserData();
   }, []);
 
   const levelLabels = {
