@@ -2,44 +2,14 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { getFirestore, doc, getDoc } from 'firebase/firestore';
-import { app } from '../firebase';
-
-const db = getFirestore(app);
-
 function Home() {
   const navigate = useNavigate();
   const [showToast, setShowToast] = useState(false);
   const timeoutRef = useRef(null);
+
   const [userName, setUserName] = useState(() => localStorage.getItem('userName'));
-
   const [uid, setUid] = useState(() => localStorage.getItem('userUID'));
-  const [gender, setGender] = useState(() => localStorage.getItem('userGender') || null);
-
-  useEffect(() => {
-    if (uid && !gender) {
-      const fetchUser = async () => {
-        try {
-          const docRef = doc(db, 'users', uid);
-          const userSnap = await getDoc(docRef);
-          if (userSnap.exists()) {
-            const g = userSnap.data().gender || 'other';
-            setGender(g);
-            localStorage.setItem('userGender', g);
-          } else {
-            setGender('other');
-            localStorage.setItem('userGender', 'other');
-          }
-        } catch (error) {
-          console.error('Error fetching user:', error);
-          setGender('other');
-          localStorage.setItem('userGender', 'other');
-        }
-      };
-
-      fetchUser();
-    }
-  }, [uid, gender]);
+  const [gender, setGender] = useState(() => localStorage.getItem('userGender') || 'other');
 
   useEffect(() => {
     if (document.activeElement) {
@@ -56,6 +26,7 @@ function Home() {
 
     setUid(null);
     setGender(null);
+    setUserName(null);
 
     setShowToast(true);
     navigate('/');
