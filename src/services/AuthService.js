@@ -38,3 +38,26 @@ export const registerUser = async (email, password, username, gender, lang) => {
     difficulty: 'easy'
   };
 };
+
+// Login function to be used in your Login.jsx
+export const loginUser = async (email, password) => {
+  const userCredential = await signInWithEmailAndPassword(auth, email, password);
+  const user = userCredential.user;
+
+  const userRef = doc(db, 'users', user.uid);
+  const userSnap = await getDoc(userRef);
+
+  if (!userSnap.exists()) throw new Error('לא נמצאו נתוני משתמש במסד.');
+
+  const userData = userSnap.data();
+
+  // Save data to localStorage
+  localStorage.setItem('userEmail', user.email);
+  localStorage.setItem('userName', userData.username || 'anonymous');
+  localStorage.setItem('userGender', userData.gender || 'other');
+  localStorage.setItem('userLang', userData.language || 'us');
+  localStorage.setItem('userDifficulty', userData.difficulty || 'easy');
+  localStorage.setItem('userUID', user.uid);
+
+  return userData;
+};
