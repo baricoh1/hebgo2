@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { db } from '../firebase';
+import { fetchPlacementQuestions} from '../services/QuestionsService';
+import { saveUserDifficulty} from '../services/SettingsService';
 
 function PlacementTest() {
   const [current, setCurrent] = useState(0);
@@ -16,35 +16,19 @@ function PlacementTest() {
   const userLang = localStorage.getItem('userLang') || 'us';
   const userName = localStorage.getItem('userName');
 
-  // Map userLang to Firestore doc name
-  const langMap = {
-    us: '0',
-    es: '1',
-    ru: '2'
-  };
-
   useEffect(() => {
-    const fetchQuestions = async () => {
+    const loadQuestions = async () => {
       try {
-        const docRef = doc(db, 'placementQuestions', langMap[userLang]);
-        const snap = await getDoc(docRef);
-        if (!snap.exists()) {
-          console.error('No questions found for language:', userLang);
-          setLoading(false);
-          return;
-        }
-
-        const data = snap.data();
-        const easyQuestions = Object.values(data.easy || {});
-        setTestQuestions(easyQuestions);
+        const questions = await fetchPlacementQuestions(userLang);
+        setTestQuestions(questions);
       } catch (err) {
-        console.error('Error fetching placement questions:', err);
+        console.error(err.message);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchQuestions();
+    loadQuestions();
   }, [userLang]);
 
   const handleAnswer = (index) => {
@@ -80,13 +64,9 @@ function PlacementTest() {
 
     try {
       const uid = localStorage.getItem('userUID');
-      await setDoc(doc(db, 'users', uid), {
-        difficulty,
-        lang: userLang,
-        updatedAt: new Date(),
-      }, { merge: true });
-    } catch (err) {
-      console.error('Error saving difficulty to Firebase:', err);
+      await saveUserDifficulty(uid, userLang, difficulty);
+    } catch {
+      // Optional: show error toast
     }
 
     setTimeout(() => navigate('/'), 2000);
@@ -108,10 +88,15 @@ function PlacementTest() {
     );
   }
 
-  const progressPercent = Math.round(((current + (selected !== null ? 1 : 0)) / testQuestions.length) * 100);
+  const progressPercent = Math.round(
+    ((current + (selected !== null ? 1 : 0)) / testQuestions.length) * 100
+  );
 
   return (
-    <div dir="rtl" className="bg-blue-100 text-black dark:bg-gray-900 dark:text-white min-h-screen transition-colors duration-300">
+    <div
+      dir="rtl"
+      className="bg-blue-100 text-black dark:bg-gray-900 dark:text-white min-h-screen transition-colors duration-300"
+    >
       <div className="max-w-3xl mx-auto px-4 py-10 space-y-8 text-center">
         <h1 className="text-3xl font-bold">
           מבחן רמת התחלה - {userLang.toUpperCase()}
@@ -129,9 +114,12 @@ function PlacementTest() {
         {!completed ? (
           <>
             <div className="text-lg font-medium mt-2">
-              שאלה <span className="font-bold">{current + 1}</span> מתוך <span className="font-bold">{testQuestions.length}</span>
+              שאלה <span className="font-bold">{current + 1}</span> מתוך{' '}
+              <span className="font-bold">{testQuestions.length}</span>
             </div>
-            <div className="text-2xl font-semibold">{testQuestions[current].question}</div>
+            <div className="text-2xl font-semibold">
+              {testQuestions[current].question}
+            </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-6">
               {testQuestions[current].answers.map((ans, i) => (
@@ -140,11 +128,12 @@ function PlacementTest() {
                   onClick={() => handleAnswer(i)}
                   disabled={selected !== null}
                   className={`p-4 rounded-xl shadow-md border text-right transition-all duration-200 ease-in-out hover:scale-105
-                    ${selected === i
-                      ? i === testQuestions[current].correct
-                        ? 'bg-green-200 dark:bg-green-700'
-                        : 'bg-red-200 dark:bg-red-700'
-                      : 'bg-white dark:bg-gray-800 hover:bg-blue-50 dark:hover:bg-gray-700'
+                    ${
+                      selected === i
+                        ? i === testQuestions[current].correct
+                          ? 'bg-green-200 dark:bg-green-700'
+                          : 'bg-red-200 dark:bg-red-700'
+                        : 'bg-white dark:bg-gray-800 hover:bg-blue-50 dark:hover:bg-gray-700'
                     }`}
                 >
                   {ans}

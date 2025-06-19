@@ -15,3 +15,19 @@ export const saveUserSettingsToDB = async (uid, lang, difficulty) => {
     throw err;
   }
 };
+
+
+export const saveUserDifficulty = async (uid, lang, difficulty) => {
+  if (!uid) return;
+
+  try {
+    await setDoc(doc(db, 'users', uid), {
+      difficulty,
+      lang,
+      updatedAt: new Date(),
+    }, { merge: true });
+  } catch (err) {
+    console.error('Error saving difficulty to Firebase:', err);
+    throw err;
+  }
+};
