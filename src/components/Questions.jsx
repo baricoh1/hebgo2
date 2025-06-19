@@ -169,7 +169,7 @@ function Questions() {
       }
 
       if (gender) {
-        localStorage.setItem('userGender', data.gender);
+        localStorage.setItem('userGender', gender);
       }
 
       const remaining = MAX_QUESTIONS_PER_CATEGORY - serverProg.length;
