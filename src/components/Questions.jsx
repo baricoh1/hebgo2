@@ -168,7 +168,7 @@ function Questions() {
         }
       }
 
-      if (data.gender) {
+      if (gender) {
         localStorage.setItem('userGender', data.gender);
       }
 
