@@ -1,5 +1,5 @@
 // src/services/UserProgressService.js
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc , setDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 
 export const getUserProgressData = async (uid) => {
