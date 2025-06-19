@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { doc, setDoc } from 'firebase/firestore';
-import { db } from '../firebase';
+import { saveUserSettingsToDB } from '../services/SettingsService';
+
 
 function Settings() {
   const navigate = useNavigate();
@@ -22,10 +22,7 @@ function Settings() {
     const uid = localStorage.getItem('userUID');
     if (uid) {
       try {
-        await setDoc(doc(db, 'users', uid), {
-          difficulty: difficulty,
-          language: lang,
-        }, { merge: true });
+        await saveUserSettingsToDB(uid, lang, difficulty);
       } catch (err) {
         console.error('Failed to update user settings in DB:', err);
       }
