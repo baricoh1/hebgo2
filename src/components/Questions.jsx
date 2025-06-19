@@ -1,8 +1,10 @@
 // src/components/Questions.jsx
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { db } from '../firebase';
+import { fetchQuestions } from '../services/QuestionsServiceService';
+import { getUserProgress , saveUserProgress , levelUpUser} from '../services/ProgressServiceServiceService';
+
+
 
 const balls = [
   '/images/ball0.png',
@@ -91,42 +93,26 @@ function Questions() {
      FIREBASE HELPERS - IMPROVED ERROR HANDLING
   ------------------------------------------------------------------ */
   const fetchQuestionsFromDB = async () => {
-    try {
-      console.log("🌍 Fetching questions for lang:", lang, "→ doc:", langMap[lang]);
-      const docRef = doc(db, "questions", langMap[lang]);
-      const snap = await getDoc(docRef);
-      
-      if (!snap.exists()) {
-        console.error("❌ No document found for language:", lang);
-        setToast({ message: 'שגיאה בטעינת השאלות', type: 'error' });
-        return;
-      }
-      
-      const data = snap.data();
-      const selected = data?.[currentDifficulty] || [];
-      console.log("📥 Loaded questions for difficulty:", currentDifficulty, "→", selected.length, "questions");
-      
-      setQuestionsList(selected);
-      setDataLoaded(true);
-    } catch (err) {
-      console.error("❌ Error fetching questions from DB:", err);
-      setToast({ message: 'שגיאה בטעינת השאלות', type: 'error' });
-    }
-  };
+  try {
+    const selected = await fetchQuestions(lang, currentDifficulty);
+    setQuestionsList(selected);
+    setDataLoaded(true);
+  } catch (err) {
+    console.error("❌ Error fetching questions:", err);
+    setToast({ message: 'שגיאה בטעינת השאלות', type: 'error' });
+  }
+};
 
   const fetchProgressFromDB = async () => {
     try {
       const uid = localStorage.getItem('userUID');
-      const userRef = doc(db, 'users', uid);
-      const snap = await getDoc(userRef);
-      
-      if (!snap.exists()) {
+      const { progress, gender } = await getUserProgress(uid, lang, currentDifficulty);
+
+      if (!progress) {
         setProgressReady(true);
         return;
       }
-      
-      const data = snap.data();
-      const serverProg = data.progress?.[lang]?.[currentDifficulty] || [];
+      const serverProg = progress;
       
       // MERGE instead of overwrite
       const mergedProgress = [...new Set([...correctIndexes.current, ...serverProg])];
@@ -143,8 +129,7 @@ function Questions() {
           setIsLevelingUp(true);
           
           // Update database first
-          await setDoc(userRef, { difficulty: next }, { merge: true });
-          localStorage.setItem('userDifficulty', next);
+          await levelUpUser(uid, next);
           
           // Reset game state for new difficulty
           correctIndexes.current = [];
@@ -197,32 +182,15 @@ function Questions() {
   };
 
   const saveProgressToDB = async (updatedArr) => {
-    try {
-      const uid = localStorage.getItem('userUID');
-      const ref = doc(db, 'users', uid);
-      const snap = await getDoc(ref);
-      const base = snap.exists() ? snap.data() : {};
-      
-      await setDoc(
-        ref,
-        {
-          ...base,
-          progress: {
-            ...(base.progress || {}),
-            [lang]: {
-              ...(base.progress?.[lang] || {}),
-              [currentDifficulty]: updatedArr,
-            },
-          },
-        },
-        { merge: true }
-      );
-      console.log('💾 Saved to database:', updatedArr);
-      
-    } catch (err) {
-      console.error('Error saving progress to DB:', err);
-    }
-  };
+  try {
+    const uid = localStorage.getItem('userUID');
+    await saveUserProgress(uid, lang, currentDifficulty, updatedArr);
+    console.log('💾 Saved to database:', updatedArr);
+  } catch (err) {
+    console.error('Error saving progress to DB:', err);
+  }
+};
+
 
 
   /* ------------------------------------------------------------------
