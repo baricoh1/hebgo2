@@ -1,8 +1,8 @@
 // src/components/Questions.jsx
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { fetchQuestions } from '../services/QuestionsServiceService';
-import { getUserProgress , saveUserProgress , levelUpUser} from '../services/ProgressServiceServiceService';
+import { fetchQuestions } from '../services/QuestionsService';
+import { getUserProgress , saveUserProgress , levelUpUser} from '../services/ProgressService';
 
 
 
