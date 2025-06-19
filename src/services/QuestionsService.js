@@ -1,4 +1,4 @@
-// src/services/questionsService.js
+// src/services/QuestionsService.js
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 
@@ -23,5 +23,25 @@ export const fetchPlacementQuestions = async (lang) => {
   } catch (err) {
     console.error('Error fetching placement questions:', err);
     throw err;
+  }
+};
+
+export const fetchQuestions = async (lang, difficulty) => {
+  const langCode = langMap[lang];
+  if (!langCode) throw new Error('Unsupported language');
+
+  try {
+    const docRef = doc(db, 'questions', langCode);
+    const snap = await getDoc(docRef);
+
+    if (!snap.exists()) {
+      throw new Error('No question data found for this language');
+    }
+
+    const data = snap.data();
+    return data[difficulty] || [];
+  } catch (error) {
+    console.error('Error fetching questions:', error);
+    throw error;
   }
 };
