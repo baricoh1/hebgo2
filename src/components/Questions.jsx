@@ -1,11 +1,12 @@
-// src/components/Questions.jsx
+// Core React and router imports
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+
+// Services for fetching questions and managing progress
 import { fetchQuestions } from '../services/QuestionsService';
-import { getUserProgress , saveUserProgress , levelUpUser} from '../services/ProgressService';
+import { getUserProgress, saveUserProgress, levelUpUser } from '../services/ProgressService';
 
-
-
+// Array of images representing the result score
 const balls = [
   '/images/ball0.png',
   '/images/ball1.png',
@@ -20,37 +21,30 @@ const balls = [
   '/images/ball10.png',
 ];
 
-// Sounds
-const correctSound = new Audio('/sounds/right_answer.mp3');
-const wrongSound = new Audio('/sounds/wrong_answer.mp3');
 
 function Questions() {
   /* ------------------------------------------------------------------
-     CONSTANTS & BASIC DATA
+     CONSTANTS & USER DATA
   ------------------------------------------------------------------ */
+  // Game limits
   const MAX_QUESTIONS = 10;
   const MAX_QUESTIONS_PER_CATEGORY = 20;
+
+  // Navigation function
   const navigate = useNavigate();
 
-  const userName = localStorage.getItem('userName');
+  // Retrieve user info from local storage
   const lang = localStorage.getItem('userLang');
-  const [currentDifficulty, setCurrentDifficulty] = useState(
-    localStorage.getItem('userDifficulty')
-  );
+  const [currentDifficulty, setCurrentDifficulty] = useState(localStorage.getItem('userDifficulty'));
 
-  // Fix language mapping consistency
-  const langMap = { 
-    "en": "0", "us": "0", // Support both en and us
-    "es": "1", 
-    "ru": "2" 
-  };
-  
+  // Mapping for language and hints
   const hintTextMap = { en: 'Show Hint', es: 'Mostrar pista', ru: 'Показать подсказку' };
   const currentHintText = hintTextMap[lang] || 'Show Hint';
 
   /* ------------------------------------------------------------------
-     REACT STATE - MOVED BEFORE EARLY RETURNS
+     STATE MANAGEMENT
   ------------------------------------------------------------------ */
+  // Main states for questions, progress, and UI interaction
   const [questionsList, setQuestionsList] = useState([]);
   const [dataLoaded, setDataLoaded] = useState(false);
   const [progressReady, setProgressReady] = useState(false);
@@ -69,7 +63,10 @@ function Questions() {
   const [questionsThisRound, setQuestionsThisRound] = useState(MAX_QUESTIONS);
   const [isLevelingUp, setIsLevelingUp] = useState(false);
 
-  // Early return checks AFTER state declarations
+
+
+
+  // Return message if language or difficulty are missing
   if (!lang || !currentDifficulty) {
     return (
       <div className="p-4 text-red-600">
@@ -78,60 +75,63 @@ function Questions() {
     );
   }
 
+  // Get next level after current
   const getNextDifficulty = (level) => {
     const levels = ['easy', 'medium', 'hard'];
     const idx = levels.indexOf(level);
     return idx < levels.length - 1 ? levels[idx + 1] : null;
   };
 
-  const getDifficultyDisplayName = (level) => {
-    const names = { easy: 'קל', medium: 'בינוני', hard: 'קשה' };
-    return names[level] || level;
-  };
+
 
   /* ------------------------------------------------------------------
-     FIREBASE HELPERS - IMPROVED ERROR HANDLING
+     DATABASE OPERATIONS
   ------------------------------------------------------------------ */
+  // Fetch questions based on selected language and difficulty
   const fetchQuestionsFromDB = async () => {
-  try {
-    const selected = await fetchQuestions(lang, currentDifficulty);
-    setQuestionsList(selected);
-    setDataLoaded(true);
-  } catch (err) {
-    console.error("❌ Error fetching questions:", err);
-    setToast({ message: 'שגיאה בטעינת השאלות', type: 'error' });
-  }
-};
+    try {
+      const selected = await fetchQuestions(lang, currentDifficulty);
+      setQuestionsList(selected);
+      setDataLoaded(true);
+    } catch (err) {
+      console.error("❌ Error fetching questions:", err);
+      setToast({ message: 'שגיאה בטעינת השאלות', type: 'error' });
+    }
+  };
 
+  // Fetch user's progress from the database and handle level-up logic
   const fetchProgressFromDB = async () => {
     try {
+      // Get user ID from localStorage
       const uid = localStorage.getItem('userUID');
+
+      // Fetch user's progress and gender for current language and difficulty
       const { progress, gender } = await getUserProgress(uid, lang, currentDifficulty);
 
+      // If no progress is returned, mark progress as ready and exit
       if (!progress) {
         setProgressReady(true);
         return;
       }
+
       const serverProg = progress;
-      
-      // MERGE instead of overwrite
+
+      // Merge current local progress with server progress to avoid duplicates
       const mergedProgress = [...new Set([...correctIndexes.current, ...serverProg])];
       correctIndexes.current = mergedProgress;
-      
-      console.log('🔄 Server progress:', serverProg);
-      console.log('🔄 Merged progress:', mergedProgress);
 
-      // AUTO LEVEL-UP - FIXED: Check if we've completed the category
+      // Auto level-up logic: if user completed the full question set in this category
       if (serverProg.length >= MAX_QUESTIONS_PER_CATEGORY) {
         const next = getNextDifficulty(currentDifficulty);
+
+        // If there's a next level, initiate level-up sequence
         if (next) {
-          console.log('🚀 Triggering level up from', currentDifficulty, 'to', next);
           setIsLevelingUp(true);
-          
-          // Update database first
+
+          // Update difficulty level in backend
           await levelUpUser(uid, next);
-          
-          // Reset game state for new difficulty
+
+          // Reset all relevant game state before advancing
           correctIndexes.current = [];
           seenQuestions.current = [];
           setCorrectCount(0);
@@ -144,8 +144,8 @@ function Questions() {
           setShowAutoHint(false);
           setTime(30);
           setShowEndModal(false);
-          
-          // Update difficulty and restart
+
+          // Update local difficulty and trigger re-fetch after delay
           setTimeout(() => {
             setToast(null);
             setCurrentDifficulty(next);
@@ -155,12 +155,13 @@ function Questions() {
           }, 3000);
           return;
         } else {
-          // No next difficulty available - user completed all levels
-          console.log('🏆 User completed all difficulty levels!');
+          // If no next difficulty exists, user completed all levels
           setToast({
-            message: '🏆 מזל טוב! סיימת את כל הרמות!',
+            message: '🎉 כל הכבוד, עלית רמה!',
             type: 'levelup'
           });
+
+          // Navigate to progress screen after short delay
           setTimeout(() => {
             navigate('/progress');
           }, 3000);
@@ -168,103 +169,140 @@ function Questions() {
         }
       }
 
+      // If gender was returned, save it locally
       if (gender) {
         localStorage.setItem('userGender', gender);
       }
 
+      // Calculate how many questions are left in the current category
       const remaining = MAX_QUESTIONS_PER_CATEGORY - serverProg.length;
+
+      // Set number of questions to show this round (up to MAX_QUESTIONS)
       setQuestionsThisRound(Math.min(MAX_QUESTIONS, remaining));
+
+      // Mark progress data as ready to proceed
       setProgressReady(true);
     } catch (err) {
+      // Log any errors and still allow progress to continue
       console.error('Error fetching user progress:', err);
-      setProgressReady(true); // Continue even if progress fetch fails
+      setProgressReady(true); // Allow app to continue even if this fails
     }
   };
 
+  // Save updated progress array to the database for the current user
   const saveProgressToDB = async (updatedArr) => {
-  try {
-    const uid = localStorage.getItem('userUID');
-    await saveUserProgress(uid, lang, currentDifficulty, updatedArr);
-    console.log('💾 Saved to database:', updatedArr);
-  } catch (err) {
-    console.error('Error saving progress to DB:', err);
-  }
-};
+    try {
+      // Retrieve user ID
+      const uid = localStorage.getItem('userUID');
 
+      // Send updated progress to backend
+      await saveUserProgress(uid, lang, currentDifficulty, updatedArr);
+    } catch (err) {
+      // Log any errors during save operation
+      console.error('Error saving progress to DB:', err);
+    }
+  };
 
 
   /* ------------------------------------------------------------------
-     EFFECTS - IMPROVED LOADING SEQUENCE
-  ------------------------------------------------------------------ */
-  // 1) Load questions first
+   EFFECTS - IMPROVED LOADING SEQUENCE
+------------------------------------------------------------------ */
+
+  // 1) Load questions first when language and difficulty are available,
+  //    and the user is not currently leveling up
   useEffect(() => {
     if (lang && currentDifficulty && !isLevelingUp) {
       fetchQuestionsFromDB();
     }
   }, [lang, currentDifficulty, isLevelingUp]);
 
-  // 2) Load progress after questions are loaded
+  // 2) After questions are loaded, fetch user's progress
+  //    Only if not already done and not in level-up mode
   useEffect(() => {
     if (dataLoaded && !progressReady && !isLevelingUp) {
       fetchProgressFromDB();
     }
   }, [dataLoaded, isLevelingUp]);
 
-  // 3) Reset progress when difficulty changes
-  useEffect(() => {
-    if (!isLevelingUp) {
-      correctIndexes.current = [];
-      seenQuestions.current = [];
-      setProgressReady(false);
-      setDataLoaded(false);
-      setQuestionIndex(null);
-      setCurrentQuestionNumber(1);
-    }
-  }, [currentDifficulty, isLevelingUp]);
+  // 3) Reset progress-related state when difficulty changes
+  //    This clears previous session's progress and prepares for the new difficulty level
+useEffect(() => {
+  if (!isLevelingUp) {
+    correctIndexes.current = [];        // Clear correct answers
+    seenQuestions.current = [];         // Clear seen questions
+    setProgressReady(false);            // Reset progress readiness flag
+    setDataLoaded(false);               // Mark questions as not loaded
 
-  // 4) Load first question when both data and progress are ready
-  useEffect(() => {
-    if (dataLoaded && progressReady && questionIndex === null && questionsList.length > 0 && !isLevelingUp) {
-      loadNextQuestion();
+    if (questionIndex !== null) {
+      setQuestionIndex(null);           // Clear only if something exists
     }
-  }, [dataLoaded, progressReady, questionIndex, questionsList.length, isLevelingUp]);
 
-  // Timer effect
-  useEffect(() => {
-    if (isLevelingUp) return; // Don't run timer during level up
+    setCurrentQuestionNumber(1);        // Reset question counter
     
-    const id = setInterval(() => {
-      setTime((t) => {
-        if (t <= 1) {
-          if (!locked) {
-            setLocked(true);
-            setToast({ message: '❌ תם הזמן!', type: 'error' });
-            setTimeout(() => {
-              setToast(null);
-              nextQuestionAfterTimeout();
-              setLocked(false);
-              setShowAutoHint(false);
-            }, 1000);
-          }
-          return 30;
-        }
-        if (t === 11) setShowAutoHint(true);
-        return t - 1;
-      });
-    }, 1000);
-    return () => clearInterval(id);
-  }, [locked, isLevelingUp]);
+  }
+}, [currentDifficulty]);
+
+
+// 4) Once both questions and progress are ready, load the next question exactly once per reset
+useEffect(() => {
+
+  if (
+    dataLoaded &&
+    progressReady &&
+    questionIndex === null &&   
+    questionsList.length > 0 &&
+    !isLevelingUp
+  ) {
+    loadNextQuestion();
+  }
+}, [
+  dataLoaded,
+  progressReady,
+  questionIndex,
+  questionsList.length,
+  isLevelingUp,
+]);
+
+// 1) Reset and start countdown on every change of questionIndex
+useEffect(() => {
+  if (isLevelingUp) return;
+
+  setTime(30);
+  setShowAutoHint(false);
+  setToast(null);
+
+
+  const intervalId = setInterval(() => {
+    setTime(prev => prev - 1);
+  }, 1000);
+
+  return () => clearInterval(intervalId);
+}, [questionIndex, isLevelingUp]);
+
+useEffect(() => {
+  if (time === 11) {
+    setShowAutoHint(true);
+  }
+  if (time <= 0) {
+    setToast({ message: '❌ תם הזמן!', type: 'error' });
+    nextQuestionAfterTimeout();
+  }
+}, [time]);
+
 
   /* ------------------------------------------------------------------
      QUESTION FLOW HELPERS - IMPROVED VALIDATION
   ------------------------------------------------------------------ */
+
+  // Selects the index of the next available question
+  // Filters out questions already seen or correctly answered
   const getNextQuestionIndex = () => {
     if (!questionsList || questionsList.length === 0) {
       console.warn('No questions available');
       return null;
     }
-    
-    // Filter questions that haven't been seen AND haven't been answered correctly
+
+    // Get all indexes of questions that haven't been seen or answered correctly
     const candidates = questionsList
       .map((_, i) => i)
       .filter(
@@ -272,120 +310,141 @@ function Questions() {
           !seenQuestions.current.includes(i) &&
           !correctIndexes.current.includes(i)
       );
-      
-    console.log('Available question candidates:', candidates.length);
-    
+
     if (candidates.length === 0) return null;
+
+    // Return a random candidate from the filtered list
     return candidates[Math.floor(Math.random() * candidates.length)];
   };
 
+  // Loads the next question to be displayed
   const loadNextQuestion = () => {
-    if (isLevelingUp) return; // Don't load questions during level up
+
+     if (isLevelingUp){
+       return; // Prevent loading while transitioning levels 
+       }
+// Prevent re-loading if a question is already selected
+
+  if (questionIndex !== null)return; 
     
+
+    // If user answered all questions for this round, show the end modal
     if (currentQuestionNumber > questionsThisRound) {
       setShowEndModal(true);
+      navigate('/progress'); 
       return;
     }
-    
+
     const nxt = getNextQuestionIndex();
+
     if (nxt === null) {
-      console.log('No more questions available, ending quiz');
       setShowEndModal(true);
+      navigate('/progress'); 
     } else {
-      // Add to seen questions (but don't add already correct ones)
-      if (!correctIndexes.current.includes(nxt)) {
-        seenQuestions.current = [...seenQuestions.current, nxt];
-      }
-      
+        if (!seenQuestions.current.includes(nxt)) {
+          seenQuestions.current.push(nxt);
+    }
+
+      // Update state to show the selected question
       setQuestionIndex(nxt);
       setSelected(null);
       setShowHint(false);
       setShowAutoHint(false);
-      setTime(30);
-      
-      console.log('Loaded question index:', nxt, 'Question number:', currentQuestionNumber);
+      setTime(30); // Reset timer
+
     }
   };
+const nextQuestionAfterTimeout = () => {
+  if (isLevelingUp) return; // Skip if currently transitioning to the next level
 
-  const nextQuestionAfterTimeout = () => {
-    if (isLevelingUp) return; // Don't proceed during level up
-    
-    const last = currentQuestionNumber >= questionsThisRound;
-    setCurrentQuestionNumber((n) => n + 1);
-    if (last) {
-      setShowEndModal(true);
-    } else {
-      loadNextQuestion();
-    }
-  };
+  const last = currentQuestionNumber >= questionsThisRound; // Check if this is the last question
 
+  if (last) {
+    setShowEndModal(true);  // Show end-of-quiz modal
+    return;
+  }
+
+  if (questionIndex !== null && !seenQuestions.current.includes(questionIndex)) {
+    seenQuestions.current.push(questionIndex);
+  }
+  setQuestionIndex(null);
+  setCurrentQuestionNumber(n => {
+    return n + 1;
+  });
+
+  setLocked(false);
+};
+
+
+  // Handles user answer selection
   const handleAnswerClick = async (idx) => {
-    if (selected !== null || locked || isLevelingUp) return;
-    
-    setSelected(idx);
-    setLocked(true);
+    // Prevent interaction if a choice has already been made, the UI is locked, or a level-up is in progress
+    if (selected !== null  || isLevelingUp){
+      return; // Exit if already selected, locked, or leveling up 
+    } 
+
+    setSelected(idx); // Mark the selected answer
+    setLocked(true);  // Lock UI to prevent double-clicks
 
     const correctAudio = new Audio('/sounds/right_answer.mp3');
     const wrongAudio = new Audio('/sounds/wrong_answer.mp3');
-    const question = questionsList[questionIndex];
+    const question = questionsList[questionIndex]; // Get the current question
+    if (questionIndex !== null && !seenQuestions.current.includes(questionIndex)) {
+      seenQuestions.current.push(questionIndex);
+}
 
+
+    // If the answer is correct:
     if (idx === question.correct) {
       correctAudio.play().catch(e => console.log('Audio play failed:', e));
-      
-      // Only add if not already in the array
-      if (!correctIndexes.current.includes(questionIndex)) {
+
+      // Add the question to the correct list only if not already saved
+      if (questionIndex !== null && !correctIndexes.current.includes(questionIndex)) {
         const updated = [...correctIndexes.current, questionIndex];
         correctIndexes.current = updated;
-        
-        console.log('✅ Correct answer! Question index:', questionIndex);
-        console.log('📊 Updated correctIndexes:', updated);
-        console.log('📈 Total correct:', updated.length);
-        
-        // Save to database asynchronously
-        saveProgressToDB(updated);
+        saveProgressToDB(updated); // Save progress in background
       } else {
         console.log('ℹ️ Question', questionIndex, 'already answered correctly');
       }
-      
-      setCorrectCount((c) => c + 1);
-      setToast({ message: '✅ תשובה נכונה!', type: 'success' });
+
+      setCorrectCount((c) => c + 1); // Increase correct answers counter
+      setToast({ message: '✅ תשובה נכונה!', type: 'success' }); // Show success toast
     } else {
+      // Wrong answer
       wrongAudio.play().catch(e => console.log('Audio play failed:', e));
-      console.log('❌ Wrong answer for question index:', questionIndex);
-      setToast({ message: '❌ תשובה שגויה!', type: 'error' });
+      setToast({ message: '❌ תשובה שגויה!', type: 'error' }); // Show error toast
     }
 
-    setTimeout(() => {
-      if (isLevelingUp) return; // Don't proceed if leveling up started
-      
-      setToast(null);
-      const isLast = currentQuestionNumber >= questionsThisRound;
-      setCurrentQuestionNumber((n) => n + 1);
-      if (isLast) {
-        setShowEndModal(true);
-      } else {
-        loadNextQuestion();
-      }
-      setLocked(false);
-    }, 1500);
-  };
+    // Wait 1.5 seconds before loading the next question
+setTimeout(() => {
+  if (isLevelingUp) return;
 
+  setToast(null);
+  setQuestionIndex(null);
+  setCurrentQuestionNumber(n => n + 1);
+  setLocked(false);
+}, 1500);
+
+  };
 
   /* ------------------------------------------------------------------
      RENDER HELPERS
   ------------------------------------------------------------------ */
+
+  // Converts seconds to mm:ss format for countdown timer display
   const formatTime = (s) =>
     `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
-    
+
+  // Returns the image corresponding to the number of correct answers
   const getResultImage = () => balls[correctCount] || balls[0];
-   
-  // EARLY RETURN DURING LEVEL-UP
+
+  // EARLY RETURN DURING LEVEL-UP – loading screen for level transition
   if (isLevelingUp) {
     return (
       <div
         dir="rtl"
         className="bg-blue-100 dark:bg-gray-900 text-black dark:text-white min-h-screen
-                   flex items-center justify-center transition-colors duration-300"
+                 flex items-center justify-center transition-colors duration-300"
       >
         <div className="text-center">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-purple-600 mx-auto mb-4"></div>
@@ -395,8 +454,8 @@ function Questions() {
         {toast && (
           <div
             className="fixed bottom-6 left-1/2 transform -translate-x-1/2
-                       bg-gradient-to-r from-purple-600 to-pink-600 animate-pulse
-                       text-white px-6 py-3 rounded-full shadow-lg text-lg z-50"
+                     bg-gradient-to-r from-purple-600 to-pink-600 animate-pulse
+                     text-white px-6 py-3 rounded-full shadow-lg text-lg z-50"
           >
             {toast.message}
           </div>
@@ -405,7 +464,7 @@ function Questions() {
     );
   }
 
-  // No questions available or loading
+  // EARLY RETURN: Display message if no questions available or still loading
   if (questionsList.length === 0 && (!dataLoaded || !progressReady)) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-blue-100 dark:bg-gray-900">
@@ -432,8 +491,10 @@ function Questions() {
     );
   }
 
+  // Get the current question object from the list
   const question = questionIndex !== null ? questionsList[questionIndex] : null;
-  
+
+  // Show loading screen if question is not ready yet
   if (!question) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-blue-100 dark:bg-gray-900">
@@ -442,26 +503,31 @@ function Questions() {
     );
   }
 
+  // Calculate progress bar percentage
   const progressPercent = ((currentQuestionNumber - 1) / questionsThisRound) * 100;
-  const fullQuestionText = question.question;
 
+  // Store full question text
+  const fullQuestionText = question.question;
   return (
     <div
       dir="rtl"
       className="bg-blue-100 dark:bg-gray-900 text-black dark:text-white min-h-screen transition-colors duration-300"
     >
-      {/* QUIZ AREA */}
+      {/* QUIZ AREA - Blur and disable interactions if end modal is open */}
       <div className={`relative z-10 ${showEndModal ? 'pointer-events-none blur-sm' : ''}`}>
         <div className="max-w-4xl mx-auto flex flex-col p-4 space-y-4">
-          {/* Header */}
+
+          {/* HEADER - Contains back button, question number, and countdown timer */}
           <header className="flex flex-row-reverse justify-between items-center bg-blue-200 dark:bg-blue-950 p-4 rounded-lg shadow">
             <button
               onClick={() => navigate('/')}
               className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
-              disabled={isLevelingUp}
+              disabled={isLevelingUp} // Prevent navigating away during level-up
             >
               ← חזרה לעמוד ראשי
             </button>
+
+            {/* Current question number indicator */}
             <div className="flex items-center mx-3 gap-2">
               <span className="text-base font-semibold text-gray-700 dark:text-gray-300">
                 שאלה
@@ -470,6 +536,8 @@ function Questions() {
                 {currentQuestionNumber}
               </span>
             </div>
+
+            {/* Countdown timer with red highlight if time is low */}
             <div className="bg-white py-1 px-3 rounded shadow dark:bg-gray-100">
               <span
                 className={time <= 5 ? 'text-red-600 font-bold' : 'text-blue-600'}
@@ -479,42 +547,47 @@ function Questions() {
             </div>
           </header>
 
-          {/* Progress Bar */}
+          {/* PROGRESS BAR - Shows percent completion of quiz */}
           <div className="w-full bg-gray-300 dark:bg-gray-700 h-2 rounded-full overflow-hidden mt-2">
             <div
               className="bg-blue-500 h-2 transition-all duration-300"
               style={{ width: `${progressPercent}%` }}
             />
           </div>
+
+          {/* Progress text */}
           <p className="text-right text-sm text-gray-600 dark:text-gray-300">
             שאלה {currentQuestionNumber} מתוך {questionsThisRound}
           </p>
 
-          {/* Question Card */}
+          {/* QUESTION CARD - Displays question text, answers, hints */}
           <main className="bg-white/90 dark:bg-gray-800 p-6 rounded-xl shadow-lg text-lg flex-grow transition-all duration-300">
+            {/* Question title */}
             <div className="text-center text-xl font-bold text-blue-900 dark:text-blue-200">
               {fullQuestionText}
             </div>
 
-
+            {/* Answers list */}
             <ul className="space-y-2 text-right list-none p-0 m-0">
               {question.answers.map((ans, idx) => {
                 const isCorrect = idx === question.correct;
                 const isSelected = idx === selected;
                 let bg = 'bg-white dark:bg-gray-600';
+
+                // Highlighting logic after selection
                 if (selected !== null) {
                   if (isSelected && isCorrect) bg = 'bg-green-400';
                   else if (isSelected && !isCorrect) bg = 'bg-red-400';
                   else if (isCorrect) bg = 'bg-green-400';
                 }
+
                 return (
                   <button
                     key={idx}
                     onClick={() => handleAnswerClick(idx)}
                     disabled={selected !== null || locked || isLevelingUp}
-                    className={`w-full text-right p-3 rounded-lg border shadow hover:bg-blue-100 ${bg} ${
-                      selected !== null || locked || isLevelingUp ? 'cursor-not-allowed' : ''
-                    }`}
+                    className={`w-full text-right p-3 rounded-lg border shadow hover:bg-blue-100 ${bg} ${selected !== null || locked || isLevelingUp ? 'cursor-not-allowed' : ''
+                      }`}
                   >
                     {ans}
                   </button>
@@ -522,6 +595,7 @@ function Questions() {
               })}
             </ul>
 
+            {/* Show Hint Button */}
             <div className="mt-6 flex items-center justify-between">
               <button
                 className="px-4 py-2 bg-yellow-400 text-black rounded hover:bg-yellow-500"
@@ -532,11 +606,14 @@ function Questions() {
               </button>
             </div>
 
+            {/* Manual Hint Display */}
             {showHint && (
               <div className="mt-2 p-3 bg-yellow-100 dark:bg-yellow-900 rounded text-right">
                 💡 {question.hint}
               </div>
             )}
+
+            {/* Auto Hint Display (when time gets low) */}
             {showAutoHint && question.authohint && (
               <div className="mt-2 p-3 bg-blue-100 dark:bg-blue-900 rounded text-right animate-pulse">
                 🤖 {question.authohint}
@@ -544,29 +621,28 @@ function Questions() {
             )}
           </main>
 
-          {/* Footer */}
+          {/* FOOTER - Shows total score (falafel count) */}
           <footer className="text-right text-lg mt-4">
             סה״כ פלאפלים שנאספו: {correctCount} 🧆
           </footer>
         </div>
       </div>
 
-      {/* TOAST */}
+      {/* TOAST MESSAGE - Appears after answer selection */}
       {toast && !isLevelingUp && (
         <div
-          className={`fixed bottom-6 left-1/2 transform -translate-x-1/2 px-6 py-3 rounded-full text-lg shadow-lg ${
-            toast.type === 'success'
+          className={`fixed bottom-6 left-1/2 transform -translate-x-1/2 px-6 py-3 rounded-full text-lg shadow-lg ${toast.type === 'success'
               ? 'bg-green-600'
               : toast.type === 'levelup'
-              ? 'bg-gradient-to-r from-purple-600 to-pink-600 animate-pulse'
-              : 'bg-red-600'
-          } text-white`}
+                ? 'bg-gradient-to-r from-purple-600 to-pink-600 animate-pulse'
+                : 'bg-red-600'
+            } text-white`}
         >
           {toast.message}
         </div>
       )}
 
-      {/* END MODAL */}
+      {/* END MODAL - Displayed after final question */}
       {showEndModal && !isLevelingUp && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-20">
           <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg space-y-4 max-w-sm">
