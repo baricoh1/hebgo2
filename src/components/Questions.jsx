@@ -259,10 +259,6 @@ function Questions() {
      QUESTION FLOW HELPERS - IMPROVED VALIDATION
   ------------------------------------------------------------------ */
   const getNextQuestionIndex = () => {
-    console.log('❓ getNextQuestionIndex called');
-    console.log('questionsList length:', questionsList.length);
-    console.log('seenQuestions:', seenQuestions.current);
-    console.log('correctIndexes:', correctIndexes.current);
     if (!questionsList || questionsList.length === 0) {
       console.warn('No questions available');
       return null;
@@ -312,34 +308,16 @@ function Questions() {
   };
 
   const nextQuestionAfterTimeout = () => {
-  console.log('🚩 nextQuestionAfterTimeout called');
-  console.log('isLevelingUp:', isLevelingUp);
-
-  if (isLevelingUp) return; // Don't proceed during level up
-  
-  setCurrentQuestionNumber((n) => {
-    console.log('currentQuestionNumber (before increment):', n);
-
-    const nextQuestionNum = n + 1;
-    const isLastQuestion   = nextQuestionNum === MAX_QUESTIONS;
-
-    console.log('nextQuestionNum:', nextQuestionNum);
-    console.log('MAX_QUESTIONS:', MAX_QUESTIONS);
-    console.log('questionsThisRound:', questionsThisRound); // אם רלוונטי לך
-    console.log('isLastQuestion:', isLastQuestion);
-
-    if (isLastQuestion) {
-      console.log('➡️ Showing End Modal');
+    if (isLevelingUp) return; // Don't proceed during level up
+    
+    const last = currentQuestionNumber >= questionsThisRound;
+    setCurrentQuestionNumber((n) => n + 1);
+    if (last) {
       setShowEndModal(true);
     } else {
-      console.log('➡️ Loading next question');
       loadNextQuestion();
     }
-
-    return nextQuestionNum;
-  });
-};
-
+  };
 
   const handleAnswerClick = async (idx) => {
     if (selected !== null || locked || isLevelingUp) return;
