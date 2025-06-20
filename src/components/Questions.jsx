@@ -42,7 +42,6 @@ function Questions() {
   const [currentDifficulty, setCurrentDifficulty] = useState(localStorage.getItem('userDifficulty'));
 
   // Mapping for language and hints
-  const langMap = { en: '0', us: '0', es: '1', ru: '2' };
   const hintTextMap = { en: 'Show Hint', es: 'Mostrar pista', ru: 'Показать подсказку' };
   const currentHintText = hintTextMap[lang] || 'Show Hint';
 
@@ -68,6 +67,9 @@ function Questions() {
   const [questionsThisRound, setQuestionsThisRound] = useState(MAX_QUESTIONS);
   const [isLevelingUp, setIsLevelingUp] = useState(false);
 
+
+
+
   // Return message if language or difficulty are missing
   if (!lang || !currentDifficulty) {
     return (
@@ -84,11 +86,7 @@ function Questions() {
     return idx < levels.length - 1 ? levels[idx + 1] : null;
   };
 
-  // Translate difficulty for display
-  const getDifficultyDisplayName = (level) => {
-    const names = { easy: 'קל', medium: 'בינוני', hard: 'קשה' };
-    return names[level] || level;
-  };
+
 
   /* ------------------------------------------------------------------
      DATABASE OPERATIONS
@@ -126,16 +124,12 @@ function Questions() {
       const mergedProgress = [...new Set([...correctIndexes.current, ...serverProg])];
       correctIndexes.current = mergedProgress;
 
-      console.log('🔄 Server progress:', serverProg);
-      console.log('🔄 Merged progress:', mergedProgress);
-
       // Auto level-up logic: if user completed the full question set in this category
       if (serverProg.length >= MAX_QUESTIONS_PER_CATEGORY) {
         const next = getNextDifficulty(currentDifficulty);
 
         // If there's a next level, initiate level-up sequence
         if (next) {
-          console.log('馃殌 Triggering level up from', currentDifficulty, 'to', next);
           setIsLevelingUp(true);
 
           // Update difficulty level in backend
@@ -166,9 +160,8 @@ function Questions() {
           return;
         } else {
           // If no next difficulty exists, user completed all levels
-          console.log('馃弳 User completed all difficulty levels!');
           setToast({
-            message: '馃弳 诪讝诇 讟讜讘! 住讬讬诪转 讗转 讻诇 讛专诪讜转!',
+            message: '🎉 כל הכבוד, עלית רמה!',
             type: 'levelup'
           });
 
@@ -208,8 +201,6 @@ function Questions() {
 
       // Send updated progress to backend
       await saveUserProgress(uid, lang, currentDifficulty, updatedArr);
-
-      console.log('馃捑 Saved to database:', updatedArr);
     } catch (err) {
       // Log any errors during save operation
       console.error('Error saving progress to DB:', err);
@@ -239,61 +230,68 @@ function Questions() {
 
   // 3) Reset progress-related state when difficulty changes
   //    This clears previous session's progress and prepares for the new difficulty level
-  useEffect(() => {
-    if (!isLevelingUp) {
-      correctIndexes.current = [];        // Clear correct answers
-      seenQuestions.current = [];         // Clear seen questions
-      setProgressReady(false);            // Reset progress readiness flag
-      setDataLoaded(false);               // Mark questions as not loaded
-      setQuestionIndex(null);             // Clear current question index
-      setCurrentQuestionNumber(1);        // Reset question counter
+useEffect(() => {
+  if (!isLevelingUp) {
+    correctIndexes.current = [];        // Clear correct answers
+    seenQuestions.current = [];         // Clear seen questions
+    setProgressReady(false);            // Reset progress readiness flag
+    setDataLoaded(false);               // Mark questions as not loaded
+
+    if (questionIndex !== null) {
+      setQuestionIndex(null);           // Clear only if something exists
     }
-  }, [currentDifficulty, isLevelingUp]);
 
-  // 4) Once both questions and progress are ready, load the first question
-  useEffect(() => {
-    if (
-      dataLoaded &&
-      progressReady &&
-      questionIndex === null &&
-      questionsList.length > 0 &&
-      !isLevelingUp
-    ) {
-      loadNextQuestion();
-    }
-  }, [dataLoaded, progressReady, questionIndex, questionsList.length, isLevelingUp]);
+    setCurrentQuestionNumber(1);        // Reset question counter
+    
+  }
+}, [currentDifficulty]);
 
-  // Timer effect: runs every second unless user is leveling up
-  useEffect(() => {
-    if (isLevelingUp) return; // Skip timer while leveling up
 
-    const id = setInterval(() => {
-      setTime((t) => {
-        // If time runs out
-        if (t <= 1) {
-          if (!locked) {
-            setLocked(true);                        // Lock UI to prevent actions
-            setToast({ message: '❌ תם הזמן!', type: 'error' });  // Show timeout message
-            setTimeout(() => {
-              setToast(null);                       // Clear toast
-              nextQuestionAfterTimeout();           // Move to next question
-              setLocked(false);                     // Unlock UI
-              setShowAutoHint(false);               // Hide auto-hint
-            }, 1000);
-          }
-          return 30; // Reset timer
-        }
+// 4) Once both questions and progress are ready, load the next question exactly once per reset
+useEffect(() => {
 
-        // Auto show hint at 11 seconds left
-        if (t === 11) setShowAutoHint(true);
+  if (
+    dataLoaded &&
+    progressReady &&
+    questionIndex === null &&   
+    questionsList.length > 0 &&
+    !isLevelingUp
+  ) {
+    loadNextQuestion();
+  }
+}, [
+  dataLoaded,
+  progressReady,
+  questionIndex,
+  questionsList.length,
+  isLevelingUp,
+]);
 
-        return t - 1; // Decrease time
-      });
-    }, 1000);
+// 1) Reset and start countdown on every change of questionIndex
+useEffect(() => {
+  if (isLevelingUp) return;
 
-    // Clear interval on cleanup
-    return () => clearInterval(id);
-  }, [locked, isLevelingUp]);
+  setTime(30);
+  setShowAutoHint(false);
+  setToast(null);
+
+
+  const intervalId = setInterval(() => {
+    setTime(prev => prev - 1);
+  }, 1000);
+
+  return () => clearInterval(intervalId);
+}, [questionIndex, isLevelingUp]);
+
+useEffect(() => {
+  if (time === 11) {
+    setShowAutoHint(true);
+  }
+  if (time <= 0) {
+    setToast({ message: '❌ תם הזמן!', type: 'error' });
+    nextQuestionAfterTimeout();
+  }
+}, [time]);
 
 
   /* ------------------------------------------------------------------
@@ -317,8 +315,6 @@ function Questions() {
           !correctIndexes.current.includes(i)
       );
 
-    console.log('Available question candidates:', candidates.length);
-
     if (candidates.length === 0) return null;
 
     // Return a random candidate from the filtered list
@@ -327,24 +323,31 @@ function Questions() {
 
   // Loads the next question to be displayed
   const loadNextQuestion = () => {
-    if (isLevelingUp) return; // Prevent loading while transitioning levels
+
+     if (isLevelingUp){
+       return; // Prevent loading while transitioning levels 
+       }
+// Prevent re-loading if a question is already selected
+
+  if (questionIndex !== null)return; 
+    
 
     // If user answered all questions for this round, show the end modal
     if (currentQuestionNumber > questionsThisRound) {
       setShowEndModal(true);
+      navigate('/progress'); 
       return;
     }
 
     const nxt = getNextQuestionIndex();
 
     if (nxt === null) {
-      console.log('No more questions available, ending quiz');
       setShowEndModal(true);
+      navigate('/progress'); 
     } else {
-      // Track that this question has been seen (unless it was already answered correctly)
-      if (!correctIndexes.current.includes(nxt)) {
-        seenQuestions.current = [...seenQuestions.current, nxt];
-      }
+        if (!seenQuestions.current.includes(nxt)) {
+          seenQuestions.current.push(nxt);
+    }
 
       // Update state to show the selected question
       setQuestionIndex(nxt);
@@ -353,27 +356,36 @@ function Questions() {
       setShowAutoHint(false);
       setTime(30); // Reset timer
 
-      console.log('Loaded question index:', nxt, 'Question number:', currentQuestionNumber);
     }
   };
-  // Moves to the next question after the time runs out
-  const nextQuestionAfterTimeout = () => {
-    if (isLevelingUp) return; // Skip if currently transitioning to the next level
+const nextQuestionAfterTimeout = () => {
+  if (isLevelingUp) return; // Skip if currently transitioning to the next level
 
-    const last = currentQuestionNumber >= questionsThisRound; // Check if this is the last question
-    setCurrentQuestionNumber((n) => n + 1); // Move to the next question number
+  const last = currentQuestionNumber >= questionsThisRound; // Check if this is the last question
 
-    if (last) {
-      setShowEndModal(true); // Show end-of-quiz modal
-    } else {
-      loadNextQuestion(); // Otherwise, load the next question
-    }
-  };
+  if (last) {
+    setShowEndModal(true);  // Show end-of-quiz modal
+    return;
+  }
+
+  if (questionIndex !== null && !seenQuestions.current.includes(questionIndex)) {
+    seenQuestions.current.push(questionIndex);
+  }
+  setQuestionIndex(null);
+  setCurrentQuestionNumber(n => {
+    return n + 1;
+  });
+
+  setLocked(false);
+};
+
 
   // Handles user answer selection
   const handleAnswerClick = async (idx) => {
     // Prevent interaction if a choice has already been made, the UI is locked, or a level-up is in progress
-    if (selected !== null || locked || isLevelingUp) return;
+    if (selected !== null  || isLevelingUp){
+      return; // Exit if already selected, locked, or leveling up 
+    } 
 
     setSelected(idx); // Mark the selected answer
     setLocked(true);  // Lock UI to prevent double-clicks
@@ -381,20 +393,19 @@ function Questions() {
     const correctAudio = new Audio('/sounds/right_answer.mp3');
     const wrongAudio = new Audio('/sounds/wrong_answer.mp3');
     const question = questionsList[questionIndex]; // Get the current question
+    if (questionIndex !== null && !seenQuestions.current.includes(questionIndex)) {
+      seenQuestions.current.push(questionIndex);
+}
+
 
     // If the answer is correct:
     if (idx === question.correct) {
       correctAudio.play().catch(e => console.log('Audio play failed:', e));
 
       // Add the question to the correct list only if not already saved
-      if (!correctIndexes.current.includes(questionIndex)) {
+      if (questionIndex !== null && !correctIndexes.current.includes(questionIndex)) {
         const updated = [...correctIndexes.current, questionIndex];
         correctIndexes.current = updated;
-
-        console.log('✅ Correct answer! Question index:', questionIndex);
-        console.log('📊 Updated correctIndexes:', updated);
-        console.log('📈 Total correct:', updated.length);
-
         saveProgressToDB(updated); // Save progress in background
       } else {
         console.log('ℹ️ Question', questionIndex, 'already answered correctly');
@@ -405,26 +416,19 @@ function Questions() {
     } else {
       // Wrong answer
       wrongAudio.play().catch(e => console.log('Audio play failed:', e));
-      console.log('❌ Wrong answer for question index:', questionIndex);
       setToast({ message: '❌ תשובה שגויה!', type: 'error' }); // Show error toast
     }
 
     // Wait 1.5 seconds before loading the next question
-    setTimeout(() => {
-      if (isLevelingUp) return; // Avoid continuing if level-up has begun
+setTimeout(() => {
+  if (isLevelingUp) return;
 
-      setToast(null); // Clear any toast message
-      const isLast = currentQuestionNumber >= questionsThisRound;
+  setToast(null);
+  setQuestionIndex(null);
+  setCurrentQuestionNumber(n => n + 1);
+  setLocked(false);
+}, 1500);
 
-      setCurrentQuestionNumber((n) => n + 1); // Increment question number
-      if (isLast) {
-        setShowEndModal(true); // If it's the last question, show summary modal
-      } else {
-        loadNextQuestion(); // Otherwise, load next
-      }
-
-      setLocked(false); // Unlock UI for next interaction
-    }, 1500);
   };
 
   /* ------------------------------------------------------------------
