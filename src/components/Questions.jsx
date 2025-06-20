@@ -21,9 +21,6 @@ const balls = [
   '/images/ball10.png',
 ];
 
-// Audio feedback for answers
-const correctSound = new Audio('/sounds/right_answer.mp3');
-const wrongSound = new Audio('/sounds/wrong_answer.mp3');
 
 function Questions() {
   /* ------------------------------------------------------------------
@@ -37,7 +34,6 @@ function Questions() {
   const navigate = useNavigate();
 
   // Retrieve user info from local storage
-  const userName = localStorage.getItem('userName');
   const lang = localStorage.getItem('userLang');
   const [currentDifficulty, setCurrentDifficulty] = useState(localStorage.getItem('userDifficulty'));
 
