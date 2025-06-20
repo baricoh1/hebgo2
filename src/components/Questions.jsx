@@ -308,21 +308,34 @@ function Questions() {
   };
 
   const nextQuestionAfterTimeout = () => {
+  console.log('🚩 nextQuestionAfterTimeout called');
+  console.log('isLevelingUp:', isLevelingUp);
+
   if (isLevelingUp) return; // Don't proceed during level up
   
   setCurrentQuestionNumber((n) => {
+    console.log('currentQuestionNumber (before increment):', n);
+
     const nextQuestionNum = n + 1;
-    const isLastQuestion = (nextQuestionNum == MAX_QUESTIONS);
-    
+    const isLastQuestion   = nextQuestionNum === MAX_QUESTIONS;
+
+    console.log('nextQuestionNum:', nextQuestionNum);
+    console.log('MAX_QUESTIONS:', MAX_QUESTIONS);
+    console.log('questionsThisRound:', questionsThisRound); // אם רלוונטי לך
+    console.log('isLastQuestion:', isLastQuestion);
+
     if (isLastQuestion) {
+      console.log('➡️ Showing End Modal');
       setShowEndModal(true);
     } else {
+      console.log('➡️ Loading next question');
       loadNextQuestion();
     }
-    
+
     return nextQuestionNum;
   });
 };
+
 
   const handleAnswerClick = async (idx) => {
     if (selected !== null || locked || isLevelingUp) return;
