@@ -308,16 +308,21 @@ function Questions() {
   };
 
   const nextQuestionAfterTimeout = () => {
-    if (isLevelingUp) return; // Don't proceed during level up
+  if (isLevelingUp) return; // Don't proceed during level up
+  
+  setCurrentQuestionNumber((n) => {
+    const nextQuestionNum = n + 1;
+    const isLastQuestion = nextQuestionNum > questionsThisRound;
     
-    const last = currentQuestionNumber >= questionsThisRound;
-    setCurrentQuestionNumber((n) => n + 1);
-    if (last) {
+    if (isLastQuestion) {
       setShowEndModal(true);
     } else {
       loadNextQuestion();
     }
-  };
+    
+    return nextQuestionNum;
+  });
+};
 
   const handleAnswerClick = async (idx) => {
     if (selected !== null || locked || isLevelingUp) return;
