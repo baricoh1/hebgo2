@@ -259,6 +259,10 @@ function Questions() {
      QUESTION FLOW HELPERS - IMPROVED VALIDATION
   ------------------------------------------------------------------ */
   const getNextQuestionIndex = () => {
+    console.log('❓ getNextQuestionIndex called');
+    console.log('questionsList length:', questionsList.length);
+    console.log('seenQuestions:', seenQuestions.current);
+    console.log('correctIndexes:', correctIndexes.current);
     if (!questionsList || questionsList.length === 0) {
       console.warn('No questions available');
       return null;
