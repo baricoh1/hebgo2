@@ -312,7 +312,7 @@ function Questions() {
   
   setCurrentQuestionNumber((n) => {
     const nextQuestionNum = n + 1;
-    const isLastQuestion = nextQuestionNum > questionsThisRound;
+    const isLastQuestion = (nextQuestionNum == MAX_QUESTIONS);
     
     if (isLastQuestion) {
       setShowEndModal(true);
