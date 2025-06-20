@@ -22,6 +22,7 @@ function Register() {
     const userData = await registerUser(email, password, username, gender, lang);
     
     localStorage.setItem('userUID', userData.uid);
+    localStorage.setItem('userGender', gender);
     localStorage.setItem('userEmail', userData.email);
     localStorage.setItem('userName', userData.username);
     localStorage.setItem('userLang', userData.lang);
