@@ -21,9 +21,6 @@ const balls = [
   '/images/ball10.png',
 ];
 
-// Audio feedback for answers
-const correctSound = new Audio('/sounds/right_answer.mp3');
-const wrongSound = new Audio('/sounds/wrong_answer.mp3');
 
 function Questions() {
   /* ------------------------------------------------------------------
