@@ -123,8 +123,6 @@ function Questions() {
       const mergedProgress = [...new Set([...correctIndexes.current, ...serverProg])];
       correctIndexes.current = mergedProgress;
 
-      console.log('🔄 Server progress:', serverProg);
-      console.log('🔄 Merged progress:', mergedProgress);
 
       // Auto level-up logic: if user completed the full question set in this category
       if (serverProg.length >= MAX_QUESTIONS_PER_CATEGORY) {
@@ -132,7 +130,6 @@ function Questions() {
 
         // If there's a next level, initiate level-up sequence
         if (next) {
-          console.log('馃殌 Triggering level up from', currentDifficulty, 'to', next);
           setIsLevelingUp(true);
 
           // Update difficulty level in backend
@@ -163,9 +160,8 @@ function Questions() {
           return;
         } else {
           // If no next difficulty exists, user completed all levels
-          console.log('馃弳 User completed all difficulty levels!');
           setToast({
-            message: '馃弳 诪讝诇 讟讜讘! 住讬讬诪转 讗转 讻诇 讛专诪讜转!',
+            message: '🏆 כל הכבוד! סיימת את כל הרמות!',
             type: 'levelup'
           });
 
@@ -206,7 +202,6 @@ function Questions() {
       // Send updated progress to backend
       await saveUserProgress(uid, lang, currentDifficulty, updatedArr);
 
-      console.log('馃捑 Saved to database:', updatedArr);
     } catch (err) {
       // Log any errors during save operation
       console.error('Error saving progress to DB:', err);
@@ -247,7 +242,7 @@ function Questions() {
     }
   }, [currentDifficulty, isLevelingUp]);
 
-  // 4) Once both questions and progress are ready, load the first question or כל שאלה חדשה
+  // 4) Once both questions and progress are ready, load the first question or next question
   useEffect(() => {
     if (
       dataLoaded &&
@@ -259,7 +254,7 @@ function Questions() {
     // eslint-disable-next-line
   }, [dataLoaded, progressReady, currentQuestionNumber, isLevelingUp]);
 
-  // 1) Reset and start countdown on every change of questionIndex
+  // 5) Reset and start countdown on every change of questionIndex
   useEffect(() => {
     if (isLevelingUp) return;
 
@@ -274,7 +269,7 @@ function Questions() {
     return () => clearInterval(intervalId);
   }, [questionIndex, isLevelingUp]);
 
-  // 2) ברגע שה‐time מגיע ל־11 או מאופס, נגלול אוטומטית או נציג רמז
+  // 6) When `time` reaches 11 or 0, show auto hint or trigger timeout behavior
   useEffect(() => {
     if (time === 11) {
       setShowAutoHint(true);
@@ -307,7 +302,6 @@ function Questions() {
           !correctIndexes.current.includes(i)
       );
 
-    console.log('Available question candidates:', candidates.length);
 
     if (candidates.length === 0) return null;
 
@@ -328,7 +322,6 @@ function Questions() {
     const nxt = getNextQuestionIndex();
 
     if (nxt === null) {
-      console.log('No more questions available, ending quiz');
       setShowEndModal(true);
     } else {
       // Track that this question has been seen (unless it was already answered correctly)
@@ -343,7 +336,6 @@ function Questions() {
       setShowAutoHint(false);
       setTime(30); // Reset timer
 
-      console.log('Loaded question index:', nxt, 'Question number:', currentQuestionNumber);
     }
   };
   // Moves to the next question after the time runs out
@@ -379,10 +371,6 @@ function Questions() {
         const updated = [...correctIndexes.current, questionIndex];
         correctIndexes.current = updated;
 
-        console.log('✅ Correct answer! Question index:', questionIndex);
-        console.log('📊 Updated correctIndexes:', updated);
-        console.log('📈 Total correct:', updated.length);
-
         saveProgressToDB(updated); // Save progress in background
       } else {
         console.log('ℹ️ Question', questionIndex, 'already answered correctly');
@@ -406,7 +394,6 @@ function Questions() {
         setShowEndModal(true);
       } else {
         setCurrentQuestionNumber((n) => n + 1);
-        // אל תקרא כאן ל-loadNextQuestion
       }
       setLocked(false);
     }, 1500);
