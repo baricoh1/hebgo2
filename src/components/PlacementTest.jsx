@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { fetchPlacementQuestions } from '../services/QuestionsService';
-import { saveUserDifficulty } from '../services/SettingsService';
+import { saveUserSettingsToDB } from '../services/SettingsService';
 
 function PlacementTest() {
   // State for current question index
@@ -81,7 +81,7 @@ function PlacementTest() {
 
     try {
       const uid = localStorage.getItem('userUID');
-      await saveUserDifficulty(uid, userLang, difficulty);
+      await saveUserSettingsToDB(uid, userLang, difficulty);
     } catch {
       // Error handling skipped – could show toast if needed
     }

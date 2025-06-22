@@ -23,26 +23,3 @@ export const saveUserSettingsToDB = async (uid, lang, difficulty) => {
     throw err;
   }
 };
-
-/**
- * Updates only the user's difficulty and language in Firestore,
- * and includes a timestamp indicating when the update occurred.
- */
-export const saveUserDifficulty = async (uid, lang, difficulty) => {
-  if (!uid) return;
-
-  try {
-    await setDoc(
-      doc(db, 'users', uid),
-      {
-        difficulty,
-        lang,
-        updatedAt: new Date(), // Records time of update
-      },
-      { merge: true }
-    );
-  } catch (err) {
-    console.error('Error saving difficulty to Firebase:', err);
-    throw err;
-  }
-};
