@@ -1,7 +1,11 @@
 // src/services/UserProgressService.js
-import { doc, getDoc , setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 
+/**
+ * Fetches the full user progress data from Firestore.
+ * Includes username, gender, difficulty, language, and progress object.
+ */
 export const getUserProgressData = async (uid) => {
   const userDoc = await getDoc(doc(db, 'users', uid));
 
@@ -21,6 +25,9 @@ export const getUserProgressData = async (uid) => {
   };
 };
 
+/**
+ * Retrieves the progress array and gender for a specific user, language, and difficulty.
+ */
 export const getUserProgress = async (uid, lang, difficulty) => {
   const userRef = doc(db, 'users', uid);
   const snap = await getDoc(userRef);
@@ -34,7 +41,9 @@ export const getUserProgress = async (uid, lang, difficulty) => {
   return { progress, gender };
 };
 
-
+/**
+ * Saves updated progress array to Firestore for a specific user, language, and difficulty.
+ */
 export const saveUserProgress = async (uid, lang, difficulty, updatedArr) => {
   const ref = doc(db, 'users', uid);
   const snap = await getDoc(ref);
@@ -56,6 +65,9 @@ export const saveUserProgress = async (uid, lang, difficulty, updatedArr) => {
   );
 };
 
+/**
+ * Updates the user's difficulty level in Firestore and localStorage.
+ */
 export const levelUpUser = async (uid, nextDifficulty) => {
   const ref = doc(db, 'users', uid);
   await setDoc(ref, { difficulty: nextDifficulty }, { merge: true });
