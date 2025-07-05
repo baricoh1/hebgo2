@@ -4,7 +4,7 @@ import { getFirestore } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth'; // ✅ import auth module
 
 const firebaseConfig = {
-  apiKey: "AIzaSyA0P7Epgzq3yFPeA4b6MiNW8Omk_vH_iGc",
+  apiKey: "AIzaSyChbfQWxcgbQyaFyY4LQ5zFauGn0J7rvvY",
   authDomain: "hebgo-38419.firebaseapp.com",
   projectId: "hebgo-38419",
   storageBucket: "hebgo-38419.appspot.com", 
@@ -13,10 +13,10 @@ const firebaseConfig = {
   measurementId: "G-YE7PG8TYSP"
 };
 
-// ✅ Initialize Firebase app
+// Initialize Firebase app
 const app = initializeApp(firebaseConfig);
 
-// ✅ Firestore & Auth services
+// Firestore & Auth services
 const db = getFirestore(app);
 const auth = getAuth(app); // <-- this is new
 
