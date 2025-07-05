@@ -19,7 +19,7 @@ function App() {
 
   return (
     <div className="min-h-screen text-black dark:text-white transition-colors duration-300">
-      {/* 🔘 כפתור מעבר מצב כהה/בהיר */}
+      {}
       <button
   onClick={() => setDarkMode(!darkMode)}
   className="absolute top-4 left-4 px-4 py-2 rounded bg-gray-200 dark:bg-gray-700 text-black dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600 transition z-50"

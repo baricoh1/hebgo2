@@ -17,13 +17,13 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<App />}>
-          {/* דפים ציבוריים */}
+          {}
           <Route index element={<Home />} />
           <Route path="login" element={<Login />} />
           <Route path="register" element={<Register />} />
           <Route path="placement" element={<PlacementTest />} />
 
-          {/* דפים שמוגנים */}
+          {}
           <Route path="questions" element={<ProtectedRoute><Questions /></ProtectedRoute>} />
           <Route path="settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
           <Route path="progress" element={<ProtectedRoute><Progress /></ProtectedRoute>} />
